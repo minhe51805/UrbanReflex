@@ -1,0 +1,46 @@
+{
+  "id": "urn:ngsi-ld:PointOfInterest:HCMC-bitexco-tower",
+  "type": "PointOfInterest",
+  "@context": [
+    "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "https://raw.githubusercontent.com/smart-data-models/dataModel.PointOfInterest/master/context.jsonld"
+  ],
+  "name": {
+    "type": "Property",
+    "value": "Bitexco Financial Tower"
+  },
+  "location": {
+    "type": "GeoProperty",
+    "value": {
+      "type": "Point",
+      "coordinates": [106.7033, 10.7716]
+    }
+  },
+  "category": {
+    "type": "Property",
+    "value": ["building", "landmark", "commercial"]
+  },
+  "description": {
+    "type": "Property",
+    "value": "68-story skyscraper in Ho Chi Minh City, iconic landmark"
+  },
+  "address": {
+    "type": "Property",
+    "value": {
+      "streetAddress": "36 Hồ Tùng Mậu",
+      "addressLocality": "Quận 1",
+      "addressRegion": "TP. Hồ Chí Minh",
+      "addressCountry": "VN",
+      "postalCode": "70000"
+    }
+  },
+  "source": {
+    "type": "Property",
+    "value": "OpenStreetMap"
+  },
+  "refRoadSegment": {
+    "type": "Relationship",
+    "object": "urn:ngsi-ld:RoadSegment:HCMC-nguyen-hue-001"
+  }
+}
+
