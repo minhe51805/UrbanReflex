@@ -2,7 +2,7 @@
 # UrbanReflex - Requirements
 # Author: Hồ Viết Hiệp
 # Created at: 2025-11-13
-# Updated at: 2025-11-15
+Updated at: 2025-11-15
 # ============================================================================
 
 # HTTP requests

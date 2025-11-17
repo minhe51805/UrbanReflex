@@ -7,7 +7,7 @@ This document describes the infrastructure components and setup process for Urba
 ## Overview
 
 UrbanReflex uses a containerized architecture with:
-- **MongoDB 6.0** - Data storage backend
+- **MongoDB 4.4** - Data storage backend
 - **Orion-LD 1.5.1** - NGSI-LD Context Broker
 - **Python 3.9+** - Data processing environment
 
@@ -97,7 +97,7 @@ Expected output:
          ▼
 ┌─────────────────┐
 │   MongoDB       │  NoSQL database (port 27017)
-│   v6.0          │
+│   v4.4          │
 └─────────────────┘
 ```
 
@@ -113,7 +113,7 @@ Expected output:
 | `OPENAQ_API_KEY` | OpenAQ API key | Yes | - |
 | `MONGO_ROOT_USERNAME` | MongoDB username | Yes | - |
 | `MONGO_ROOT_PASSWORD` | MongoDB password | Yes | - |
-| `MONGO_DATABASE` | Database name | No | `urbanreflex_db` |
+| `MONGO_DATABASE` | Database name | No | `urbandb` |
 | `ORION_LD_URL` | Orion-LD endpoint | No | `http://localhost:1026` |
 
 ### Getting API Keys
