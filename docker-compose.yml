@@ -1,0 +1,62 @@
+# Author: Hồ Viết Hiệp
+# Created at: 2025-11-13
+# Updated at: 2025-11-13
+# Description: Docker Compose for UrbanReflex with MongoDB 6.0 and Orion-LD
+
+version: "3.9"
+
+services:
+  # MongoDB - Backend for Orion-LD (with authentication)
+  mongo:
+    container_name: urbanreflex-mongo
+    image: mongo:4.4
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE}
+    volumes:
+      - mongodata_urbanreflex:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - urbanreflex-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Orion-LD Context Broker
+  orion-ld:
+    container_name: urbanreflex-orion-ld
+    image: fiware/orion-ld:1.5.1
+    depends_on:
+      mongo:
+        condition: service_healthy
+    ports:
+      - "1026:1026"
+    environment:
+      - ORIONLD_MONGO_HOST=mongo
+    command: >
+      -dbhost mongo
+      -dbuser ${ORION_LD_USERNAME}
+      -dbpwd ${ORION_LD_PASSWORD}
+      -db ${MONGO_DATABASE}
+      -logLevel WARN
+    networks:
+      - urbanreflex-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:1026/version"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  urbanreflex-network:
+    driver: bridge
+
+volumes:
+  mongodata_urbanreflex:
+    driver: local
