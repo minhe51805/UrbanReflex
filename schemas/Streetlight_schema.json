@@ -1,0 +1,331 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$schemaVersion": "0.2.1",
+  "modelTags": "IUDX",
+  "$id": "https://smart-data-models.github.io/dataModel.Streetlighting/Streetlight/schema.json",
+  "title": " Smart Data Models - Streetlight",
+  "description": "A Street light",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "https://smart-data-models.github.io/data-models/common-schema.json#/definitions/GSMA-Commons"
+    },
+    {
+      "$ref": "https://smart-data-models.github.io/data-models/common-schema.json#/definitions/Location-Commons"
+    },
+    {
+      "$ref": "https://smart-data-models.github.io/data-models/common-schema.json#/definitions/PhysicalObject-Commons"
+    },
+    {
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "Streetlight"
+          ],
+          "description": "Property. NGSI Entity type. It has to be Streetlight"
+        },
+        "circuit": {
+          "type": "string",
+          "description": "Property. The circuit to which this streetlight connects to and gets power from. Typically it will contain an identifier that will allow to obtain more information about such circuit"
+        },
+        "refStreetlightModel": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "pattern": "^[\\w\\-\\.\\{\\}\\$\\+\\*\\[\\]`|~^@!,:\\\\]+$",
+              "description": "Property. Identifier format of any NGSI entity"
+            },
+            {
+              "type": "string",
+              "format": "uri",
+              "description": "Property. Identifier format of any NGSI entity"
+            }
+          ],
+          "description": "Relationship. Streetlight's model"
+        },
+        "refStreetlightControlCabinet": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "pattern": "^[\\w\\-\\.\\{\\}\\$\\+\\*\\[\\]`|~^@!,:\\\\]+$",
+              "description": "Property. Identifier format of any NGSI entity"
+            },
+            {
+              "type": "string",
+              "format": "uri",
+              "description": "Property. Identifier format of any NGSI entity"
+            }
+          ],
+          "description": "Relationship. If this streetlight is individually controlled, reference to the control cabinet in charge of"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "brokenLantern",
+            "columnIssue",
+            "defectiveLamp",
+            "ok"
+          ],
+          "description": "Property. The overall status of this street light. Enum:'brokenLantern, columnIssue, defectiveLamp, ok'"
+        },
+        "powerState": {
+          "type": "string",
+          "enum": [
+            "bootingUp",
+            "low",
+            "off",
+            "on"
+          ],
+          "description": "Property. Model:'https://schema.org/Text'. Streetlight's power state. Enum:'bootingUp, low, off, on'"
+        },
+        "refDevice": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256,
+                "pattern": "^[\\w\\-\\.\\{\\}\\$\\+\\*\\[\\]`|~^@!,:\\\\]+$",
+                "description": "Property. Identifier format of any NGSI entity"
+              },
+              {
+                "type": "string",
+                "format": "uri",
+                "description": "Property. Identifier format of any NGSI entity"
+              }
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "Relationship. Reference to the device(s) used to monitor this streetligth. List of Reference to entity(ies) of type Device"
+        },
+        "refStreetlightGroup": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "pattern": "^[\\w\\-\\.\\{\\}\\$\\+\\*\\[\\]`|~^@!,:\\\\]+$",
+              "description": "Property. Identifier format of any NGSI entity"
+            },
+            {
+              "type": "string",
+              "format": "uri",
+              "description": "Property. Identifier format of any NGSI entity"
+            }
+          ],
+          "description": "Relationship. Streetlight's group, if this streetlight belongs to any group"
+        },
+        "dateLastLampChange": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Property. Model:'https://schema.org/DateTime'. Timestamp of the last change of lamp made"
+        },
+        "dateLastSwitchingOn": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Property. Model:'https://schema.org/DateTime'. Timestamp of the last switching on"
+        },
+        "dateLastSwitchingOff": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Property. Model:'https://schema.org/DateTime'. Timestamp of the last switching off"
+        },
+        "controllingMethod": {
+          "type": "string",
+          "enum": [
+            "group",
+            "individual"
+          ],
+          "description": "Property. The method used to control this streetlight. Enum:'group, individual'. "
+        },
+        "dateServiceStarted": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Property. Model:'https://schema.org/Date'. Date at which the streetlight started giving service"
+        },
+        "locationCategory": {
+          "type": "string",
+          "enum": [
+            "bridge",
+            "centralIsland",
+            "facade",
+            "garden",
+            "park",
+            "parking",
+            "pedestrianPath",
+            "playground",
+            "road",
+            "sidewalk",
+            "tunnel"
+          ],
+          "description": "Property. Category of the location where the streetlight is placed. Enum:'bridge, centralIsland, facade, garden, park, parking, pedestrianPath, playground, road, sidewalk, tunnel'"
+        },
+        "lanternHeight": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Property. Lantern's height. In columns with many arms this can vary between streetlights. Another variation source of this property are wall-mounted streetlights"
+        },
+        "lifetimeMotionDetected": {
+          "description": "Property. Accumulated count of motion detections",
+          "type": "number"
+        },
+        "lifetimePowerConsumption": {
+          "description": "Property. Total power consumed by the device over its entire operational lifespan",
+          "type": "number"
+        },
+        "illuminanceLevel": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Property. Relative illuminance level setting. A number between 0 and 1"
+        },
+        "powerConsumption": {
+          "type": "number",
+          "description": "Property. Model:'https://schema.org/Number'. Power consumed by the LED or the streetlight bulb corresponding to this observation"
+        },
+        "current": {
+          "type": "number",
+          "description": "Property. Model:'https://schema.org/Number'. Current value of the streetlight corresponding to this observation"
+        },
+        "powerRating": {
+          "type": "number",
+          "description": "Property. Model:'https://schema.org/Number'. Power rating of the LED or the streetlight bulb corresponding to this observation"
+        },
+        "powerFactor": {
+          "type": "number",
+          "description": "Property. Model:'https://schema.org/Number'. Power factor or the ratio of working power of the streetlight corresponding to this observation"
+        },
+        "voltage": {
+          "type": "number",
+          "description": "Property. Model:'https://schema.org/Number'. Voltage value of the streetlight corresponding to this observation"
+        },
+        "feederPillarNum": {
+          "type": "string",
+          "description": "Property. Model:'https://schema.org/Text'. Streetlight feeder pillar information associated with the streetlight corresponding to this observation"
+        },
+        "streetPoleNum": {
+          "type": "string",
+          "description": "Property. Model:'https://schema.org/Text'. Street pole information associated with the streetlight corresponding to this observation"
+        },
+        "observationDateTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Property. Model:'https://schema.org/Text'. Last reported time of observation"
+        },
+        "feederID": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "Property. "
+            },
+            {
+              "type": "string",
+              "format": "uri",
+              "description": "Property. Model:'https://schema.org/Text"
+            }
+          ],
+          "description": "Relationship. Model:'https://schema.org/Text. Unique ID of the streetlight feeder panel associated with the streetlight corresponding to this observation"
+        },
+        "municipalityInfo": {
+          "type": "object",
+          "description": "Property. Model:'https://schema.org/Text. Municipality information corresponding to this observation",
+          "properties": {
+            "district": {
+              "type": "string",
+              "description": "Property. Model:'https://schema.org/Text'. District name corresponding to this observation"
+            },
+            "ulbName": {
+              "type": "string",
+              "description": "Property. Model:'https://schema.org/Text'.Name of the Urban Local Body corresponding to this observation"
+            },
+            "cityId": {
+              "type": "string",
+              "description": "Property. Model:'https://schema.org/Text'. City ID corresponding to this observation"
+            },
+            "stateName": {
+              "type": "string",
+              "description": "Property. Model:'https://schema.org/Text'. Name of the state corresponding to this observation"
+            },
+            "cityName": {
+              "type": "string",
+              "description": "Property. Model:'https://schema.org/Text'. City name corresponding to this observation"
+            },
+            "zoneId": {
+              "type": "string",
+              "description": "Property. Model:'https://schema.org/Text'. Zone ID corresponding to this observation"
+            },
+            "wardNum": {
+              "type": "number",
+              "description": "Property. Model:'https://schema.org/Number'. Ward number corresponding to this observation"
+            }
+          }
+        },
+        "deviceInfo": {
+          "type": "object",
+          "description": "Property. Model:'https://schema.org/Text. Information about the device associated with the observations",
+          "properties": {
+            "RFId": {
+              "type": "string",
+              "description": "Property. Model:'https://schema.org/Text'. Gives the ID of the RFID reader"
+            },
+            "deviceBatteryStatus": {
+              "type": "string",
+              "description": "Property. Model:'https://schema.org/Text'. Gives the Battery charging status of the reporting device(Connected, Disconnected)"
+            },
+            "deviceName": {
+              "type": "string",
+              "description": "Property. Model:'https://schema.org/Text'. Device Name or Station name of the sensor device/station corresponding to this observation"
+            },
+            "deviceId": {
+              "type": "string",
+              "description": "Property. Model:'https://schema.org/Text'. Device ID of the physical sensor/ measurement station corresponding to this observation"
+            },
+            "measurand": {
+              "type": "string",
+              "description": "Property. Model:'https://schema.org/Text'. Property/properties sensed/observed/measured by the device"
+            },
+            "deviceSimNumber": {
+              "type": "string",
+              "description": "Property. Model:'https://schema.org/Text'. Gives the sim number of the device in the waste management vehicle"
+            },
+            "deviceModel": {
+              "type": "object",
+              "description": "Property. Model:'https://schema.org/Text'. Describes the information of the device, sensor or system in consideration",
+              "properties": {
+                "brandName": {
+                  "type": "string",
+                  "description": "Property. Model:'https://schema.org/Text'. Name of the brand associated with an entity, e.g., sensor, device etc"
+                },
+                "manufacturerName": {
+                  "type": "string",
+                  "description": "Property. Model:'https://schema.org/Text'. Name of the manufacturer associated with an entity, e.g., sensor, device etc"
+                },
+                "modelName": {
+                  "type": "string",
+                  "description": "Property. Model:'https://schema.org/Text'. Name of a specific model associated with an entity, e.g., sensor, device etc"
+                },
+                "modelURL": {
+                  "type": "string",
+                  "description": "Property. Model:'https://schema.org/Text'. URL providing further information of a specific model associated with an entity, e.g., sensor, device etc"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "required": [
+    "id",
+    "type",
+    "location",
+    "status"
+  ]
+}
