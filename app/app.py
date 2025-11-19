@@ -1,6 +1,15 @@
+"""
+Author: Trần Tuấn Anh
+Created at: 2025-11-19
+Updated at: 2025-11-19
+Description: Main FastAPI application instance for UrbanReflex.
+             Configures CORS, includes routers, and defines health endpoints.
+"""
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import items, users, auth
+from app.internal import admin
 
 app = FastAPI(title="UrbanReflex Backend", version="1.0.0")
 
@@ -16,6 +25,7 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/auth", tags=["authentication"])
 app.include_router(items.router, prefix="/api/v1", tags=["items"])
 app.include_router(users.router, prefix="/api/v1", tags=["users"])
+app.include_router(admin.router, prefix="/admin", tags=["admin"])
 
 @app.get("/")
 async def root():

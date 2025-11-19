@@ -1,3 +1,11 @@
+"""
+Author: Trần Tuấn Anh
+Created at: 2025-11-19
+Updated at: 2025-11-19
+Description: Authentication router for UrbanReflex.
+             Handles user registration, login, and profile retrieval.
+"""
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from motor.motor_asyncio import AsyncIOMotorDatabase
@@ -26,6 +34,7 @@ async def register(user: UserCreate, db: AsyncIOMotorDatabase = Depends(get_data
         "phone": user.phone,
         "latitude": user.latitude,
         "longitude": user.longitude,
+        "is_admin": user.is_admin,
         "hashed_password": hashed_password
     }
     

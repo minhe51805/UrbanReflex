@@ -1,3 +1,11 @@
+"""
+Author: Trần Tuấn Anh
+Created at: 2025-11-19
+Updated at: 2025-11-19
+Description: Pydantic models for user data validation and API responses.
+             Includes User, UserCreate, Token, and LoginRequest schemas.
+"""
+
 from pydantic import BaseModel, Field, field_validator
 from email_validator import validate_email, EmailNotValidError
 from typing import Optional
@@ -13,6 +21,7 @@ class UserBase(BaseModel):
     phone: str
     latitude: float
     longitude: float
+    is_admin: bool = False
 
 class UserCreate(UserBase):
     password: str

@@ -1,3 +1,10 @@
+"""
+Author: Trần Tuấn Anh
+Created at: 2025-11-19
+Updated at: 2025-11-19
+Description: Configuration file for UrbanReflex FastAPI application.
+             Includes MongoDB connection, JWT settings, and database utilities.
+"""
 import os
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.errors import ConnectionFailure

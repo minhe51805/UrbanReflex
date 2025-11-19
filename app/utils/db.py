@@ -1,3 +1,11 @@
+"""
+Author: Trần Tuấn Anh
+Created at: 2025-11-19
+Updated at: 2025-11-19
+Description: Database utilities for UrbanReflex.
+             Includes document serialization for MongoDB responses.
+"""
+
 from bson import ObjectId
 from typing import Any, Dict
 

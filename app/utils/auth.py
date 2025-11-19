@@ -1,3 +1,11 @@
+"""
+Author: Trần Tuấn Anh
+Created at: 2025-11-19
+Updated at: 2025-11-19
+Description: Authentication utilities for UrbanReflex.
+             Includes password hashing, JWT token creation, and user verification.
+"""
+
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
@@ -46,3 +54,11 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncIOMotor
     if user is None:
         raise credentials_exception
     return serialize_doc(user)
+
+async def get_current_admin(current_user = Depends(get_current_user)):
+    if not current_user.get("is_admin", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions"
+        )
+    return current_user
