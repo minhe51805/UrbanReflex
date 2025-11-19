@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.config.config import get_database
-from app.schemas.user import UserCreate, User, Token
+from app.schemas.user import UserCreate, User, Token, LoginRequest
 from app.utils.auth import get_password_hash, verify_password, create_access_token, get_current_user
 from app.utils.db import serialize_doc
 
@@ -22,6 +22,10 @@ async def register(user: UserCreate, db: AsyncIOMotorDatabase = Depends(get_data
     user_doc = {
         "email": user.email,
         "username": user.username,
+        "full_name": user.full_name,
+        "phone": user.phone,
+        "latitude": user.latitude,
+        "longitude": user.longitude,
         "hashed_password": hashed_password
     }
     
@@ -32,12 +36,12 @@ async def register(user: UserCreate, db: AsyncIOMotorDatabase = Depends(get_data
     return serialize_doc(user_doc)
 
 @router.post("/login", response_model=Token)
-async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncIOMotorDatabase = Depends(get_database)):
-    user = await db.users.find_one({"username": form_data.username})
-    if not user or not verify_password(form_data.password, user["hashed_password"]):
+async def login(login_data: LoginRequest, db: AsyncIOMotorDatabase = Depends(get_database)):
+    user = await db.users.find_one({"$or": [{"email": login_data.identifier}, {"username": login_data.identifier}]})
+    if not user or not verify_password(login_data.password, user["hashed_password"]):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
+            detail="Incorrect email/username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
     access_token = create_access_token(data={"sub": user["username"]})

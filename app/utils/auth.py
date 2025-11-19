@@ -7,6 +7,7 @@ from fastapi.security import OAuth2PasswordBearer
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.config.config import get_database, SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from app.schemas.user import TokenData
+from app.utils.db import serialize_doc
 
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
@@ -44,4 +45,4 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncIOMotor
     user = await db.users.find_one({"username": token_data.username})
     if user is None:
         raise credentials_exception
-    return user
+    return serialize_doc(user)

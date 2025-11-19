@@ -9,6 +9,10 @@ class UserBase(BaseModel):
     # optionally allow more relaxed domains (e.g., local or experimental TLDs)
     email: str
     username: str
+    full_name: str
+    phone: str
+    latitude: float
+    longitude: float
 
 class UserCreate(UserBase):
     password: str
@@ -51,3 +55,7 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     username: Optional[str] = None
+
+class LoginRequest(BaseModel):
+    identifier: str  # email or username
+    password: str
