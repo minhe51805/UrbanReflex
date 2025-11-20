@@ -6,16 +6,20 @@ Description: Configuration file for UrbanReflex FastAPI application.
              Includes MongoDB connection, JWT settings, and database utilities.
 """
 import os
+from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.errors import ConnectionFailure
 
+# Load environment variables from .env file
+load_dotenv()
+
 # MongoDB configuration
-MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://urbanreflex_admin:WAG_team_2025_secure@103.178.233.233:27017/urbanreflex_db?authSource=admin")
+MONGODB_URL = os.getenv("MONGODB_URL")
 
 # JWT configuration
-SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here-change-in-production")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
 
 # Database client
 client = AsyncIOMotorClient(MONGODB_URL)

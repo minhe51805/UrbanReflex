@@ -8,6 +8,7 @@ dependencies = [
     "fastapi[standard]>=0.121.2",
     "motor>=3.7.1",
     "passlib[bcrypt]>=1.7.4",
+    "python-dotenv>=1.0.0",
     "python-jose[cryptography]>=3.5.0",
     "sqlalchemy>=2.0.44",
     "uvicorn>=0.38.0",
