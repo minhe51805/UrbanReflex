@@ -10,6 +10,7 @@ Describe: Transform OpenAQ location data to NGSI-LD AirQualityObserved entities.
 import json
 import sys
 import random
+import unicodedata
 from pathlib import Path
 from datetime import datetime, timedelta
 from tqdm import tqdm
@@ -140,8 +141,13 @@ def create_station_id(location_name):
     Returns:
         Clean ID string
     """
+    # Normalize to ASCII
+    normalized = unicodedata.normalize('NFD', location_name)
+    stripped = ''.join(ch for ch in normalized if unicodedata.category(ch) != 'Mn')
+    clean_name = stripped.encode('ascii', 'ignore').decode('ascii')
+
     # Remove special characters and spaces
-    clean_name = location_name.lower()
+    clean_name = clean_name.lower()
     clean_name = clean_name.replace(':', '')
     clean_name = clean_name.replace(',', '')
     clean_name = clean_name.replace('(', '')
