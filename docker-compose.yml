@@ -1,7 +1,7 @@
 # Author: Hồ Viết Hiệp
 # Created at: 2025-11-13
-# Updated at: 2025-11-13
-# Description: Docker Compose for UrbanReflex with MongoDB 6.0 and Orion-LD
+# Updated at: 2025-11-19
+# Description: Docker Compose for UrbanReflex with MongoDB 4.4 and Orion-LD
 
 version: "3.9"
 
@@ -52,6 +52,24 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  scheduler:
+    container_name: urbanreflex-scheduler
+    build:
+      context: .
+      dockerfile: Dockerfile.scheduler
+    depends_on:
+      orion-ld:
+        condition: service_healthy
+    environment:
+      OWM_API_KEY: ${OWM_API_KEY}
+      OPENAQ_API_KEY: ${OPENAQ_API_KEY}
+      ORION_LD_URL: ${ORION_LD_URL}
+      ORION_LD_USERNAME: ${ORION_LD_USERNAME}
+      ORION_LD_PASSWORD: ${ORION_LD_PASSWORD}
+    networks:
+      - urbanreflex-network
+    restart: unless-stopped
 
 networks:
   urbanreflex-network:
