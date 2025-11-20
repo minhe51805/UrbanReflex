@@ -1,0 +1,20 @@
+# Author: Hồ Viết Hiệp
+# Created at: 2025-11-19
+# Updated at: 2025-11-19
+# Description: Docker image for the APScheduler service that automates
+#              WeatherObserved and AirQualityObserved pipelines.
+
+FROM python:3.11-slim
+
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+CMD ["python", "scripts/run_scheduler.py"]
+
