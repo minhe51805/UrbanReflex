@@ -2,7 +2,7 @@
 # UrbanReflex - Requirements
 # Author: Hồ Viết Hiệp
 # Created at: 2025-11-13
-Updated at: 2025-11-15
+#Updated at: 2025-11-19
 # ============================================================================
 
 # HTTP requests
@@ -28,3 +28,6 @@ pandas==2.1.4
 
 # Environment variables (if needed)
 python-dotenv==1.0.0
+
+# Scheduler
+APScheduler==3.10.4
