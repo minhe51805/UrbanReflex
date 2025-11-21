@@ -1,7 +1,7 @@
 """
 Author: Hồ Viết Hiệp
 Created at: 2025-11-15
-Updated at: 2025-11-19
+Updated at: 2025-11-21
 Description: Seed NGSI-LD entities into Orion-LD using create, update,
              and upsert flows with batching, validation, and error handling.
 """
@@ -16,7 +16,7 @@ from requests.auth import HTTPBasicAuth
 
 sys.path.append(str(Path(__file__).parent.parent))
 from config.config import ORION_LD_URL, ORION_LD_USERNAME, ORION_LD_PASSWORD
-
+from config.data_model import get_context
 
 ENTITIES_DIR = Path("ngsi_ld_entities")
 
@@ -285,10 +285,9 @@ def process_entities(orion_url, entities, mode=MODE_CREATE, batch_size=100, auth
     
     return stats
 
-
 def delete_all_entities(orion_url, entity_type=None, auth=None):
     """
-    Delete all entities of a specific type (or all entities)
+    Delete all entities of a specific type (or all entities), handling pagination.
     
     Args:
         orion_url: Orion-LD base URL
@@ -296,52 +295,72 @@ def delete_all_entities(orion_url, entity_type=None, auth=None):
         auth: HTTPBasicAuth object (optional)
         
     Returns:
-        Number of entities deleted
+        Total number of entities deleted
     """
-    try:
-        # Get all entities
-        params = {}
-        if entity_type:
-            params['type'] = entity_type
-        
-        response = requests.get(
-            f"{orion_url}/ngsi-ld/v1/entities",
-            params=params,
-            auth=auth,
-            timeout=10
-        )
-        
-        if response.status_code != 200:
-            print(f"[ERROR] Failed to get entities: {response.status_code}")
-            return 0
-        
-        entities = response.json()
-        
-        if not entities:
-            print(f"[INFO] No entities found for type: {entity_type or 'all'}")
-            return 0
-        
-        print(f"\nDeleting {len(entities)} entities...")
-        deleted = 0
-        
-        for entity in tqdm(entities, desc="Deleting", unit="entities"):
-            entity_id = entity.get('id')
-            
-            del_response = requests.delete(
-                f"{orion_url}/ngsi-ld/v1/entities/{entity_id}",
-                auth=auth,
-                timeout=10
-            )
-            
-            if del_response.status_code == 204:
-                deleted += 1
-        
-        return deleted
+    total_deleted = 0
+    page_limit = 1000  # Max entities per request
     
-    except Exception as e:
-        print(f"[ERROR] Failed to delete entities: {e}")
-        return 0
+    print(f"\nStarting deletion for entity type: {entity_type or 'all'}")
 
+    headers = {}
+    if entity_type:
+        link_header = build_link_header(get_context(entity_type))
+        if link_header:
+            headers["Link"] = link_header
+
+    while True:
+        try:
+            params = {'limit': page_limit}
+            if entity_type:
+                params['type'] = entity_type
+                params['options'] = 'keyValues'
+
+            response = requests.get(
+                f"{orion_url}/ngsi-ld/v1/entities",
+                params=params,
+                headers=headers,
+                auth=auth,
+                timeout=30
+            )
+
+            if response.status_code != 200:
+                print(f"[ERROR] Failed to get entities: {response.status_code} - {response.text}")
+                break
+
+            entities = response.json()
+            if not entities:
+                print("[INFO] No more entities found to delete.")
+                break
+
+            print(f"Found {len(entities)} entities in this batch. Deleting...")
+            
+            batch_deleted = 0
+            for entity in tqdm(entities, desc="Deleting batch", unit="entities"):
+                entity_id = entity.get('id')
+                if not entity_id:
+                    continue
+
+                del_response = requests.delete(
+                    f"{orion_url}/ngsi-ld/v1/entities/{entity_id}",
+                    auth=auth,
+                    timeout=10
+                )
+                
+                if del_response.status_code == 204:
+                    batch_deleted += 1
+            
+            total_deleted += batch_deleted
+            print(f"Deleted {batch_deleted} entities in this batch.")
+
+            # If fewer entities were returned than the limit, it's the last page
+            if len(entities) < page_limit:
+                break
+        
+        except Exception as e:
+            print(f"[ERROR] An exception occurred during deletion: {e}")
+            break
+            
+    return total_deleted
 
 def print_seed_summary(all_stats):
     """
@@ -427,6 +446,7 @@ def main():
     parser.add_argument('--password', default=ORION_LD_PASSWORD, help='Password for authentication')
     parser.add_argument('--clear', action='store_true', help='Clear all existing entities before seeding')
     parser.add_argument('--clear-type', help='Clear entities of specific type before seeding')
+    parser.add_argument('--delete-only', action='store_true', help='Only perform deletion and exit')
     parser.add_argument('--types', nargs='+', help='Entity types to process (default: all)')
     parser.add_argument('--mode', choices=MODE_CHOICES, default=MODE_CREATE, help='Operation mode: create|update|upsert')
     parser.add_argument('--batch-size', type=int, default=100, help='Throttle delay interval')
@@ -467,6 +487,10 @@ def main():
         print(f"\n[WARNING] Clearing entities of type: {args.clear_type}")
         deleted = delete_all_entities(orion_url, args.clear_type, auth)
         print(f"[OK] Deleted {deleted} entities")
+
+    if args.delete_only:
+        print("\n[INFO] --delete-only flag is set. Exiting after deletion.")
+        return 0
     
     # Determine which types to seed
     types_to_seed = args.types if args.types else list(ENTITY_FILES.keys())
@@ -522,4 +546,3 @@ def main():
 
 if __name__ == "__main__":
     exit(main())
-
