@@ -1,7 +1,7 @@
 """
 Author: Hồ Viết Hiệp
 Created at: 2025-11-19
-Updated at: 2025-11-19
+Updated at: 2025-11-21
 Description: APScheduler service that runs fetch → transform → seed pipelines
              for WeatherObserved and AirQualityObserved in Orion-LD.
 """
@@ -24,7 +24,7 @@ PYTHON_EXECUTABLE = sys.executable
 
 # Interval cấu hình (phút)
 WEATHER_INTERVAL_MIN = 15
-AQI_INTERVAL_MIN = 60
+AQI_INTERVAL_MIN = 15
 
 
 logging.basicConfig(

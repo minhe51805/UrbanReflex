@@ -1,6 +1,6 @@
 # Author: Hồ Viết Hiệp
 # Created at: 2025-11-13
-# Updated at: 2025-11-19
+# Updated at: 2025-11-21
 # Description: Docker Compose for UrbanReflex with MongoDB 4.4 and Orion-LD
 
 version: "3.9"
@@ -22,7 +22,7 @@ services:
       - urbanreflex-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      test: ["CMD", "mongo", "--quiet", "--eval", "db.adminCommand('ping').ok"]
       interval: 10s
       timeout: 5s
       retries: 5
