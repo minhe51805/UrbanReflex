@@ -1,15 +1,15 @@
 """
 Author: Hồ Viết Hiệp
 Created at: 2025-11-15
-Updated at: 2025-11-16
-Describe: Fetch air quality data from OpenAQ API v3 for HCMC.
-         Retrieves PM2.5, PM10, NO2, O3, CO, SO2 from monitoring stations.
+Updated at: 2025-11-21
+Description: Fetch air quality data from OpenAQ API v3 for HCMC.
+             Retrieves PM2.5, PM10, NO2, O3, CO, SO2 from monitoring stations.
 """
 
 import requests
 import json
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 # Import config
 import sys
@@ -23,6 +23,9 @@ from config.config import (
     AREA_NAME,
     SOURCE_OPENAQ
 )
+
+
+FRESHNESS_HOURS = 48
 
 
 def fetch_locations_near_hcmc(api_key, lat, lon, radius=25000):
@@ -80,7 +83,7 @@ def fetch_locations_near_hcmc(api_key, lat, lon, radius=25000):
 
 def fetch_latest_measurements(api_key, location_id):
     """
-    Fetch latest measurements for a specific location
+    Fetch latest measurements for a specific location (legacy, unused)
     
     Args:
         api_key: OpenAQ API key
@@ -157,6 +160,134 @@ def fetch_all_latest_measurements(api_key, limit=1000):
     except json.JSONDecodeError as e:
         print(f"[ERROR] Failed to parse JSON response: {e}")
         return None
+
+
+def fetch_location_sensors(api_key, location_id):
+    """
+    Fetch sensors metadata for a specific location
+
+    Args:
+        api_key: OpenAQ API key
+        location_id: Location ID
+
+    Returns:
+        List of sensors (possibly empty)
+    """
+    endpoint = f"{OPENAQ_BASE_URL}/locations/{location_id}/sensors"
+
+    headers = {
+        "X-API-Key": api_key,
+        "Accept": "application/json"
+    }
+
+    try:
+        response = requests.get(endpoint, headers=headers, timeout=30)
+        response.raise_for_status()
+        data = response.json()
+        return data.get('results', [])
+    except requests.RequestException as e:
+        print(f"[WARNING] Failed to fetch sensors for location {location_id}: {e}")
+        return []
+
+
+def fetch_sensor_latest_measurement(api_key, sensor_id, freshness_hours=FRESHNESS_HOURS):
+    """
+    Fetch the latest measurement for a sensor within freshness window
+
+    Args:
+        api_key: OpenAQ API key
+        sensor_id: Sensor ID
+        freshness_hours: Acceptable age of measurement
+
+    Returns:
+        Dict with measurement info or None
+    """
+    endpoint = f"{OPENAQ_BASE_URL}/sensors/{sensor_id}/measurements"
+
+    headers = {
+        "X-API-Key": api_key,
+        "Accept": "application/json"
+    }
+
+    params = {
+        "limit": 1,
+        "sort": "desc"
+    }
+
+    if freshness_hours:
+        since = datetime.now(timezone.utc) - timedelta(hours=freshness_hours)
+        params["datetime_from"] = since.isoformat().replace("+00:00", "Z")
+
+    try:
+        response = requests.get(endpoint, headers=headers, params=params, timeout=30)
+        response.raise_for_status()
+        data = response.json()
+        results = data.get('results', [])
+
+        if not results:
+            return None
+
+        measurement = results[0]
+        value = measurement.get('value')
+        if value is None or value == -999:
+            return None
+
+        parameter = measurement.get('parameter', {})
+        period = measurement.get('period', {})
+        observed_at = (
+            period.get('datetimeTo', {}).get('utc')
+            or period.get('datetimeFrom', {}).get('utc')
+        )
+
+        return {
+            "sensor_id": sensor_id,
+            "parameter": parameter.get('name'),
+            "unit": parameter.get('units'),
+            "value": value,
+            "observed_at": observed_at
+        }
+    except requests.RequestException as e:
+        print(f"[WARNING] Failed to fetch measurement for sensor {sensor_id}: {e}")
+        return None
+
+
+def build_latest_measurement_map(api_key, locations):
+    """
+    Build mapping of location -> latest measurements by parameter
+
+    Args:
+        api_key: OpenAQ API key
+        locations: List of location dicts
+
+    Returns:
+        Dict {location_id: {parameter_name: measurement_dict}}
+    """
+    measurements_by_location = {}
+
+    for location in locations:
+        location_id = location.get('id')
+        if not location_id:
+            continue
+
+        sensors = fetch_location_sensors(api_key, location_id)
+        if not sensors:
+            continue
+
+        measurements = {}
+        for sensor in sensors:
+            sensor_id = sensor.get('id')
+            parameter = sensor.get('parameter', {}).get('name')
+            if not sensor_id or not parameter:
+                continue
+
+            measurement = fetch_sensor_latest_measurement(api_key, sensor_id)
+            if measurement:
+                measurements[parameter] = measurement
+
+        if measurements:
+            measurements_by_location[location_id] = measurements
+
+    return measurements_by_location
 
 
 def enrich_data(data, data_type="locations"):
@@ -319,42 +450,36 @@ def main():
     # Enrich with metadata
     enhanced_locations = enrich_data(locations_data, "locations")
     
-    # Save locations data
+    # Prepare filenames
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     locations_filename = f"openaq_locations_{timestamp}.json"
-    
-    print(f"\n[SAVING] Monitoring stations data...")
-    save_data(enhanced_locations, locations_filename)
-    save_data(enhanced_locations, "openaq_locations_latest.json")
     
     # Print locations summary
     print_locations_summary(enhanced_locations)
     
-    # Fetch latest measurements
-    measurements_data = fetch_all_latest_measurements(OPENAQ_API_KEY)
-    
-    if measurements_data:
-        enhanced_measurements = enrich_data(measurements_data, "latest_measurements")
-        measurements_filename = f"openaq_measurements_{timestamp}.json"
-        
-        print(f"\n[SAVING] Latest measurements data...")
-        save_data(enhanced_measurements, measurements_filename)
-        save_data(enhanced_measurements, "openaq_measurements_latest.json")
-        
-        # Print measurements summary
-        print_measurements_summary(enhanced_measurements)
-        
-        print(f"\n[SUCCESS] Air quality data fetched!")
-        print(f"\nOutput files:")
-        print(f"   - {RAW_DATA_DIR}/{locations_filename}")
-        print(f"   - {RAW_DATA_DIR}/openaq_locations_latest.json")
-        print(f"   - {RAW_DATA_DIR}/{measurements_filename}")
-        print(f"   - {RAW_DATA_DIR}/openaq_measurements_latest.json")
-    else:
-        print("\n[WARNING] Failed to fetch measurements, but locations saved")
-        print(f"\nOutput files:")
-        print(f"   - {RAW_DATA_DIR}/{locations_filename}")
-        print(f"   - {RAW_DATA_DIR}/openaq_locations_latest.json")
+    # Build latest measurement map
+    try:
+        locations = locations_data.get('results', [])
+    except AttributeError:
+        locations = []
+
+    measurement_map = build_latest_measurement_map(OPENAQ_API_KEY, locations)
+    total_real = sum(1 for loc in locations if loc.get('id') in measurement_map)
+
+    for location in locations:
+        loc_id = location.get('id')
+        location['latestMeasurements'] = measurement_map.get(loc_id, {})
+
+    print(f"\n[SAVING] Monitoring stations data...")
+    save_data(enhanced_locations, locations_filename)
+    save_data(enhanced_locations, "openaq_locations_latest.json")
+
+    print(f"\n[INFO] Locations with real measurements: {total_real}/{len(locations)}")
+
+    print(f"\n[SUCCESS] Air quality data fetched!")
+    print(f"\nOutput files:")
+    print(f"   - {RAW_DATA_DIR}/{locations_filename}")
+    print(f"   - {RAW_DATA_DIR}/openaq_locations_latest.json")
     
     return 0
 
