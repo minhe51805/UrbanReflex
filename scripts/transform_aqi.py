@@ -1,10 +1,11 @@
 """
 Author: Hồ Viết Hiệp
 Created at: 2025-11-15
-Updated at: 2025-11-16
-Describe: Transform OpenAQ location data to NGSI-LD AirQualityObserved entities.
-         Uses synthetic measurements since OpenAQ data for HCMC is outdated.
-         Complies with ETSI NGSI-LD spec and FiWARE Environment Data Model.
+Updated at: 2025-11-21
+Description: Transform OpenAQ location data to NGSI-LD AirQualityObserved entities.
+             Uses synthetic measurements since OpenAQ data for HCMC is outdated.
+             Complies with ETSI NGSI-LD spec and FiWARE Environment Data Model.
+             Generates fixed entity IDs for proper upsert operations.
 """
 
 import json
@@ -12,11 +13,13 @@ import sys
 import random
 import unicodedata
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from tqdm import tqdm
 
 sys.path.append(str(Path(__file__).parent.parent))
 from config.config import RAW_DATA_DIR, AREA_NAME, SOURCE_OPENAQ
+REAL_DATA_MAX_AGE_HOURS = 48
+
 from config.data_model import (
     EntityType,
     create_entity_id,
@@ -104,7 +107,7 @@ def get_air_quality_level(aqi):
         return "hazardous"
 
 
-def generate_synthetic_measurements():
+def generate_synthetic_measurements(pm25_override=None):
     """
     Generate realistic synthetic air quality measurements for HCMC
     
@@ -112,7 +115,7 @@ def generate_synthetic_measurements():
         Dict with pollutant concentrations
     """
     # Realistic ranges for Ho Chi Minh City (based on historical data)
-    pm25 = random.uniform(20, 60)  # Typically moderate to unhealthy
+    pm25 = pm25_override if pm25_override is not None else random.uniform(20, 60)
     pm10 = pm25 * random.uniform(1.4, 2.0)  # PM10 usually 1.4-2x PM2.5
     
     # Other pollutants (typical urban values)
@@ -162,6 +165,27 @@ def create_station_id(location_name):
     return clean_name
 
 
+def parse_iso_datetime(value):
+    if not value:
+        return None
+    try:
+        if value.endswith("Z"):
+            value = value[:-1] + "+00:00"
+        return datetime.fromisoformat(value)
+    except ValueError:
+        return None
+
+
+def is_recent_datetime(value, max_age_hours=REAL_DATA_MAX_AGE_HOURS):
+    dt = parse_iso_datetime(value)
+    if not dt:
+        return False
+    now = datetime.now(timezone.utc)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return (now - dt) <= timedelta(hours=max_age_hours)
+
+
 def transform_location_to_ngsi_ld(location, timestamp=None):
     """
     Transform OpenAQ location to NGSI-LD AirQualityObserved with synthetic data
@@ -200,35 +224,64 @@ def transform_location_to_ngsi_ld(location, timestamp=None):
     # Create entity ID
     entity_id = create_entity_id(
         EntityType.AIR_QUALITY_OBSERVED,
-        f"{station_id}-{date_observed.replace(':', '').replace('-', '')}"
+        f"{station_id}"
     )
     
     if not validate_entity_id(entity_id):
         print(f"[WARNING] Invalid entity ID: {entity_id}")
         return None
     
-    # Generate synthetic measurements
-    measurements = generate_synthetic_measurements()
-    
+    valid_measurements = {}
+    latest_measurements = location.get('latestMeasurements', {})
+    if isinstance(latest_measurements, dict):
+        for param, measurement in latest_measurements.items():
+            observed_at = measurement.get('observed_at')
+            if is_recent_datetime(observed_at):
+                valid_measurements[param] = measurement
+
+    pm25_real = valid_measurements.get('pm25')
+    measurement_quality = "synthetic"
+    measurement_source = f"OpenAQ location/{location_id} (synthetic fallback)"
+    observed_at = date_observed
+    pm25_override = None
+
+    if pm25_real:
+        pm25_override = pm25_real.get('value')
+        observed_at = pm25_real.get('observed_at') or date_observed
+        measurement_quality = "measured"
+        sensor_id = pm25_real.get('sensor_id')
+        measurement_source = f"OpenAQ sensor/{sensor_id}" if sensor_id else "OpenAQ sensor (measured)"
+
+    # Generate measurements (real pm25 will override)
+    measurements = generate_synthetic_measurements(pm25_override=pm25_override)
+
+    # Override other pollutants if real data exists
+    for parameter, measurement in valid_measurements.items():
+        if parameter == 'pm25':
+            continue
+        value = measurement.get('value')
+        if value is not None:
+            measurements[parameter] = round(value, 1)
+
     # Calculate AQI from PM2.5
     aqi = calculate_aqi_from_pm25(measurements['pm25'])
     aqi_level = get_air_quality_level(aqi)
     
     # Build NGSI-LD entity
+    observed_value = {"@type": "DateTime", "@value": observed_at}
+
     entity = {
         "id": entity_id,
         "type": EntityType.AIR_QUALITY_OBSERVED,
         "@context": get_context(EntityType.AIR_QUALITY_OBSERVED),
         "location": create_geo_property([lon, lat], "Point"),
-        "dateObserved": create_property(
-            {"@type": "DateTime", "@value": date_observed}
-        )
+        "dateObserved": create_property(observed_value)
     }
     
     # Add AQI
     entity["aqi"] = create_property(
         aqi,
-        observed_at=date_observed
+        observed_at=observed_at
     )
     
     entity["airQualityLevel"] = create_property(aqi_level)
@@ -237,37 +290,37 @@ def transform_location_to_ngsi_ld(location, timestamp=None):
     entity["pm25"] = create_property(
         measurements['pm25'],
         unit_code="GQ",  # µg/m³
-        observed_at=date_observed
+        observed_at=observed_at
     )
     
     entity["pm10"] = create_property(
         measurements['pm10'],
         unit_code="GQ",
-        observed_at=date_observed
+        observed_at=observed_at
     )
     
     entity["no2"] = create_property(
         measurements['no2'],
         unit_code="GQ",
-        observed_at=date_observed
+        observed_at=observed_at
     )
     
     entity["o3"] = create_property(
         measurements['o3'],
         unit_code="GQ",
-        observed_at=date_observed
+        observed_at=observed_at
     )
     
     entity["so2"] = create_property(
         measurements['so2'],
         unit_code="GQ",
-        observed_at=date_observed
+        observed_at=observed_at
     )
     
     entity["co"] = create_property(
         measurements['co'],
         unit_code="GP",  # mg/m³
-        observed_at=date_observed
+        observed_at=observed_at
     )
     
     # Metadata
@@ -278,9 +331,8 @@ def transform_location_to_ngsi_ld(location, timestamp=None):
     
     entity["dataProvider"] = create_property(SOURCE_OPENAQ)
     
-    entity["source"] = create_property(
-        f"OpenAQ location/{location_id} (synthetic measurements)"
-    )
+    entity["source"] = create_property(measurement_source)
+    entity["measurementQuality"] = create_property(measurement_quality, observed_at=observed_at)
     
     entity["address"] = create_property({
         "addressLocality": AREA_NAME,
@@ -400,6 +452,7 @@ def print_statistics(entities):
     by_level = {}
     aqi_values = []
     pm25_values = []
+    quality_counts = {}
     
     for entity in entities:
         level = entity.get('airQualityLevel', {}).get('value', 'unknown')
@@ -410,6 +463,10 @@ def print_statistics(entities):
         
         if 'pm25' in entity:
             pm25_values.append(entity['pm25']['value'])
+        
+        quality = entity.get('measurementQuality', {}).get('value')
+        if quality:
+            quality_counts[quality] = quality_counts.get(quality, 0) + 1
     
     if aqi_values:
         print(f"\nAQI Statistics:")
@@ -427,6 +484,12 @@ def print_statistics(entities):
     for level, count in sorted(by_level.items(), key=lambda x: x[1], reverse=True):
         percentage = count / len(entities) * 100
         print(f"  {level:30s}: {count:5d} ({percentage:5.1f}%)")
+    
+    if quality_counts:
+        print("\nMeasurement Quality:")
+        for quality, count in sorted(quality_counts.items(), key=lambda x: x[1], reverse=True):
+            percentage = count / len(entities) * 100
+            print(f"  {quality:30s}: {count:5d} ({percentage:5.1f}%)")
     
     print("=" * 70)
 
@@ -452,7 +515,8 @@ def validate_sample(entities, sample_size=2):
         except UnicodeEncodeError:
             print(f"   Station: {name.encode('ascii', 'replace').decode('ascii')}")
         
-        print(f"   Observed: {entity.get('dateObserved', {}).get('value', {}).get('@value', 'N/A')}")
+        observed_value = entity.get('dateObserved', {}).get('value', {}).get('@value')
+        print(f"   Observed: {observed_value or 'N/A'}")
         
         if 'aqi' in entity:
             aqi = entity['aqi']['value']
@@ -462,6 +526,10 @@ def validate_sample(entities, sample_size=2):
         if 'pm25' in entity:
             pm25 = entity['pm25']['value']
             print(f"   PM2.5: {pm25} µg/m³")
+        
+        quality = entity.get('measurementQuality', {}).get('value')
+        if quality:
+            print(f"   Measurement quality: {quality}")
         
         # Validate structure
         required_fields = ['id', 'type', '@context', 'location', 'dateObserved', 'aqi']
@@ -478,7 +546,7 @@ def main():
     print("=" * 70)
     print("UrbanReflex - AQI to NGSI-LD Transformer")
     print("=" * 70)
-    print("\nNote: Using synthetic measurements (OpenAQ data is outdated)")
+    print("\nNote: Uses OpenAQ real measurements when available, otherwise synthetic fallback")
     
     mode = "current"
     if len(sys.argv) > 1:
