@@ -34,7 +34,7 @@ async def register(user: UserCreate, db: AsyncIOMotorDatabase = Depends(get_data
         "phone": user.phone,
         "latitude": user.latitude,
         "longitude": user.longitude,
-        "is_admin": user.is_admin,
+        "is_admin": False,  # Always set to False for security
         "hashed_password": hashed_password
     }
     

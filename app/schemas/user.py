@@ -23,7 +23,13 @@ class UserBase(BaseModel):
     longitude: float
     is_admin: bool = False
 
-class UserCreate(UserBase):
+class UserCreate(BaseModel):
+    email: str
+    username: str
+    full_name: str
+    phone: str
+    latitude: float
+    longitude: float
     password: str
 
     @field_validator('password')
