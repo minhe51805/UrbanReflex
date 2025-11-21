@@ -1,7 +1,7 @@
 """
 Author: Hồ Viết Hiệp
 Created at: 2025-11-13
-Updated at: 2025-11-15
+Updated at: 2025-11-21
 Description: Data model constants and helpers for UrbanReflex.
              Defines entity types, ID prefixes, contexts, and relationship types.
 """
@@ -56,17 +56,20 @@ FIWARE_CONTEXTS = {
     ],
     EntityType.STREETLIGHT: [
         NGSI_LD_CORE_CONTEXT,
-        "https://raw.githubusercontent.com/smart-data-models/dataModel.Streetlighting/master/context.jsonld"
+        "https://smart-data-models.github.io/dataModel.Streetlighting/context.jsonld"
     ],
     EntityType.STREETLIGHT_CONTROL_CABINET: [
         NGSI_LD_CORE_CONTEXT,
-        "https://raw.githubusercontent.com/smart-data-models/dataModel.Streetlighting/master/context.jsonld"
+        "https://smart-data-models.github.io/dataModel.Streetlighting/context.jsonld"
     ],
     EntityType.POINT_OF_INTEREST: [
         NGSI_LD_CORE_CONTEXT,
         "https://raw.githubusercontent.com/smart-data-models/dataModel.PointOfInterest/master/context.jsonld"
     ],
-    EntityType.ROAD_SEGMENT: [NGSI_LD_CORE_CONTEXT],
+    EntityType.ROAD_SEGMENT: [
+        NGSI_LD_CORE_CONTEXT,
+        "https://smart-data-models.github.io/dataModel.Transportation/context.jsonld"
+    ],
     EntityType.CITIZEN_REPORT: [NGSI_LD_CORE_CONTEXT]
 }
 
