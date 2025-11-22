@@ -1,7 +1,7 @@
 """
 Author: Hồ Viết Hiệp
 Created at: 2025-11-13
-Updated at: 2025-11-21
+Updated at: 2025-11-22
 Description: Data model constants and helpers for UrbanReflex.
              Defines entity types, ID prefixes, contexts, and relationship types.
 """
@@ -44,14 +44,20 @@ class IDPrefix:
 # Core NGSI-LD context (always required)
 NGSI_LD_CORE_CONTEXT = "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"
 
+# SOSA/SSN Ontology contexts (W3C)
+SOSA_CONTEXT = "https://www.w3.org/ns/sosa/context.jsonld"
+SSN_CONTEXT = "https://www.w3.org/ns/ssn/context.jsonld"
+
 # FiWARE Smart Data Model contexts
 FIWARE_CONTEXTS = {
     EntityType.WEATHER_OBSERVED: [
         NGSI_LD_CORE_CONTEXT,
+        SOSA_CONTEXT,  # SOSA/SSN for observations
         "https://raw.githubusercontent.com/smart-data-models/dataModel.Weather/master/context.jsonld"
     ],
     EntityType.AIR_QUALITY_OBSERVED: [
         NGSI_LD_CORE_CONTEXT,
+        SOSA_CONTEXT,  # SOSA/SSN for observations
         "https://raw.githubusercontent.com/smart-data-models/dataModel.Environment/master/context.jsonld"
     ],
     EntityType.STREETLIGHT: [
@@ -68,6 +74,7 @@ FIWARE_CONTEXTS = {
     ],
     EntityType.ROAD_SEGMENT: [
         NGSI_LD_CORE_CONTEXT,
+        SOSA_CONTEXT,  # SOSA/SSN for FeatureOfInterest
         "https://smart-data-models.github.io/dataModel.Transportation/context.jsonld"
     ],
     EntityType.CITIZEN_REPORT: [NGSI_LD_CORE_CONTEXT]
@@ -333,4 +340,56 @@ def validate_coordinates(coordinates) -> bool:
         return False
         
     return True
+
+
+def add_sosa_ssn_types(entity: dict, entity_type: str) -> dict:
+    """
+    Add SOSA/SSN @type annotations to entity for explicit SOSA/SSN compliance.
+    
+    According to SOSA/SSN ontology:
+    - WeatherObserved and AirQualityObserved implement sosa:Observation
+    - RoadSegment implements sosa:FeatureOfInterest
+    - dateObserved maps to sosa:resultTime
+    - location maps to sosa:hasFeatureOfInterest
+    - Properties map to sosa:hasResult
+    
+    Args:
+        entity: NGSI-LD entity dict
+        entity_type: Entity type constant from EntityType class
+        
+    Returns:
+        Entity dict with @type added
+    """
+    # Ensure @type exists as a list
+    if "@type" not in entity:
+        entity["@type"] = [entity.get("type", entity_type)]
+    elif not isinstance(entity["@type"], list):
+        entity["@type"] = [entity["@type"]]
+    
+    # Add SOSA/SSN types based on entity type
+    if entity_type == EntityType.WEATHER_OBSERVED:
+        if "sosa:Observation" not in entity["@type"]:
+            entity["@type"].append("sosa:Observation")
+        # Map dateObserved to sosa:resultTime
+        if "dateObserved" in entity and isinstance(entity["dateObserved"], dict):
+            if "@type" not in entity["dateObserved"]:
+                entity["dateObserved"]["@type"] = "sosa:resultTime"
+    
+    elif entity_type == EntityType.AIR_QUALITY_OBSERVED:
+        if "sosa:Observation" not in entity["@type"]:
+            entity["@type"].append("sosa:Observation")
+        # Map dateObserved to sosa:resultTime
+        if "dateObserved" in entity and isinstance(entity["dateObserved"], dict):
+            if "@type" not in entity["dateObserved"]:
+                entity["dateObserved"]["@type"] = "sosa:resultTime"
+        # Map location to sosa:hasFeatureOfInterest
+        if "location" in entity and isinstance(entity["location"], dict):
+            if "@type" not in entity["location"]:
+                entity["location"]["@type"] = "sosa:hasFeatureOfInterest"
+    
+    elif entity_type == EntityType.ROAD_SEGMENT:
+        if "sosa:FeatureOfInterest" not in entity["@type"]:
+            entity["@type"].append("sosa:FeatureOfInterest")
+    
+    return entity
 
