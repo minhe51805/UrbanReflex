@@ -1,12 +1,15 @@
 {
   "id": "urn:ngsi-ld:AirQualityObserved:HCMC-us-consulate-20251115T080000Z",
   "type": "AirQualityObserved",
+  "@type": ["AirQualityObserved", "sosa:Observation"],
   "@context": [
     "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "https://www.w3.org/ns/sosa/context.jsonld",
     "https://raw.githubusercontent.com/smart-data-models/dataModel.Environment/master/context.jsonld"
   ],
   "location": {
     "type": "GeoProperty",
+    "@type": "sosa:hasFeatureOfInterest",
     "value": {
       "type": "Point",
       "coordinates": [106.7008, 10.7747]
@@ -14,6 +17,7 @@
   },
   "dateObserved": {
     "type": "Property",
+    "@type": "sosa:resultTime",
     "value": {
       "@type": "DateTime",
       "@value": "2025-11-15T08:00:00Z"

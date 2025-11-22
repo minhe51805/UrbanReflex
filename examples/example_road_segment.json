@@ -1,8 +1,11 @@
 {
   "id": "urn:ngsi-ld:RoadSegment:HCMC-nguyen-hue-001",
   "type": "RoadSegment",
+  "@type": ["RoadSegment", "sosa:FeatureOfInterest"],
   "@context": [
-    "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"
+    "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "https://www.w3.org/ns/sosa/context.jsonld",
+    "https://smart-data-models.github.io/dataModel.Transportation/context.jsonld"
   ],
   "name": {
     "type": "Property",

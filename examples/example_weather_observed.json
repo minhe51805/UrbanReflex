@@ -1,8 +1,10 @@
 {
   "id": "urn:ngsi-ld:WeatherObserved:HCMC-district1-20251115T080000Z",
   "type": "WeatherObserved",
+  "@type": ["WeatherObserved", "sosa:Observation"],
   "@context": [
     "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "https://www.w3.org/ns/sosa/context.jsonld",
     "https://raw.githubusercontent.com/smart-data-models/dataModel.Weather/master/context.jsonld"
   ],
   "location": {
@@ -14,6 +16,7 @@
   },
   "dateObserved": {
     "type": "Property",
+    "@type": "sosa:resultTime",
     "value": {
       "@type": "DateTime",
       "@value": "2025-11-15T08:00:00Z"
