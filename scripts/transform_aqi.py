@@ -212,10 +212,16 @@ def transform_location_to_ngsi_ld(location, timestamp=None):
     location_name = location.get('name', f'Station-{location_id}')
     
     # Get timestamp
+    # Always use current time for dateObserved (ensure fresh timestamp)
     if timestamp is None:
-        timestamp = datetime.now()
+        timestamp = datetime.now(timezone.utc)
+    else:
+        # Ensure timestamp has timezone
+        if timestamp.tzinfo is None:
+            timestamp = timestamp.replace(tzinfo=timezone.utc)
     
     date_observed = timestamp.strftime("%Y-%m-%dT%H:%M:%SZ")
+    observed_at = date_observed  # Use same timestamp for observed_at
     
     # Create station ID
     station_id = create_station_id(location_name)
@@ -241,12 +247,15 @@ def transform_location_to_ngsi_ld(location, timestamp=None):
     pm25_real = valid_measurements.get('pm25')
     measurement_quality = "synthetic"
     measurement_source = f"OpenAQ location/{location_id} (synthetic fallback)"
-    observed_at = date_observed
+    # Always use current timestamp for dateObserved (not old measurement time)
+    observed_at = date_observed  # Use current timestamp, not old measurement time
     pm25_override = None
 
     if pm25_real:
         pm25_override = pm25_real.get('value')
-        observed_at = pm25_real.get('observed_at') or date_observed
+        # Keep observed_at as current time (date_observed) for consistency
+        # Only use real measurement value, not old timestamp
+        observed_at = date_observed  # Always use current timestamp
         measurement_quality = "measured"
         sensor_id = pm25_real.get('sensor_id')
         measurement_source = f"OpenAQ sensor/{sensor_id}" if sensor_id else "OpenAQ sensor (measured)"
