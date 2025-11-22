@@ -1,7 +1,7 @@
 """
 Author: Hồ Viết Hiệp
 Created at: 2025-11-15
-Updated at: 2025-11-21
+Updated at: 2025-11-22
 Description: Transform OpenAQ location data to NGSI-LD AirQualityObserved entities.
              Uses synthetic measurements since OpenAQ data for HCMC is outdated.
              Complies with ETSI NGSI-LD spec and FiWARE Environment Data Model.
@@ -26,7 +26,8 @@ from config.data_model import (
     get_context,
     create_property,
     create_geo_property,
-    validate_entity_id
+    validate_entity_id,
+    add_sosa_ssn_types
 )
 
 
@@ -44,8 +45,6 @@ def load_openaq_data(filename):
     
     if not filepath.exists():
         raise FileNotFoundError(f"File not found: {filepath}")
-    
-    print(f"Loading AQI station data from {filepath}...")
     
     with open(filepath, 'r', encoding='utf-8') as f:
         data = json.load(f)
@@ -342,6 +341,9 @@ def transform_location_to_ngsi_ld(location, timestamp=None):
     if provider:
         entity["stationCode"] = create_property(f"OPENAQ-{location_id}")
     
+    # Add SOSA/SSN types for explicit compliance
+    entity = add_sosa_ssn_types(entity, EntityType.AIR_QUALITY_OBSERVED)
+    
     return entity
 
 
@@ -362,15 +364,6 @@ def transform_all_locations(openaq_data, include_timeseries=False):
     if not locations:
         print("[WARNING] No locations found in OpenAQ data")
         return []
-    
-    print(f"\nFound {len(locations)} AQI monitoring stations")
-    
-    if include_timeseries:
-        print("Generating 24-hour time series for each station...")
-        total = len(locations) * 24
-    else:
-        print("Generating current observation for each station...")
-        total = len(locations)
     
     entities = []
     
@@ -395,8 +388,6 @@ def transform_all_locations(openaq_data, include_timeseries=False):
             
             if entity:
                 entities.append(entity)
-    
-    print(f"\n[OK] Transformed {len(entities)} entities from {len(locations)} locations")
     
     return entities
 
@@ -423,131 +414,18 @@ def save_entities(entities, output_file):
     with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(document, f, indent=2, ensure_ascii=False)
     
-    print(f"\n[SAVED] {output_path}")
-    
     # Also save as NDJSON
     ndjson_path = output_dir / output_file.replace('.jsonld', '.ndjson')
     
     with open(ndjson_path, 'w', encoding='utf-8') as f:
         for entity in entities:
             f.write(json.dumps(entity, ensure_ascii=False) + '\n')
-    
-    print(f"[SAVED] {ndjson_path} (NDJSON format for batch loading)")
 
 
-def print_statistics(entities):
-    """
-    Print transformation statistics
-    
-    Args:
-        entities: List of NGSI-LD entities
-    """
-    print("\n" + "=" * 70)
-    print("TRANSFORMATION STATISTICS:")
-    print("=" * 70)
-    
-    print(f"\nTotal entities: {len(entities)}")
-    
-    # Count by AQI level
-    by_level = {}
-    aqi_values = []
-    pm25_values = []
-    quality_counts = {}
-    
-    for entity in entities:
-        level = entity.get('airQualityLevel', {}).get('value', 'unknown')
-        by_level[level] = by_level.get(level, 0) + 1
-        
-        if 'aqi' in entity:
-            aqi_values.append(entity['aqi']['value'])
-        
-        if 'pm25' in entity:
-            pm25_values.append(entity['pm25']['value'])
-        
-        quality = entity.get('measurementQuality', {}).get('value')
-        if quality:
-            quality_counts[quality] = quality_counts.get(quality, 0) + 1
-    
-    if aqi_values:
-        print(f"\nAQI Statistics:")
-        print(f"  Min: {min(aqi_values)}")
-        print(f"  Max: {max(aqi_values)}")
-        print(f"  Average: {sum(aqi_values)/len(aqi_values):.1f}")
-    
-    if pm25_values:
-        print(f"\nPM2.5 Statistics (µg/m³):")
-        print(f"  Min: {min(pm25_values):.1f}")
-        print(f"  Max: {max(pm25_values):.1f}")
-        print(f"  Average: {sum(pm25_values)/len(pm25_values):.1f}")
-    
-    print("\nAir Quality Level Distribution:")
-    for level, count in sorted(by_level.items(), key=lambda x: x[1], reverse=True):
-        percentage = count / len(entities) * 100
-        print(f"  {level:30s}: {count:5d} ({percentage:5.1f}%)")
-    
-    if quality_counts:
-        print("\nMeasurement Quality:")
-        for quality, count in sorted(quality_counts.items(), key=lambda x: x[1], reverse=True):
-            percentage = count / len(entities) * 100
-            print(f"  {quality:30s}: {count:5d} ({percentage:5.1f}%)")
-    
-    print("=" * 70)
-
-
-def validate_sample(entities, sample_size=2):
-    """
-    Validate and display sample entities
-    
-    Args:
-        entities: List of NGSI-LD entities
-        sample_size: Number of samples to display
-    """
-    print(f"\n{'=' * 70}")
-    print(f"SAMPLE ENTITIES (first {sample_size}):")
-    print("=" * 70)
-    
-    for i, entity in enumerate(entities[:sample_size], 1):
-        name = entity.get('name', {}).get('value', 'Unknown Station')
-        
-        print(f"\n{i}. {entity['id']}")
-        try:
-            print(f"   Station: {name}")
-        except UnicodeEncodeError:
-            print(f"   Station: {name.encode('ascii', 'replace').decode('ascii')}")
-        
-        observed_value = entity.get('dateObserved', {}).get('value', {}).get('@value')
-        print(f"   Observed: {observed_value or 'N/A'}")
-        
-        if 'aqi' in entity:
-            aqi = entity['aqi']['value']
-            level = entity.get('airQualityLevel', {}).get('value', 'N/A')
-            print(f"   AQI: {aqi} ({level})")
-        
-        if 'pm25' in entity:
-            pm25 = entity['pm25']['value']
-            print(f"   PM2.5: {pm25} µg/m³")
-        
-        quality = entity.get('measurementQuality', {}).get('value')
-        if quality:
-            print(f"   Measurement quality: {quality}")
-        
-        # Validate structure
-        required_fields = ['id', 'type', '@context', 'location', 'dateObserved', 'aqi']
-        missing = [f for f in required_fields if f not in entity]
-        
-        if missing:
-            print(f"   [WARNING] Missing required fields: {missing}")
-        else:
-            print(f"   [OK] All required fields present")
 
 
 def main():
     """Main execution"""
-    print("=" * 70)
-    print("UrbanReflex - AQI to NGSI-LD Transformer")
-    print("=" * 70)
-    print("\nNote: Uses OpenAQ real measurements when available, otherwise synthetic fallback")
-    
     mode = "current"
     if len(sys.argv) > 1:
         mode = sys.argv[1].lower()
@@ -571,12 +449,6 @@ def main():
             print("[ERROR] No valid entities created")
             return 1
         
-        # Validate samples
-        validate_sample(entities)
-        
-        # Print statistics
-        print_statistics(entities)
-        
         # Save output
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         timestamped_file = output_file.replace('.jsonld', f'_{timestamp}.jsonld')
@@ -584,12 +456,7 @@ def main():
         save_entities(entities, timestamped_file)
         save_entities(entities, latest_file)
         
-        print(f"\n[SUCCESS] Transformation completed!")
-        print(f"\nMode: {mode}")
-        print(f"Entities created: {len(entities)}")
-        print(f"\nOutput files:")
-        print(f"   - ngsi_ld_entities/{timestamped_file}")
-        print(f"   - ngsi_ld_entities/{latest_file}")
+        print(f"[SUCCESS] Transformed {len(entities)} entities ({mode} mode)")
         
         return 0
         

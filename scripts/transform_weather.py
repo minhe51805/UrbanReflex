@@ -1,9 +1,9 @@
 """
 Author: Hồ Viết Hiệp
 Created at: 2025-11-15
-Updated at: 2025-11-16
-Describe: Transform OpenWeatherMap JSON to NGSI-LD WeatherObserved entities.
-         Complies with ETSI NGSI-LD spec and FiWARE Weather Data Model.
+Updated at: 2025-11-22
+Description: Transform OpenWeatherMap JSON to NGSI-LD WeatherObserved entities.
+             Complies with ETSI NGSI-LD spec and FiWARE Weather Data Model.
 """
 
 import json
@@ -20,7 +20,8 @@ from config.data_model import (
     get_context,
     create_property,
     create_geo_property,
-    validate_entity_id
+    validate_entity_id,
+    add_sosa_ssn_types
 )
 
 
@@ -38,8 +39,6 @@ def load_owm_data(filename):
     
     if not filepath.exists():
         raise FileNotFoundError(f"File not found: {filepath}")
-    
-    print(f"Loading weather data from {filepath}...")
     
     with open(filepath, 'r', encoding='utf-8') as f:
         data = json.load(f)
@@ -210,6 +209,9 @@ def transform_current_weather(owm_data):
         "addressCountry": data.get('sys', {}).get('country', 'VN')
     })
     
+    # Add SOSA/SSN types for explicit compliance
+    entity = add_sosa_ssn_types(entity, EntityType.WEATHER_OBSERVED)
+    
     return entity
 
 
@@ -240,8 +242,6 @@ def transform_forecast_weather(owm_forecast_data):
     
     if not lon or not lat:
         return []
-    
-    print(f"\nTransforming {len(forecast_list)} forecast entries...")
     
     entities = []
     
@@ -376,9 +376,10 @@ def transform_forecast_weather(owm_forecast_data):
             "addressCountry": city.get('country', 'VN')
         })
         
+        # Add SOSA/SSN types for explicit compliance
+        entity = add_sosa_ssn_types(entity, EntityType.WEATHER_OBSERVED)
+        
         entities.append(entity)
-    
-    print(f"[OK] Transformed {len(entities)} forecast entities")
     
     return entities
 
@@ -405,8 +406,6 @@ def save_entities(entities, output_file):
     with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(document, f, indent=2, ensure_ascii=False)
     
-    print(f"\n[SAVED] {output_path}")
-    
     # Also save as NDJSON
     ndjson_path = output_dir / output_file.replace('.jsonld', '.ndjson')
     entity_list = entities if isinstance(entities, list) else [entities]
@@ -414,99 +413,12 @@ def save_entities(entities, output_file):
     with open(ndjson_path, 'w', encoding='utf-8') as f:
         for entity in entity_list:
             f.write(json.dumps(entity, ensure_ascii=False) + '\n')
-    
-    print(f"[SAVED] {ndjson_path} (NDJSON format for batch loading)")
 
 
-def print_statistics(entities):
-    """
-    Print transformation statistics
-    
-    Args:
-        entities: NGSI-LD entity or list of entities
-    """
-    entity_list = entities if isinstance(entities, list) else [entities]
-    
-    print("\n" + "=" * 70)
-    print("TRANSFORMATION STATISTICS:")
-    print("=" * 70)
-    
-    print(f"\nTotal entities: {len(entity_list)}")
-    
-    # Count properties
-    with_temp = sum(1 for e in entity_list if 'temperature' in e)
-    with_humidity = sum(1 for e in entity_list if 'relativeHumidity' in e)
-    with_wind = sum(1 for e in entity_list if 'windSpeed' in e)
-    with_precipitation = sum(1 for e in entity_list if 'precipitation' in e)
-    with_clouds = sum(1 for e in entity_list if 'cloudCover' in e)
-    
-    print(f"With temperature: {with_temp} ({with_temp/len(entity_list)*100:.1f}%)")
-    print(f"With humidity: {with_humidity} ({with_humidity/len(entity_list)*100:.1f}%)")
-    print(f"With wind data: {with_wind} ({with_wind/len(entity_list)*100:.1f}%)")
-    print(f"With precipitation: {with_precipitation} ({with_precipitation/len(entity_list)*100:.1f}%)")
-    print(f"With cloud cover: {with_clouds} ({with_clouds/len(entity_list)*100:.1f}%)")
-    
-    # Weather type distribution
-    weather_types = {}
-    for entity in entity_list:
-        wtype = entity.get('weatherType', {}).get('value', 'unknown')
-        weather_types[wtype] = weather_types.get(wtype, 0) + 1
-    
-    if weather_types:
-        print("\nWeather Type Distribution:")
-        for wtype, count in sorted(weather_types.items(), key=lambda x: x[1], reverse=True):
-            percentage = count / len(entity_list) * 100
-            print(f"  {wtype:15s}: {count:5d} ({percentage:5.1f}%)")
-    
-    print("=" * 70)
-
-
-def validate_sample(entities, sample_size=2):
-    """
-    Validate and display sample entities
-    
-    Args:
-        entities: NGSI-LD entity or list of entities
-        sample_size: Number of samples to display
-    """
-    entity_list = entities if isinstance(entities, list) else [entities]
-    
-    print(f"\n{'=' * 70}")
-    print(f"SAMPLE ENTITIES (first {sample_size}):")
-    print("=" * 70)
-    
-    for i, entity in enumerate(entity_list[:sample_size], 1):
-        print(f"\n{i}. {entity['id']}")
-        print(f"   Observed: {entity.get('dateObserved', {}).get('value', {}).get('@value', 'N/A')}")
-        
-        if 'temperature' in entity:
-            temp = entity['temperature']['value']
-            print(f"   Temperature: {temp}°C")
-        
-        if 'relativeHumidity' in entity:
-            humidity = entity['relativeHumidity']['value'] * 100
-            print(f"   Humidity: {humidity:.0f}%")
-        
-        if 'weatherType' in entity:
-            weather = entity['weatherType']['value']
-            print(f"   Weather: {weather}")
-        
-        # Validate structure
-        required_fields = ['id', 'type', '@context', 'location', 'dateObserved']
-        missing = [f for f in required_fields if f not in entity]
-        
-        if missing:
-            print(f"   [WARNING] Missing required fields: {missing}")
-        else:
-            print(f"   [OK] All required fields present")
 
 
 def main():
     """Main execution"""
-    print("=" * 70)
-    print("UrbanReflex - Weather to NGSI-LD Transformer")
-    print("=" * 70)
-    
     mode = "current"
     if len(sys.argv) > 1:
         mode = sys.argv[1].lower()
@@ -539,12 +451,6 @@ def main():
             output_file = "weather_observed_current.jsonld"
             latest_file = "weather_observed_latest.jsonld"
         
-        # Validate samples
-        validate_sample(entities)
-        
-        # Print statistics
-        print_statistics(entities)
-        
         # Save output
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         timestamped_file = output_file.replace('.jsonld', f'_{timestamp}.jsonld')
@@ -553,13 +459,7 @@ def main():
         save_entities(entities, latest_file)
         
         entity_count = len(entities) if isinstance(entities, list) else 1
-        
-        print(f"\n[SUCCESS] Transformation completed!")
-        print(f"\nMode: {mode}")
-        print(f"Entities created: {entity_count}")
-        print(f"\nOutput files:")
-        print(f"   - ngsi_ld_entities/{timestamped_file}")
-        print(f"   - ngsi_ld_entities/{latest_file}")
+        print(f"[SUCCESS] Transformed {entity_count} entities ({mode} mode)")
         
         return 0
         

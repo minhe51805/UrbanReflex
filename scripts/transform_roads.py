@@ -1,9 +1,9 @@
 """
 Author: Hồ Viết Hiệp
 Created at: 2025-11-15
-Updated at: 2025-11-15
-Describe: Transform OSM road GeoJSON to NGSI-LD RoadSegment entities.
-         Complies with ETSI NGSI-LD spec and FiWARE standards.
+Updated at: 2025-11-22
+Description: Transform OSM road GeoJSON to NGSI-LD RoadSegment entities.
+             Complies with ETSI NGSI-LD spec and FiWARE standards.
 """
 
 import json
@@ -22,7 +22,8 @@ from config.data_model import (
     create_property,
     create_geo_property,
     validate_entity_id,
-    validate_coordinates
+    validate_coordinates,
+    add_sosa_ssn_types
 )
 
 
@@ -41,13 +42,8 @@ def load_roads_geojson(filename):
     if not filepath.exists():
         raise FileNotFoundError(f"File not found: {filepath}")
     
-    print(f"Loading roads from {filepath}...")
-    
     with open(filepath, 'r', encoding='utf-8') as f:
         data = json.load(f)
-    
-    features = data.get('features', [])
-    print(f"[OK] Loaded {len(features)} road features")
     
     return data
 
@@ -188,6 +184,9 @@ def transform_road_to_ngsi_ld(feature):
     entity["dataProvider"] = create_property("OpenStreetMap")
     entity["source"] = create_property(f"OSM way/{osm_id}")
     
+    # Add SOSA/SSN types for explicit compliance
+    entity = add_sosa_ssn_types(entity, EntityType.ROAD_SEGMENT)
+    
     return entity
 
 
@@ -203,8 +202,6 @@ def transform_all_roads(roads_geojson):
     """
     features = roads_geojson.get('features', [])
     
-    print(f"\nTransforming {len(features)} roads to NGSI-LD...")
-    
     entities = []
     skipped = 0
     
@@ -216,7 +213,6 @@ def transform_all_roads(roads_geojson):
         else:
             skipped += 1
     
-    print(f"\n[OK] Transformed {len(entities)} entities")
     if skipped > 0:
         print(f"[WARNING] Skipped {skipped} invalid features")
     
@@ -245,105 +241,17 @@ def save_entities(entities, output_file):
     with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(document, f, indent=2, ensure_ascii=False)
     
-    print(f"\n[SAVED] {output_path}")
-    
     # Also save as NDJSON (one entity per line) for batch loading
     ndjson_path = output_dir / output_file.replace('.jsonld', '.ndjson')
     with open(ndjson_path, 'w', encoding='utf-8') as f:
         for entity in entities:
             f.write(json.dumps(entity, ensure_ascii=False) + '\n')
-    
-    print(f"[SAVED] {ndjson_path} (NDJSON format for batch loading)")
 
 
-def print_statistics(entities):
-    """
-    Print transformation statistics
-    
-    Args:
-        entities: List of NGSI-LD entities
-    """
-    print("\n" + "=" * 70)
-    print("TRANSFORMATION STATISTICS:")
-    print("=" * 70)
-    
-    # Count by road type
-    by_type = {}
-    total_length = 0
-    with_lanes = 0
-    with_lit = 0
-    
-    for entity in entities:
-        road_type = entity.get('roadType', {}).get('value', 'unknown')
-        by_type[road_type] = by_type.get(road_type, 0) + 1
-        
-        if 'length' in entity:
-            total_length += entity['length']['value']
-        
-        if 'laneCount' in entity:
-            with_lanes += 1
-        
-        if 'lit' in entity:
-            with_lit += 1
-    
-    print(f"\nTotal entities: {len(entities)}")
-    print(f"Total length: {total_length/1000:.2f} km")
-    print(f"With lane info: {with_lanes} ({with_lanes/len(entities)*100:.1f}%)")
-    print(f"With lighting info: {with_lit} ({with_lit/len(entities)*100:.1f}%)")
-    
-    print("\nBy Road Type:")
-    for road_type, count in sorted(by_type.items(), key=lambda x: x[1], reverse=True):
-        percentage = count / len(entities) * 100
-        print(f"  {road_type:15s}: {count:5d} ({percentage:5.1f}%)")
-    
-    print("=" * 70)
-
-
-def validate_sample(entities, sample_size=3):
-    """
-    Validate and display sample entities
-    
-    Args:
-        entities: List of NGSI-LD entities
-        sample_size: Number of samples to display
-    """
-    print(f"\n{'=' * 70}")
-    print(f"SAMPLE ENTITIES (first {sample_size}):")
-    print("=" * 70)
-    
-    for i, entity in enumerate(entities[:sample_size], 1):
-        name = entity.get('name', {}).get('value', 'N/A')
-        road_type = entity.get('roadType', {}).get('value', 'N/A')
-        
-        print(f"\n{i}. {entity['id']}")
-        try:
-            print(f"   Name: {name}")
-        except UnicodeEncodeError:
-            print(f"   Name: {name.encode('ascii', 'replace').decode('ascii')}")
-        print(f"   Type: {road_type}")
-        
-        if 'length' in entity:
-            print(f"   Length: {entity['length']['value']:.2f}m")
-        
-        if 'laneCount' in entity:
-            print(f"   Lanes: {entity['laneCount']['value']}")
-        
-        # Validate structure
-        required_fields = ['id', 'type', '@context', 'name', 'location']
-        missing = [f for f in required_fields if f not in entity]
-        
-        if missing:
-            print(f"   [WARNING] Missing required fields: {missing}")
-        else:
-            print(f"   [OK] All required fields present")
 
 
 def main():
     """Main execution"""
-    print("=" * 70)
-    print("UrbanReflex - Roads to NGSI-LD Transformer")
-    print("=" * 70)
-    
     # Check command-line argument
     if len(sys.argv) > 1:
         input_file = sys.argv[1]
@@ -361,12 +269,6 @@ def main():
             print("[ERROR] No valid entities created")
             return 1
         
-        # Validate samples
-        validate_sample(entities)
-        
-        # Print statistics
-        print_statistics(entities)
-        
         # Save output
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         output_file = f"road_segments_{timestamp}.jsonld"
@@ -375,11 +277,7 @@ def main():
         # Also save as latest
         save_entities(entities, "road_segments_latest.jsonld")
         
-        print(f"\n[SUCCESS] Transformation completed!")
-        print(f"\nOutput files:")
-        print(f"   - ngsi_ld_entities/{output_file}")
-        print(f"   - ngsi_ld_entities/road_segments_latest.jsonld")
-        print(f"   - ngsi_ld_entities/road_segments_latest.ndjson")
+        print(f"[SUCCESS] Transformed {len(entities)} entities")
         
         return 0
         
