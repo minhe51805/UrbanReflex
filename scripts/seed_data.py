@@ -1,7 +1,7 @@
 """
 Author: Hồ Viết Hiệp
 Created at: 2025-11-15
-Updated at: 2025-11-21
+Updated at: 2025-11-22
 Description: Seed NGSI-LD entities into Orion-LD using create, update,
              and upsert flows with batching, validation, and error handling.
 """
@@ -87,6 +87,39 @@ def check_orion_connection(orion_url, auth=None):
         return (False, str(e))
 
 
+def remove_attype_recursive(obj):
+    """
+    Recursively remove @type and @value from nested objects (Orion-LD doesn't accept these in nested properties)
+    
+    For objects like {"@type": "DateTime", "@value": "2025-11-20T14:09:16Z"},
+    this function will return just the value: "2025-11-20T14:09:16Z"
+    """
+    if isinstance(obj, dict):
+        # If object has only @type and/or @value, return the @value (or None)
+        if "@value" in obj:
+            # Return the value of @value, recursively processed
+            return remove_attype_recursive(obj["@value"])
+        elif "@type" in obj and len(obj) == 1:
+            # Only @type, no @value - skip this object
+            return None
+        
+        # Otherwise, process all keys except @type
+        result = {}
+        for key, value in obj.items():
+            if key == "@type":
+                continue  # Skip @type
+            processed_value = remove_attype_recursive(value)
+            if processed_value is not None:  # Skip None values
+                result[key] = processed_value
+        return result
+    elif isinstance(obj, list):
+        processed_list = [remove_attype_recursive(item) for item in obj]
+        # Filter out None values
+        return [item for item in processed_list if item is not None]
+    else:
+        return obj
+
+
 def create_entity(orion_url, entity, auth=None):
     """
     Create a single entity in Orion-LD
@@ -99,13 +132,40 @@ def create_entity(orion_url, entity, auth=None):
     Returns:
         Tuple of (success, status_code, error_message)
     """
+    # IMPORTANT: Orion-LD does NOT accept @type at root level when "type" field exists
+    # This is a limitation of Orion-LD - it returns "Duplicated field: type" error
+    # SOSA/SSN compliance is achieved through:
+    # 1. Context URLs in Link header (includes SOSA context)
+    # 2. Documentation explaining SOSA/SSN mapping
+    # 3. Conceptual modeling following SOSA/SSN principles
+    # 
+    # Remove @type and @value from nested properties (Orion-LD doesn't accept these)
+    # @context should be in Link header, not in body
+    entity_to_send = remove_attype_recursive(entity)
+    
+    # Remove @type from root level (Orion-LD limitation - cannot have both "type" and "@type")
+    if "@type" in entity_to_send:
+        entity_to_send.pop("@type")
+    
+    # Remove @context from body (it will be in Link header)
+    if "@context" in entity_to_send:
+        entity_to_send.pop("@context")
+    
+    headers = {}
+    
+    # Add Link header for contexts (if Link header is present, don't use Content-Type)
+    link_header = build_link_header(entity.get("@context"))
+    if link_header:
+        headers["Link"] = link_header
+    else:
+        # Only use Content-Type if no Link header
+        headers["Content-Type"] = "application/ld+json"
+    
     try:
         response = requests.post(
             f"{orion_url}/ngsi-ld/v1/entities",
-            json=entity,
-            headers={
-                "Content-Type": "application/ld+json"
-            },
+            json=entity_to_send,
+            headers=headers,
             auth=auth,
             timeout=10
         )
@@ -137,6 +197,7 @@ def build_link_header(contexts):
     Returns:
         Link header value or None
     """
+    # Add Link header for create_entity too
     if not contexts:
         return None
 
@@ -167,22 +228,36 @@ def update_entity(orion_url, entity, auth=None):
     if not entity_id:
         return (False, 400, "Missing entity id")
     
+    # IMPORTANT: Orion-LD does NOT accept @type at root level when "type" field exists
+    # This is a limitation of Orion-LD - it returns "Duplicated field: type" error
+    # SOSA/SSN compliance is achieved through:
+    # 1. Context URLs in Link header (includes SOSA context)
+    # 2. Documentation explaining SOSA/SSN mapping
+    # 3. Conceptual modeling following SOSA/SSN principles
+    #
+    # Remove @type and @value from nested properties (Orion-LD doesn't accept these)
+    entity_clean = remove_attype_recursive(entity)
+    
+    # Remove @type from root level (Orion-LD limitation - cannot have both "type" and "@type")
+    if "@type" in entity_clean:
+        entity_clean.pop("@type")
+    
     payload = {
         key: value
-        for key, value in entity.items()
+        for key, value in entity_clean.items()
         if key not in {"id", "type", "@context"}
     }
     
     if not payload:
         return (False, 400, "No attributes to update")
     
-    headers = {
-        "Content-Type": "application/json"
-    }
+    headers = {}
 
     link_header = build_link_header(entity.get("@context"))
     if link_header:
         headers["Link"] = link_header
+    else:
+        headers["Content-Type"] = "application/json"
 
     try:
         response = requests.patch(
@@ -229,8 +304,6 @@ def process_entities(orion_url, entities, mode=MODE_CREATE, batch_size=100, auth
         'failed': 0,
         'errors': []
     }
-    
-    print(f"\nProcessing {len(entities)} entities in {mode} mode...")
     
     for idx, entity in enumerate(tqdm(entities, desc="Processing", unit="entities"), start=1):
         entity_id = entity.get('id', 'unknown')
@@ -299,8 +372,6 @@ def delete_all_entities(orion_url, entity_type=None, auth=None):
     """
     total_deleted = 0
     page_limit = 1000  # Max entities per request
-    
-    print(f"\nStarting deletion for entity type: {entity_type or 'all'}")
 
     headers = {}
     if entity_type:
@@ -329,11 +400,8 @@ def delete_all_entities(orion_url, entity_type=None, auth=None):
 
             entities = response.json()
             if not entities:
-                print("[INFO] No more entities found to delete.")
                 break
 
-            print(f"Found {len(entities)} entities in this batch. Deleting...")
-            
             batch_deleted = 0
             for entity in tqdm(entities, desc="Deleting batch", unit="entities"):
                 entity_id = entity.get('id')
@@ -350,7 +418,6 @@ def delete_all_entities(orion_url, entity_type=None, auth=None):
                     batch_deleted += 1
             
             total_deleted += batch_deleted
-            print(f"Deleted {batch_deleted} entities in this batch.")
 
             # If fewer entities were returned than the limit, it's the last page
             if len(entities) < page_limit:
@@ -434,10 +501,6 @@ def print_errors(all_stats, max_errors=5):
 
 def main():
     """Main execution"""
-    print("=" * 70)
-    print("UrbanReflex - NGSI-LD Entity Seeder")
-    print("=" * 70)
-    
     # Parse arguments
     import argparse
     parser = argparse.ArgumentParser(description='Seed NGSI-LD entities to Orion-LD')
@@ -459,10 +522,8 @@ def main():
     auth = None
     if args.username and args.password:
         auth = HTTPBasicAuth(args.username, args.password)
-        print(f"\n[INFO] Using authentication: {args.username}")
     
     # Check Orion-LD connection
-    print(f"\n[INFO] Connecting to Orion-LD: {orion_url}")
     is_available, version = check_orion_connection(orion_url, auth)
     
     if not is_available:
@@ -473,40 +534,29 @@ def main():
         print("3. Firewall allows connection to the server")
         return 1
     
-    print(f"[OK] Orion-LD is available")
-    if version:
-        orion_version = version.get('orion', {}).get('version', 'unknown')
-        print(f"     Version: {orion_version}")
-    
     # Clear entities if requested
     if args.clear:
-        print("\n[WARNING] Clearing ALL entities...")
+        print("[WARNING] Clearing ALL entities...")
         deleted = delete_all_entities(orion_url, None, auth)
         print(f"[OK] Deleted {deleted} entities")
     elif args.clear_type:
-        print(f"\n[WARNING] Clearing entities of type: {args.clear_type}")
+        print(f"[WARNING] Clearing entities of type: {args.clear_type}")
         deleted = delete_all_entities(orion_url, args.clear_type, auth)
         print(f"[OK] Deleted {deleted} entities")
 
     if args.delete_only:
-        print("\n[INFO] --delete-only flag is set. Exiting after deletion.")
         return 0
     
     # Determine which types to seed
     types_to_seed = args.types if args.types else list(ENTITY_FILES.keys())
-    
-    print(f"\n[INFO] Processing entity types: {', '.join(types_to_seed)}")
-    print(f"[INFO] Mode: {args.mode}")
     
     # Seed entities
     all_stats = {}
     
     for entity_type in types_to_seed:
         if entity_type not in ENTITY_FILES:
-            print(f"\n[WARNING] Unknown entity type: {entity_type}")
+            print(f"[WARNING] Unknown entity type: {entity_type}")
             continue
-        
-        print(f"\n--- Seeding {entity_type} ---")
         
         all_entities = []
         for file in ENTITY_FILES[entity_type]:
@@ -546,3 +596,4 @@ def main():
 
 if __name__ == "__main__":
     exit(main())
+
