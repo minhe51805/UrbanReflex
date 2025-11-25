@@ -223,13 +223,18 @@ def transform_location_to_ngsi_ld(location, timestamp=None):
     date_observed = timestamp.strftime("%Y-%m-%dT%H:%M:%SZ")
     observed_at = date_observed  # Use same timestamp for observed_at
     
-    # Create station ID
-    station_id = create_station_id(location_name)
+    # Create station ID (ensure uniqueness by appending location_id)
+    station_suffix = create_station_id(location_name)
+    if location_id is not None:
+        station_suffix = f"{station_suffix}-{location_id}"
+    station_id = station_suffix
     
-    # Create entity ID
+    timestamp_suffix = timestamp.strftime("%Y%m%dT%H%M%SZ")
+
+    # Create entity ID (unique per observation timestamp for history storage)
     entity_id = create_entity_id(
         EntityType.AIR_QUALITY_OBSERVED,
-        f"{station_id}"
+        f"{station_id}-{timestamp_suffix}"
     )
     
     if not validate_entity_id(entity_id):
@@ -338,6 +343,7 @@ def transform_location_to_ngsi_ld(location, timestamp=None):
     entity["name"] = create_property(location_name)
     
     entity["dataProvider"] = create_property(SOURCE_OPENAQ)
+    entity["stationId"] = create_property(station_id)
     
     entity["source"] = create_property(measurement_source)
     entity["measurementQuality"] = create_property(measurement_quality, observed_at=observed_at)
@@ -378,7 +384,7 @@ def transform_all_locations(openaq_data, include_timeseries=False):
     
     if include_timeseries:
         # Generate hourly data for last 24 hours
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         
         for location in tqdm(locations, desc="Processing stations", unit="stations"):
             for hour in range(24):
@@ -390,7 +396,7 @@ def transform_all_locations(openaq_data, include_timeseries=False):
         
     else:
         # Generate only current observation
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         
         for location in tqdm(locations, desc="Transforming", unit="stations"):
             entity = transform_location_to_ngsi_ld(location, now)
