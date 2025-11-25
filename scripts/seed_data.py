@@ -147,10 +147,9 @@ def create_entity(orion_url, entity, auth=None):
     if "@type" in entity_to_send:
         entity_to_send.pop("@type")
     
-    # Remove @context from body (it will be in Link header)
+    # Remove @context from body (context will be resolved from Link header)
     if "@context" in entity_to_send:
         entity_to_send.pop("@context")
-    
     headers = {}
     
     # Add Link header for contexts (if Link header is present, don't use Content-Type)
