@@ -18,7 +18,7 @@ from apscheduler.schedulers.blocking import BlockingScheduler
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(str(BASE_DIR))
 
-from scripts.seed_data import MODE_UPSERT  # noqa: E402
+from scripts.seed_data import MODE_CREATE  # noqa: E402
 
 PYTHON_EXECUTABLE = sys.executable
 
@@ -92,7 +92,7 @@ def weather_pipeline():
             "command": [
                 PYTHON_EXECUTABLE,
                 "scripts/seed_data.py",
-                "--mode", MODE_UPSERT,
+                "--mode", MODE_CREATE,
                 "--types", "WeatherObserved"
             ]
         }
@@ -116,7 +116,7 @@ def aqi_pipeline():
             "command": [
                 PYTHON_EXECUTABLE,
                 "scripts/seed_data.py",
-                "--mode", MODE_UPSERT,
+                "--mode", MODE_CREATE,
                 "--types", "AirQualityObserved"
             ]
         }
