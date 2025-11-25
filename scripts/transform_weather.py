@@ -9,7 +9,7 @@ Description: Transform OpenWeatherMap JSON to NGSI-LD WeatherObserved entities.
 import json
 import sys
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from tqdm import tqdm
 
 sys.path.append(str(Path(__file__).parent.parent))
@@ -91,10 +91,12 @@ def transform_current_weather(owm_data):
     
     date_observed = timestamp_to_iso(dt)
     
-    # Create entity ID with timestamp
+    run_timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+
+    # Create entity ID with run timestamp to retain history
     entity_id = create_entity_id(
         EntityType.WEATHER_OBSERVED,
-        f"HCMC-{date_observed.replace(':', '').replace('-', '')}"
+        f"HCMC-{run_timestamp}"
     )
     
     if not validate_entity_id(entity_id):
@@ -245,6 +247,8 @@ def transform_forecast_weather(owm_forecast_data):
     
     entities = []
     
+    run_suffix = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+
     for item in tqdm(forecast_list, desc="Transforming", unit="forecasts"):
         dt = item.get('dt')
         if not dt:
@@ -252,10 +256,10 @@ def transform_forecast_weather(owm_forecast_data):
         
         date_observed = timestamp_to_iso(dt)
         
-        # Create entity ID with timestamp
+        # Create entity ID with forecast timestamp + run suffix
         entity_id = create_entity_id(
             EntityType.WEATHER_OBSERVED,
-            f"HCMC-forecast-{date_observed.replace(':', '').replace('-', '')}"
+            f"HCMC-forecast-{date_observed.replace(':', '').replace('-', '')}-{run_suffix}"
         )
         
         if not validate_entity_id(entity_id):
