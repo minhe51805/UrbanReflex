@@ -45,11 +45,61 @@ export default function HeroSection() {
   useEffect(() => {
     const fetchRealtimeData = async () => {
       try {
-        // Fetch locations from UrbanReflex API - get more to find one with data
+        // For Vietnam, use NGSI-LD API (HCMC stations)
+        if (selectedCountry === 'VN') {
+          // Fetch AirQualityObserved entities from NGSI-LD
+          const response = await fetch('/api/ngsi-ld?type=AirQualityObserved&limit=10&options=keyValues');
+          const data = await response.json();
+
+          console.log('NGSI-LD AQI data:', data);
+
+          if (data && Array.isArray(data) && data.length > 0) {
+            // Find a station with measured data first, fallback to any station
+            let station = data.find((s: any) => s.measurementQuality === 'measured') || data[0];
+
+            // Calculate time ago
+            const getTimeAgo = (dateString: string) => {
+              const date = new Date(dateString);
+              const now = new Date();
+              const diffMs = now.getTime() - date.getTime();
+              const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+              const diffMins = Math.floor(diffMs / (1000 * 60));
+
+              if (diffHours > 0) return `Updated ${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+              if (diffMins > 0) return `Updated ${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+              return 'Updated just now';
+            };
+
+            // Extract measurements from station
+            const measurements = [];
+            if (station.pm25) measurements.push({ parameter: 'pm25', value: station.pm25, unit: 'µg/m³' });
+            if (station.pm10) measurements.push({ parameter: 'pm10', value: station.pm10, unit: 'µg/m³' });
+            if (station.o3) measurements.push({ parameter: 'o3', value: station.o3, unit: 'ppb' });
+            if (station.no2) measurements.push({ parameter: 'no2', value: station.no2, unit: 'ppb' });
+            if (station.so2) measurements.push({ parameter: 'so2', value: station.so2, unit: 'ppb' });
+            if (station.co) measurements.push({ parameter: 'co', value: station.co, unit: 'ppb' });
+
+            setLocationData({
+              name: station.stationName || 'HCMC Station',
+              city: 'Ho Chi Minh City',
+              country: 'VN',
+              type: station.measurementQuality === 'measured' ? 'Monitor' : 'Synthetic',
+              measurements: measurements,
+              provider: station.source || 'UrbanReflex NGSI-LD',
+              lastUpdated: station.dateObserved ? getTimeAgo(station.dateObserved) : 'Unknown',
+              since: station.dateCreated ? new Date(station.dateCreated).toLocaleDateString() : 'Unknown',
+              measurementQuality: station.measurementQuality,
+            });
+            setLoading(false);
+            return;
+          }
+        }
+
+        // For other countries, use OpenAQ API
         const response = await fetch(`/api/openaq?endpoint=/locations&limit=20&countries=${selectedCountry}`);
         const data = await response.json();
 
-        console.log('Locations data:', data);
+        console.log('OpenAQ Locations data:', data);
 
         // Check if API returned error (401, etc)
         if (response.status !== 200 || data.error) {
@@ -110,6 +160,7 @@ export default function HeroSection() {
             provider: location.provider?.name || location.owner?.name || 'UrbanReflex',
             lastUpdated: location.datetimeLast?.utc ? getTimeAgo(location.datetimeLast.utc) : 'Unknown',
             since: location.datetimeFirst?.utc ? new Date(location.datetimeFirst.utc).toLocaleDateString() : 'Unknown',
+            measurementQuality: 'measured',
           });
         } else {
           throw new Error('No data available');
