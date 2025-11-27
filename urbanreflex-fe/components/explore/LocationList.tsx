@@ -9,7 +9,7 @@
 
 import Link from 'next/link';
 import { MapPin, Clock } from 'lucide-react';
-import type { Location } from '@/types/openaq';
+import type { Location } from '@/types/orion';
 import { getParameterDisplayName, formatRelativeTime } from '@/lib/utils/format';
 
 interface LocationListProps {
@@ -48,7 +48,7 @@ export default function LocationList({ locations, onLocationClick }: LocationLis
                   <MapPin className="h-4 w-4" />
                   <span>
                     {location.locality && `${location.locality}, `}
-                    {location.country?.name || 'Unknown'}
+                    {typeof location.country === 'string' ? location.country : location.country?.name || 'Unknown'}
                   </span>
                 </div>
               </div>
@@ -93,13 +93,13 @@ export default function LocationList({ locations, onLocationClick }: LocationLis
                   <p className="font-semibold text-gray-900">{location.provider.name}</p>
                 </div>
               )}
-              {location.datetimeLast && (
+              {location.lastUpdated && (
                 <div>
                   <p className="text-gray-600 mb-1">Reporting</p>
                   <div className="flex items-center gap-1">
                     <Clock className="h-4 w-4 text-gray-500" />
                     <p className="font-semibold text-gray-900">
-                      {formatRelativeTime(location.datetimeLast.utc)}
+                      {formatRelativeTime(location.lastUpdated)}
                     </p>
                   </div>
                 </div>

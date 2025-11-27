@@ -167,7 +167,7 @@ export default function LocationDetailModal({ location, onClose }: LocationDetai
                       <span className="text-2xl font-bold text-gray-900">
                         {measurement.value.toFixed(1)}
                       </span>
-                      <span className="text-xs text-gray-600">{measurement.unit}</span>
+                      <span className="text-xs text-gray-600">{measurement.parameter.units}</span>
                     </div>
                     <div className="mt-2">
                       <div className={`h-1.5 rounded-full ${getAQIColor(measurement.value, measurement.parameter.name)}`} />

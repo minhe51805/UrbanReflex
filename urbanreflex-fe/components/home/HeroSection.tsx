@@ -13,203 +13,131 @@ import CompactLocationCard from './CompactLocationCard';
 import { useState, useEffect } from 'react';
 import DotsBackground from '../ui/DotsBackground';
 
-// Popular countries with air quality monitoring
-const POPULAR_COUNTRIES = [
-  { code: 'US', name: 'United States' },
-  { code: 'GB', name: 'United Kingdom' },
-  { code: 'IN', name: 'India' },
-  { code: 'CN', name: 'China' },
-  { code: 'JP', name: 'Japan' },
-  { code: 'DE', name: 'Germany' },
-  { code: 'FR', name: 'France' },
-  { code: 'ES', name: 'Spain' },
-  { code: 'IT', name: 'Italy' },
-  { code: 'CA', name: 'Canada' },
-  { code: 'AU', name: 'Australia' },
-  { code: 'BR', name: 'Brazil' },
-  { code: 'MX', name: 'Mexico' },
-  { code: 'KR', name: 'South Korea' },
-  { code: 'TH', name: 'Thailand' },
-  { code: 'VN', name: 'Vietnam' },
-  { code: 'PL', name: 'Poland' },
-  { code: 'NL', name: 'Netherlands' },
-  { code: 'SE', name: 'Sweden' },
-  { code: 'NO', name: 'Norway' },
-];
+interface Station {
+  id: string;
+  stationId: string;
+  name: string;
+  city?: string;
+  address?: string;
+}
 
 export default function HeroSection() {
   const [locationData, setLocationData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedCountry, setSelectedCountry] = useState('VN');
+  const [stations, setStations] = useState<Station[]>([]);
+  const [selectedStationId, setSelectedStationId] = useState<string>('');
 
+  // Fetch available stations on mount
   useEffect(() => {
-    const fetchRealtimeData = async () => {
+    const fetchStations = async () => {
       try {
-        // For Vietnam, use NGSI-LD API (HCMC stations)
-        if (selectedCountry === 'VN') {
-          // Fetch AirQualityObserved entities from NGSI-LD
-          const response = await fetch('/api/ngsi-ld?type=AirQualityObserved&limit=10&options=keyValues');
-          const data = await response.json();
-
-          console.log('NGSI-LD AQI data:', data);
-
-          if (data && Array.isArray(data) && data.length > 0) {
-            // Find a station with measured data first, fallback to any station
-            let station = data.find((s: any) => s.measurementQuality === 'measured') || data[0];
-
-            // Calculate time ago
-            const getTimeAgo = (dateString: string) => {
-              const date = new Date(dateString);
-              const now = new Date();
-              const diffMs = now.getTime() - date.getTime();
-              const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-              const diffMins = Math.floor(diffMs / (1000 * 60));
-
-              if (diffHours > 0) return `Updated ${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-              if (diffMins > 0) return `Updated ${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
-              return 'Updated just now';
-            };
-
-            // Extract measurements from station
-            const measurements = [];
-            if (station.pm25) measurements.push({ parameter: 'pm25', value: station.pm25, unit: 'µg/m³' });
-            if (station.pm10) measurements.push({ parameter: 'pm10', value: station.pm10, unit: 'µg/m³' });
-            if (station.o3) measurements.push({ parameter: 'o3', value: station.o3, unit: 'ppb' });
-            if (station.no2) measurements.push({ parameter: 'no2', value: station.no2, unit: 'ppb' });
-            if (station.so2) measurements.push({ parameter: 'so2', value: station.so2, unit: 'ppb' });
-            if (station.co) measurements.push({ parameter: 'co', value: station.co, unit: 'ppb' });
-
-            setLocationData({
-              name: station.stationName || 'HCMC Station',
-              city: 'Ho Chi Minh City',
-              country: 'VN',
-              type: station.measurementQuality === 'measured' ? 'Monitor' : 'Synthetic',
-              measurements: measurements,
-              provider: station.source || 'UrbanReflex NGSI-LD',
-              lastUpdated: station.dateObserved ? getTimeAgo(station.dateObserved) : 'Unknown',
-              since: station.dateCreated ? new Date(station.dateCreated).toLocaleDateString() : 'Unknown',
-              measurementQuality: station.measurementQuality,
-            });
-            setLoading(false);
-            return;
-          }
-        }
-
-        // For other countries, use OpenAQ API
-        const response = await fetch(`/api/openaq?endpoint=/locations&limit=20&countries=${selectedCountry}`);
+        const response = await fetch('/api/aqi');
         const data = await response.json();
 
-        console.log('OpenAQ Locations data:', data);
+        if (data && data.stations && Array.isArray(data.stations)) {
+          // Group by station ID to get unique stations
+          const uniqueStations = new Map<string, Station>();
 
-        // Check if API returned error (401, etc)
-        if (response.status !== 200 || data.error) {
-          throw new Error('API authentication failed');
-        }
-
-        if (data.results && data.results.length > 0) {
-          // Find the first location that has parameters data
-          let location = null;
-          for (const loc of data.results) {
-            if (loc.parameters && loc.parameters.length > 0) {
-              location = loc;
-              break;
+          data.stations.forEach((s: any) => {
+            const stationId = s.stationId || s.name || s.id;
+            if (!uniqueStations.has(stationId)) {
+              uniqueStations.set(stationId, {
+                id: s.id,
+                stationId: stationId,
+                name: s.name || stationId,
+                city: s.city,
+                address: s.address,
+              });
             }
-          }
-
-          if (!location) {
-            location = data.results[0];
-          }
-
-          console.log('Selected location:', location);
-
-          // Use parameters from location data instead of fetching measurements
-          const measurements = location.parameters ? location.parameters
-            .map((p: any) => ({
-              parameter: p.parameter?.name?.toLowerCase() || p.parameterId?.toString() || '',
-              value: parseFloat(p.lastValue || p.average || 0),
-              unit: p.parameter?.units || p.units || 'µg/m³'
-            }))
-            .filter((m: any) => m.value > 0) // Only keep measurements with actual values
-            : [];
-
-          // If no valid measurements, use fallback data silently
-          if (measurements.length === 0) {
-            console.log('No valid measurement data, using fallback data');
-            throw new Error('FALLBACK_DATA');
-          }
-
-          // Calculate time ago
-          const getTimeAgo = (dateString: string) => {
-            const date = new Date(dateString);
-            const now = new Date();
-            const diffMs = now.getTime() - date.getTime();
-            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-            const diffMins = Math.floor(diffMs / (1000 * 60));
-
-            if (diffHours > 0) return `Updated ${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-            if (diffMins > 0) return `Updated ${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
-            return 'Updated just now';
-          };
-
-          setLocationData({
-            name: location.name || 'Unknown Location',
-            city: location.city || 'Unknown',
-            country: location.country?.code || selectedCountry,
-            type: location.isMobile ? 'Mobile' : 'Monitor',
-            measurements: measurements,
-            provider: location.provider?.name || location.owner?.name || 'UrbanReflex',
-            lastUpdated: location.datetimeLast?.utc ? getTimeAgo(location.datetimeLast.utc) : 'Unknown',
-            since: location.datetimeFirst?.utc ? new Date(location.datetimeFirst.utc).toLocaleDateString() : 'Unknown',
-            measurementQuality: 'measured',
           });
-        } else {
-          throw new Error('No data available');
+
+          const stationList = Array.from(uniqueStations.values());
+          setStations(stationList);
+
+          // Select first station by default
+          if (stationList.length > 0 && !selectedStationId) {
+            setSelectedStationId(stationList[0].stationId);
+          }
         }
       } catch (error) {
-        // Only log real errors, not intentional fallback triggers
-        if (error instanceof Error && error.message !== 'FALLBACK_DATA') {
-          console.error('Error fetching realtime data:', error);
+        console.error('Error fetching stations:', error);
+      }
+    };
+
+    fetchStations();
+  }, []);
+
+  // Fetch station data when selection changes
+  useEffect(() => {
+    if (!selectedStationId) return;
+
+    const fetchRealtimeData = async () => {
+      try {
+        setLoading(true);
+
+        // Fetch AirQualityObserved entities from NGSI-LD via /api/aqi
+        const response = await fetch('/api/aqi');
+        const data = await response.json();
+
+        console.log('NGSI-LD AQI data:', data);
+
+        if (data && data.stations && Array.isArray(data.stations) && data.stations.length > 0) {
+          // Find the selected station
+          let station = data.stations.find((s: any) =>
+            (s.stationId || s.name || s.id) === selectedStationId
+          );
+
+          // If not found, use first station
+          if (!station) {
+            station = data.stations[0];
+          }
+
+          // Get current time from machine
+          const getCurrentTime = () => {
+            const now = new Date();
+            return now.toLocaleTimeString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false
+            });
+          };
+
+          // Extract measurements from station
+          const measurements = [];
+          if (station.pm25) measurements.push({ parameter: 'pm25', value: station.pm25, unit: 'µg/m³' });
+          if (station.pm10) measurements.push({ parameter: 'pm10', value: station.pm10, unit: 'µg/m³' });
+          if (station.o3) measurements.push({ parameter: 'o3', value: station.o3, unit: 'ppb' });
+          if (station.no2) measurements.push({ parameter: 'no2', value: station.no2, unit: 'ppb' });
+          if (station.so2) measurements.push({ parameter: 'so2', value: station.so2, unit: 'ppb' });
+          if (station.co) measurements.push({ parameter: 'co', value: station.co, unit: 'ppb' });
+
+          setLocationData({
+            name: station.name || station.stationId || 'Station',
+            city: station.city || 'Ho Chi Minh City',
+            country: station.country || 'VN',
+            type: station.measurementQuality === 'measured' ? 'Monitor' : 'Synthetic',
+            measurements: measurements,
+            provider: station.source || 'UrbanReflex NGSI-LD',
+            lastUpdated: `Updated ${getCurrentTime()}`,
+            since: station.dateObserved ? new Date(station.dateObserved).toLocaleDateString() : 'Unknown',
+            measurementQuality: station.measurementQuality,
+          });
+          setLoading(false);
+          return;
         }
 
-        // Fallback data based on selected country
-        const countryData: any = {
-          US: { name: 'Downtown LA', city: 'Los Angeles', provider: 'US EPA AirNow' },
-          GB: { name: 'London City', city: 'London', provider: 'UK DEFRA' },
-          IN: { name: 'Delhi Central', city: 'Delhi', provider: 'CPCB India' },
-          CN: { name: 'Beijing Center', city: 'Beijing', provider: 'MEE China' },
-          JP: { name: 'Tokyo Station', city: 'Tokyo', provider: 'MOE Japan' },
-          DE: { name: 'Berlin Mitte', city: 'Berlin', provider: 'UBA Germany' },
-          FR: { name: 'Paris Centre', city: 'Paris', provider: 'LCSQA France' },
-          VN: { name: 'Hanoi Center', city: 'Hanoi', provider: 'VEA Vietnam' },
-        };
-
-        const countryInfo = countryData[selectedCountry] || countryData.US;
-
-        // Use enhanced fallback data with realistic values
-        setLocationData({
-          name: countryInfo.name,
-          city: countryInfo.city,
-          country: selectedCountry,
-          type: 'Monitor',
-          measurements: [
-            { parameter: 'pm25', value: Math.random() * 20 + 10, unit: 'µg/m³' },
-            { parameter: 'pm10', value: Math.random() * 30 + 20, unit: 'µg/m³' },
-            { parameter: 'o3', value: Math.random() * 40 + 20, unit: 'ppb' },
-            { parameter: 'no2', value: Math.random() * 25 + 10, unit: 'ppb' },
-            { parameter: 'so2', value: Math.random() * 5 + 1, unit: 'ppb' },
-            { parameter: 'co', value: Math.random() * 200 + 300, unit: 'ppb' },
-          ].map(m => ({ ...m, value: parseFloat(m.value.toFixed(1)) })),
-          provider: countryInfo.provider,
-          lastUpdated: 'Updated 1 hour ago',
-          since: '15/03/2015',
-        });
+        // Fallback: No data available
+        setLocationData(null);
+      } catch (error) {
+        console.error('Error fetching realtime data:', error);
+        setLocationData(null);
       } finally {
         setLoading(false);
       }
     };
 
     fetchRealtimeData();
-  }, [selectedCountry]);
+  }, [selectedStationId]);
 
   return (
     <section className="relative bg-white overflow-hidden min-h-[600px]">
@@ -268,22 +196,45 @@ export default function HeroSection() {
                 className="bg-white/70 backdrop-blur-lg rounded-xl shadow-soft p-4 border border-white/80"
               >
                 <label className="block text-xs font-bold text-neutral-soft-600 mb-2 uppercase tracking-wider">
-                  Select a Country
+                  📍 Select a Station
                 </label>
-                <select
-                  value={selectedCountry}
-                  onChange={(e) => {
-                    setSelectedCountry(e.target.value);
-                    setLoading(true);
-                  }}
-                  className="w-full px-4 py-3 rounded-lg border border-neutral-soft-200 bg-white/80 text-neutral-soft-900 font-bold focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                >
-                  {POPULAR_COUNTRIES.map((country) => (
-                    <option key={country.code} value={country.code}>
-                      {country.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    value={selectedStationId}
+                    onChange={(e) => {
+                      setSelectedStationId(e.target.value);
+                      setLoading(true);
+                    }}
+                    className="w-full px-4 py-3.5 rounded-lg border-2 border-neutral-soft-200 bg-white text-neutral-soft-900 font-semibold focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all appearance-none cursor-pointer hover:border-primary-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={stations.length === 0}
+                    style={{
+                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236366f1'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                      backgroundRepeat: 'no-repeat',
+                      backgroundPosition: 'right 0.75rem center',
+                      backgroundSize: '1.5em 1.5em',
+                      paddingRight: '2.5rem'
+                    }}
+                  >
+                    {stations.length === 0 ? (
+                      <option>🔄 Loading stations...</option>
+                    ) : (
+                      stations.map((station) => (
+                        <option
+                          key={station.id}
+                          value={station.stationId}
+                          className="py-2"
+                        >
+                          {station.name}{station.address ? ` • ${station.address}` : ''}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                </div>
+                {stations.length > 0 && (
+                  <p className="text-xs text-neutral-soft-500 mt-2">
+                    {stations.length} station{stations.length > 1 ? 's' : ''} available
+                  </p>
+                )}
               </motion.div>
 
               {/* Realtime Data Card */}

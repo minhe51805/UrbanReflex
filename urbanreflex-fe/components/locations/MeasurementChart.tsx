@@ -20,8 +20,11 @@ import {
   Legend,
   Filler,
 } from 'chart.js';
-import type { Measurement } from '@/types/openaq';
+import type { Measurement as OpenAQMeasurement } from '@/types/openaq';
+import type { Measurement as OrionMeasurement } from '@/types/orion';
 import { getParameterDisplayName } from '@/lib/utils/format';
+
+type Measurement = OpenAQMeasurement | OrionMeasurement;
 
 ChartJS.register(
   CategoryScale,
@@ -42,6 +45,27 @@ interface MeasurementChartProps {
   loading: boolean;
 }
 
+// Helper functions to handle both measurement types
+function getParameterName(m: Measurement): string {
+  if ('parameter' in m && typeof m.parameter === 'object' && 'name' in m.parameter) {
+    return m.parameter.name;
+  }
+  return '';
+}
+
+function getMeasurementDatetime(m: Measurement): Date {
+  if ('period' in m) {
+    const period = m.period as any;
+    if ('datetimeFrom' in period && period.datetimeFrom?.utc) {
+      return new Date(period.datetimeFrom.utc);
+    }
+    if ('datetime' in period) {
+      return new Date(period.datetime);
+    }
+  }
+  return new Date();
+}
+
 export default function MeasurementChart({
   measurements,
   parameters,
@@ -51,12 +75,12 @@ export default function MeasurementChart({
 }: MeasurementChartProps) {
   const chartData = useMemo(() => {
     const filtered = measurements
-      .filter(m => m.parameter.name === selectedParameter)
-      .sort((a, b) => new Date(a.period.datetimeFrom.utc).getTime() - new Date(b.period.datetimeFrom.utc).getTime())
+      .filter(m => getParameterName(m) === selectedParameter)
+      .sort((a, b) => getMeasurementDatetime(a).getTime() - getMeasurementDatetime(b).getTime())
       .slice(-100); // Last 100 measurements
 
     return {
-      labels: filtered.map(m => new Date(m.period.datetimeFrom.utc).toLocaleString()),
+      labels: filtered.map(m => getMeasurementDatetime(m).toLocaleString()),
       datasets: [
         {
           label: getParameterDisplayName(selectedParameter),
