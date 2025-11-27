@@ -21,22 +21,24 @@ interface CompactLocationCardProps {
   name: string;
   city: string;
   country: string;
-
+  type?: string;
   measurements: Measurement[];
   provider: string;
   lastUpdated: string;
   since: string;
+  measurementQuality?: 'measured' | 'synthetic';
 }
 
 export default function CompactLocationCard({
   name,
   city,
   country,
-
+  type,
   measurements,
   provider,
   lastUpdated,
   since,
+  measurementQuality = 'measured',
 }: CompactLocationCardProps) {
   // const pm25Measurement = measurements.find(m => m.parameter.toLowerCase() === 'pm25');
   // const aqiInfo = pm25Measurement ? getAQILevel('pm25', pm25Measurement.value) : null;
@@ -68,31 +70,24 @@ export default function CompactLocationCard({
           {/* Location name */}
           <h2 className="text-xl font-bold text-white mb-2 leading-tight">{name}</h2>
 
+          {/* Date and Time below name */}
+          <div className="text-xs text-white/70 mb-3">
+            {new Date().toLocaleDateString('en-US', {
+              weekday: 'short',
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric'
+            })} • {new Date().toLocaleTimeString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          </div>
+
           {/* Location info */}
           <div className="flex items-center gap-2 text-white/90">
             <MapPin className="h-3.5 w-3.5" />
             <span className="text-sm font-medium">{city}, {country}</span>
           </div>
-
-          {/* AQI Badge */}
-          {/* {aqiInfo && (
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
-              className="inline-block"
-            >
-              <div
-                className="px-5 py-2 rounded-full text-sm font-bold shadow-xl backdrop-blur-sm"
-                style={{
-                  backgroundColor: aqiInfo.color,
-                  boxShadow: `0 8px 24px ${aqiInfo.color}40`
-                }}
-              >
-                {aqiInfo.level}
-              </div>
-            </motion.div>
-          )} */}
         </div>
       </div>
 

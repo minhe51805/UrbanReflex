@@ -11,16 +11,17 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Clock, Calendar, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import type { Location, Measurement } from '@/types/openaq';
+import type { Location, Measurement } from '@/types/orion';
 import { getParameterDisplayName, formatRelativeTime, getAQILevel } from '@/lib/utils/format';
-import { openaqClient } from '@/lib/api/openaq-client';
+import { orionClient } from '@/lib/api/orion-client';
 import MeasurementChart from './MeasurementChart';
 
 interface LocationDetailClientProps {
   location: Location;
+  useOrion?: boolean; // Flag to determine which API to use
 }
 
-export default function LocationDetailClient({ location }: LocationDetailClientProps) {
+export default function LocationDetailClient({ location, useOrion = true }: LocationDetailClientProps) {
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedParameter, setSelectedParameter] = useState<string>('');
@@ -32,7 +33,9 @@ export default function LocationDetailClient({ location }: LocationDetailClientP
   const loadMeasurements = async () => {
     try {
       setLoading(true);
-      const response = await openaqClient.getLatestMeasurements(location.id);
+
+      // Use Orion client (which fetches from NGSI-LD via /api/aqi)
+      const response = await orionClient.getLatestMeasurements(location.id);
       setMeasurements(response.results);
 
       // Set default parameter to first available
@@ -89,21 +92,21 @@ export default function LocationDetailClient({ location }: LocationDetailClientP
                 <MapPin className="h-5 w-5" />
                 <span>
                   {location.locality && `${location.locality}, `}
-                  {location.country?.name || 'Unknown'}
+                  {typeof location.country === 'string' ? location.country : location.country?.name || 'Unknown'}
                 </span>
               </div>
 
-              {location.datetimeLast && (
+              {location.lastUpdated && (
                 <div className="flex items-center gap-2">
                   <Clock className="h-5 w-5" />
-                  <span>Updated {formatRelativeTime(location.datetimeLast.utc)}</span>
+                  <span>Updated {formatRelativeTime(location.lastUpdated)}</span>
                 </div>
               )}
 
-              {location.datetimeFirst && (
+              {location.firstUpdated && (
                 <div className="flex items-center gap-2">
                   <Calendar className="h-5 w-5" />
-                  <span>Since {new Date(location.datetimeFirst.utc).toLocaleDateString()}</span>
+                  <span>Since {new Date(location.firstUpdated).toLocaleDateString()}</span>
                 </div>
               )}
             </div>

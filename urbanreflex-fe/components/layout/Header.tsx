@@ -13,50 +13,42 @@ import { useState } from 'react';
 import { Menu, X, ChevronDown, LogIn, LogOut, User, Shield, UserCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
+type NavigationItem = {
+  name: string;
+  href: string;
+  dropdown?: { name: string; href: string }[];
+};
+
 export default function Header() {
   const { user, logout, isAdmin } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [authDropdownOpen, setAuthDropdownOpen] = useState(false);
 
-  const navigation = [
+  const navigation: NavigationItem[] = [
     {
       name: 'Explore the data',
       href: '/explore',
     },
-
+    {
+      name: 'AQI Stations',
+      href: '/aqi-stations',
+    },
     {
       name: 'Why open data?',
       href: '/why-open-data',
     },
     {
-      name: 'Partners',
-      href: '/partners',
+      name: 'Docs',
+      href: '/docs',
     },
     {
-      name: 'Developers',
-      href: '#',
-      dropdown: [
-        { name: 'Roadmap', href: '/roadmap' },
-        { name: 'Platform Overview', href: '/platform-overview' },
-        { name: 'Developer Documentation', href: '/developers' },
-        { name: 'API Documentation', href: '/api-docs' },
-        { name: 'API Keys', href: '/api-keys' },
-        { name: 'Help', href: '/help' },
-      ],
+      name: 'Help',
+      href: '/help',
     },
     {
       name: 'About',
-      href: '#',
-      dropdown: [
-        { name: 'About Us', href: '/about' },
-        { name: 'Initiatives', href: '/initiatives' },
-        { name: 'People', href: '/people' },
-        { name: 'Sponsor us', href: '/sponsor' },
-        { name: 'Blog', href: '/blog' },
-        { name: 'Use Cases', href: '/use-cases' },
-        { name: 'Legal & Policies', href: '/legal' },
-      ],
+      href: '/about',
     },
   ];
 
