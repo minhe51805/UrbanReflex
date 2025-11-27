@@ -9,19 +9,21 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const BASE_URL = 'http://103.178.233.233:1026/ngsi-ld/v1';
 
-// Context URLs for different entity types
-const CONTEXT_URLS: Record<string, string> = {
-  RoadSegment: 'https://raw.githubusercontent.com/smart-data-models/dataModel.UrbanMobility/master/context.jsonld',
-  Streetlight: 'https://raw.githubusercontent.com/smart-data-models/dataModel.Streetlighting/master/context.jsonld',
-  PointOfInterest: 'https://raw.githubusercontent.com/smart-data-models/dataModel.PointOfInterest/master/context.jsonld',
-  WeatherObserved: 'https://raw.githubusercontent.com/smart-data-models/dataModel.Weather/master/context.jsonld',
-  AirQualityObserved: 'https://raw.githubusercontent.com/smart-data-models/dataModel.Environment/master/context.jsonld',
-  CitizenReport: 'https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld',
+// Context configurations matching FE_INTEGRATION_GUIDE
+// IMPORTANT: RoadSegment, WeatherObserved, AirQualityObserved need 3 contexts (core + sosa + domain)
+// Streetlight and PointOfInterest need ONLY domain context (no core)
+const CONTEXTS: Record<string, string> = {
+  RoadSegment: '<https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json", <https://www.w3.org/ns/sosa/context.jsonld>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json", <https://smart-data-models.github.io/dataModel.Transportation/context.jsonld>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json"',
+  WeatherObserved: '<https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json", <https://www.w3.org/ns/sosa/context.jsonld>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json", <https://raw.githubusercontent.com/smart-data-models/dataModel.Weather/master/context.jsonld>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json"',
+  AirQualityObserved: '<https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json", <https://www.w3.org/ns/sosa/context.jsonld>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json", <https://raw.githubusercontent.com/smart-data-models/dataModel.Environment/master/context.jsonld>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json"',
+  Streetlight: '<https://smart-data-models.github.io/dataModel.Streetlighting/context.jsonld>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json"',
+  PointOfInterest: '<https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json", <https://raw.githubusercontent.com/smart-data-models/dataModel.PointOfInterest/master/context.jsonld>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json"',
+  CitizenReport: '<https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json"',
+  RoadReport: '<https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json"',
 };
 
 function buildLinkHeader(type: string): string {
-  const contextUrl = CONTEXT_URLS[type] || CONTEXT_URLS.CitizenReport;
-  return `<${contextUrl}>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json"`;
+  return CONTEXTS[type] || CONTEXTS.CitizenReport;
 }
 
 export async function GET(request: NextRequest) {
@@ -84,10 +86,18 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
+    // Log the request for debugging
+    console.log('📤 POST to NGSI-LD:', {
+      url,
+      type,
+      entityId: body.id,
+      entityType: body.type
+    });
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/ld+json',
+        'Content-Type': 'application/json',
         'Link': buildLinkHeader(type),
       },
       body: JSON.stringify(body),
@@ -99,6 +109,13 @@ export async function POST(request: NextRequest) {
         title: 'Request Failed',
         detail: `HTTP ${response.status}: ${response.statusText}`
       }));
+
+      // Log the error for debugging
+      console.error('❌ NGSI-LD POST Error:', {
+        status: response.status,
+        error,
+        body: JSON.stringify(body, null, 2)
+      });
 
       return NextResponse.json(error, { status: response.status });
     }
