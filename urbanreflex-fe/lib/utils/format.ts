@@ -71,3 +71,39 @@ export function cn(...classes: (string | undefined | null | false)[]): string {
   return classes.filter(Boolean).join(' ');
 }
 
+/**
+ * Parse DateTime from NGSI-LD format
+ * Handles both nested format { "@type": "DateTime", "@value": "..." } and flat string
+ */
+export function parseDateTime(dateObserved: any): Date {
+  if (!dateObserved) return new Date(0);
+
+  // Handle nested format
+  if (typeof dateObserved === 'object' && dateObserved['@value']) {
+    return new Date(dateObserved['@value']);
+  }
+
+  // Handle flat string
+  if (typeof dateObserved === 'string') {
+    return new Date(dateObserved);
+  }
+
+  return new Date(0);
+}
+
+/**
+ * Get value from NGSI-LD Property object
+ * Handles both { "value": ... } and direct values
+ */
+export function getValue(prop: any): any {
+  if (prop === null || prop === undefined) return null;
+
+  // Handle Property object with value
+  if (typeof prop === 'object' && 'value' in prop) {
+    return prop.value;
+  }
+
+  // Return direct value
+  return prop;
+}
+
