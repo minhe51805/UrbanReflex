@@ -1,18 +1,18 @@
 /**
  * Author: Trương Dương Bảo Minh (minhe51805)
  * Create at: 16-11-2025
- * Update at: 16-11-2025
- * Description: Partners page showcasing UrbanReflex collaborators, sponsors, and funders
+ * Update at: 25-11-2025
+ * Description: Documentation page with professional layout
  */
 
 import { Metadata } from 'next';
-import PartnersContent from './PartnersContent';
+import DocsContent from './DocsContent';
 
 export const metadata: Metadata = {
-  title: 'Partners | UrbanReflex',
-  description: 'Meet our partners, sponsors, and funders who make UrbanReflex possible. Together we are building the future of open air quality data.',
+  title: 'Documentation | UrbanReflex',
+  description: 'Complete documentation for UrbanReflex platform - API reference, guides, and tutorials.',
 };
 
-export default function PartnersPage() {
-  return <PartnersContent />;
+export default function DocsPage() {
+  return <DocsContent />;
 }
