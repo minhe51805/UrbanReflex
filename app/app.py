@@ -8,7 +8,7 @@ Description: Main FastAPI application instance for UrbanReflex.
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import items, users, auth
+from app.routers import items, users, auth, chatbot
 from app.internal import admin
 
 app = FastAPI(title="UrbanReflex Backend", version="1.0.0")
@@ -26,6 +26,7 @@ app.include_router(auth.router, prefix="/auth", tags=["authentication"])
 app.include_router(items.router, prefix="/api/v1", tags=["items"])
 app.include_router(users.router, prefix="/api/v1", tags=["users"])
 app.include_router(admin.router, prefix="/admin", tags=["admin"])
+app.include_router(chatbot.router, prefix="/chatbot", tags=["chatbot"])
 
 @app.get("/")
 async def root():
