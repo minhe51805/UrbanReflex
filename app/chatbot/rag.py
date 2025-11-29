@@ -1,23 +1,26 @@
 """
 Author: Trần Tuấn Anh
 Created at: 2025-11-28
-Updated at: 2025-11-28
+Updated at: 2025-11-29
 Description: RAG (Retrieval-Augmented Generation) module for UrbanReflex chatbot.
              Integrates with Gemini API for intelligent responses based on retrieved context.
+             Optimized for user support with detailed guidance and web links.
 """
 
 import os
 import asyncio
 from typing import List, Dict, Optional, Any
 import google.generativeai as genai
-from app.config.config import GEMINI_API_KEY
+from app.config.config import GEMINI_API_KEY, get_database
 from app.chatbot.embedding import get_embedding_manager
+from app.models.chat_history import ChatSession, ChatMessage
 
 
 class RAGSystem:
     """
     Retrieval-Augmented Generation system for chatbot responses.
     Combines vector search with Gemini API for context-aware answers.
+    Optimized for UrbanReflex user support with detailed guidance.
     """
     
     def __init__(self, api_key: str = None):
@@ -38,37 +41,54 @@ class RAGSystem:
         
         # System prompt for UrbanReflex help assistant
         self.system_prompt = """
-        You are a helpful assistant for the UrbanReflex smart city management platform.
+        You are a professional support assistant for the UrbanReflex smart city platform.
         Your role is to help users understand how to use the platform, answer questions about features,
-        and provide guidance on API usage when applicable.
+        and provide detailed guidance on reporting issues and using services.
         
-        Guidelines:
-        1. Always base your answers on the provided context
-        2. If the context doesn't contain relevant information, say so clearly
-        3. When mentioning API endpoints, provide the full URL format
-        4. Be concise but thorough in your explanations
-        5. If you're unsure about something, ask for clarification
-        6. Always maintain a professional and helpful tone
+        GUIDELINES:
+        1. Always base your answers on provided context
+        2. If no relevant information is available, state clearly and suggest alternatives
+        3. When providing steps, present them in clear sequential order
+        4. Always include relevant web links when available
+        5. Use friendly, professional, and easy-to-understand language
+        6. When mentioning APIs, provide complete information
         
-        When responding about API usage, include:
-        - The endpoint URL
-        - HTTP method (GET, POST, etc.)
-        - Required parameters
-        - Example request/response if helpful
+        WHEN ANSWERING ABOUT HOW TO REPORT ISSUES:
+        - Provide detailed step-by-step instructions
+        - Include direct links to reporting pages
+        - Explain required information
+        - Suggest alternative options if available
+        
+        WHEN ANSWERING ABOUT THE PROJECT:
+        - Explain UrbanReflex's goals and vision
+        - Highlight key features
+        - Provide links to introduction pages
+        
+        ALWAYS INCLUDE:
+        - Relevant web links for the answer
+        - Detailed implementation steps
+        - Contact information if additional support is needed
         """
     
-    async def generate_response(self, query: str, context_docs: List[Dict] = None) -> Dict[str, Any]:
+    async def generate_response(self, query: str, session_id: str = None, user_id: str = None, context_docs: List[Dict] = None) -> Dict[str, Any]:
         """
-        Generate a response using RAG approach.
+        Generate a response using RAG approach with chat history.
         
         Args:
             query: User's question
+            session_id: Session identifier for context
+            user_id: User identifier for personalization
             context_docs: Retrieved context documents (if None, will search)
             
         Returns:
             Dictionary containing response and metadata
         """
         try:
+            # Get chat history if session_id provided
+            chat_history = ""
+            if session_id:
+                chat_history = await self._get_chat_history(session_id)
+            
             # Get context if not provided
             if context_docs is None:
                 embedding_manager = await get_embedding_manager()
@@ -77,16 +97,27 @@ class RAGSystem:
             # Format context for prompt
             context_text = self._format_context(context_docs)
             
-            # Create prompt with context
+            # Create prompt with context and history
             full_prompt = f"""
             {self.system_prompt}
             
-            Context from UrbanReflex documentation:
+            CHAT HISTORY FOR CONTEXT:
+            {chat_history}
+            
+            CONTEXT FROM URBANREFLEX DOCUMENTATION:
             {context_text}
             
-            User Question: {query}
+            USER QUESTION: {query}
             
-            Please provide a helpful response based on the context above.
+            PLEASE PROVIDE A HELPFUL RESPONSE BASED ON THE CONTEXT ABOVE.
+            
+            IMPORTANT:
+            - Always respond in the user's language (Vietnamese for Vietnamese questions)
+            - Provide detailed step-by-step guidance
+            - Include relevant web links
+            - If multiple steps, number them sequentially
+            - Add important notes if applicable
+            - Consider previous conversation context for continuity
             """
             
             # Generate response with Gemini
@@ -95,22 +126,27 @@ class RAGSystem:
             # Extract response text
             response_text = response.text
             
-            # Extract relevant API links from context
-            api_links = self._extract_api_links(context_docs)
+            # Extract relevant links from context
+            web_links = self._extract_web_links(context_docs)
+            
+            # Save chat messages if session_id provided
+            if session_id:
+                await self._save_chat_message(session_id, user_id, query, response_text)
             
             return {
                 'response': response_text,
                 'sources': self._format_sources(context_docs),
-                'api_links': api_links,
+                'web_links': web_links,
                 'context_used': len(context_docs) > 0,
-                'query': query
+                'query': query,
+                'session_id': session_id
             }
             
         except Exception as e:
             return {
-                'response': f"I apologize, but I encountered an error while processing your question: {str(e)}",
+                'response': f"Xin lỗi, tôi đã gặp lỗi khi xử lý câu hỏi của bạn: {str(e)}",
                 'sources': [],
-                'api_links': [],
+                'web_links': [],
                 'context_used': False,
                 'query': query,
                 'error': str(e)
@@ -118,7 +154,7 @@ class RAGSystem:
     
     def _format_context(self, context_docs: List[Dict]) -> str:
         """
-        Format context documents for the prompt.
+        Format context documents for prompt.
         
         Args:
             context_docs: List of context documents
@@ -131,7 +167,7 @@ class RAGSystem:
         
         formatted_context = []
         for i, doc in enumerate(context_docs, 1):
-            title = doc.get('metadata', {}).get('title', 'Untitled')
+            title = doc.get('metadata', {}).get('title', 'Không có tiêu đề')
             url = doc.get('metadata', {}).get('url', '')
             text = doc.get('text', '')
             score = doc.get('score', 0)
@@ -166,43 +202,62 @@ class RAGSystem:
             })
         return sources
     
-    def _extract_api_links(self, context_docs: List[Dict]) -> List[Dict]:
+    def _extract_web_links(self, context_docs: List[Dict]) -> List[Dict]:
         """
-        Extract API endpoint information from context.
+        Extract web links and relevant information from context.
         
         Args:
             context_docs: List of context documents
             
         Returns:
-            List of API endpoint information
+            List of web link information
         """
-        api_links = []
-        api_keywords = ['endpoint', 'api', '/api/', 'http', 'request', 'response']
+        links = []
         
         for doc in context_docs:
-            text = doc.get('text', '').lower()
+            text = doc.get('text', '')
             metadata = doc.get('metadata', {})
             
-            # Simple heuristic to detect API-related content
-            if any(keyword in text for keyword in api_keywords):
-                # Extract potential API endpoints (basic pattern matching)
-                import re
-                endpoint_pattern = r'/api/[^\s\)]+'
-                endpoints = re.findall(endpoint_pattern, text)
-                
-                if endpoints:
-                    base_url = metadata.get('url', '')
-                    api_links.append({
-                        'endpoints': list(set(endpoints)),  # Remove duplicates
-                        'source_url': base_url,
-                        'title': metadata.get('title', 'API Documentation')
-                    })
+            # Extract URLs from text
+            import re
+            url_pattern = r'https?://[^\s<>"\'\)]+'
+            urls = re.findall(url_pattern, text)
+            
+            # Add the main source URL
+            source_url = metadata.get('url', '')
+            if source_url and source_url not in urls:
+                urls.append(source_url)
+            
+            if urls:
+                links.append({
+                    'urls': list(set(urls)),  # Remove duplicates
+                    'source_title': metadata.get('title', 'Tài liệu'),
+                    'description': self._extract_link_description(text)
+                })
         
-        return api_links
+        return links
+    
+    def _extract_link_description(self, text: str) -> str:
+        """
+        Extract a brief description of what the link is about.
+        
+        Args:
+            text: Text containing the link
+            
+        Returns:
+            Brief description
+        """
+        # Simple heuristic to extract description
+        sentences = text.split('.')
+        for sentence in sentences[:2]:  # Check first 2 sentences
+            if any(keyword in sentence.lower() for keyword in ['báo cáo', 'hướng dẫn', 'trang', 'dịch vụ', 'tính năng']):
+                return sentence.strip()
+        
+        return "Thông tin liên quan"
     
     async def health_check(self) -> Dict[str, Any]:
         """
-        Check the health of the RAG system components.
+        Check health of RAG system components.
         
         Returns:
             Health status information
@@ -215,7 +270,7 @@ class RAGSystem:
         
         try:
             # Test Gemini API
-            test_response = self.model.generate_content("Hello")
+            test_response = self.model.generate_content("Xin chào")
             if test_response.text:
                 status['gemini_api'] = True
             
@@ -231,6 +286,89 @@ class RAGSystem:
             status['error'] = str(e)
         
         return status
+    
+    async def _get_chat_history(self, session_id: str, limit: int = 10) -> str:
+        """
+        Get chat history for context.
+        
+        Args:
+            session_id: Session identifier
+            limit: Maximum number of messages to retrieve
+            
+        Returns:
+            Formatted chat history string
+        """
+        try:
+            db = await get_database()
+            session = await db.chat_sessions.find_one({"session_id": session_id})
+            
+            if not session or not session.get('messages'):
+                return ""
+            
+            # Get recent messages
+            messages = session['messages'][-limit:]
+            
+            # Format history
+            history_lines = []
+            for msg in messages:
+                role = "User" if msg['role'] == 'user' else "Assistant"
+                history_lines.append(f"{role}: {msg['content']}")
+            
+            return "\n".join(history_lines[-6:])  # Last 6 messages for context
+            
+        except Exception as e:
+            print(f"Error getting chat history: {str(e)}")
+            return ""
+    
+    async def _save_chat_message(self, session_id: str, user_id: str, user_message: str, assistant_message: str):
+        """
+        Save chat messages to database.
+        
+        Args:
+            session_id: Session identifier
+            user_id: User identifier
+            user_message: User's message
+            assistant_message: Assistant's response
+        """
+        try:
+            db = await get_database()
+            
+            # Create or update session
+            now = datetime.utcnow()
+            
+            # Add user message
+            user_msg = ChatMessage(
+                role="user",
+                content=user_message,
+                timestamp=now
+            )
+            
+            # Add assistant message
+            assistant_msg = ChatMessage(
+                role="assistant",
+                content=assistant_message,
+                timestamp=now
+            )
+            
+            # Update session
+            await db.chat_sessions.update_one(
+                {"session_id": session_id},
+                {
+                    "$set": {
+                        "user_id": user_id,
+                        "updated_at": now,
+                        "$push": {
+                            "messages": {
+                                "$each": [user_msg.model_dump(), assistant_msg.model_dump()]
+                            }
+                        }
+                    }
+                },
+                upsert=True
+            )
+            
+        except Exception as e:
+            print(f"Error saving chat message: {str(e)}")
 
 
 # Global RAG system instance
@@ -274,21 +412,26 @@ if __name__ == "__main__":
             # Initialize RAG system
             rag = RAGSystem()
             
-            # Example query
-            query = "How do I report a streetlight issue using the API?"
+            # Example queries
+            queries = [
+                "I don't know how to report issues",
+                "What is this project about?",
+                "How to report broken streetlights?"
+            ]
             
-            # Generate response
-            response = await rag.generate_response(query)
-            
-            print("Response:", response['response'])
-            print("Sources:", response['sources'])
-            print("API Links:", response['api_links'])
+            for query in queries:
+                print(f"\nQuestion: {query}")
+                response = await rag.generate_response(query)
+                print("Response:", response['response'])
+                print("Sources:", response['sources'])
+                print("Links:", response['web_links'])
+                print("-" * 50)
             
             # Health check
             health = await rag.health_check()
-            print("Health Status:", health)
+            print("System Health Status:", health)
             
         except Exception as e:
-            print(f"Error: {str(e)}")
+            print(f"Lỗi: {str(e)}")
     
     asyncio.run(main())
