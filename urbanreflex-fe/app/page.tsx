@@ -6,7 +6,6 @@
  */
 
 import HeroSection from '@/components/home/HeroSection';
-import WeatherWidget from '@/components/home/WeatherWidget';
 import FeatureSection from '@/components/home/FeatureSection';
 import AQIHubIllustration from '@/components/home/AQIHubIllustration';
 import DataSourceIllustration from '@/components/home/DataSourceIllustration';
@@ -19,33 +18,7 @@ export default function Home() {
       {/* 1. Hero Section with Compact Location Card */}
       <HeroSection />
 
-      {/* 2. Weather Widget Section */}
-      <section className="bg-white py-12">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
-              <h2 className="text-3xl font-bold text-neutral-soft-800 mb-4">
-                Real-time Environmental Data
-              </h2>
-              <p className="text-lg text-neutral-soft-600 mb-6">
-                Access live weather and air quality data from our NGSI-LD Context Broker.
-                All data is updated automatically every 15 minutes from trusted sources.
-              </p>
-              <a
-                href="/live-data"
-                className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-primary-600 text-white font-semibold hover:bg-primary-700 transition-all duration-200 shadow-medium"
-              >
-                View Full Dashboard
-              </a>
-            </div>
-            <div>
-              <WeatherWidget />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 3. One-stop data source */}
+      {/* 2. One-stop data source */}
       <FeatureSection
         title="One-stop data source"
         description="UrbanReflex aggregates data from hundreds of sources worldwide, harmonizing and sharing them on our centralized, trusted, open-source data platform."

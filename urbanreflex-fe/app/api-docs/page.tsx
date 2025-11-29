@@ -22,45 +22,46 @@ export default function APIDocsPage() {
   };
 
   const codeExamples = {
-    curl: `curl -X GET "https://your-domain.com/api/v1/locations?city=Hanoi" \\
-  -H "X-API-Key: urx_your_api_key_here"`,
-    
-    javascript: `// Using fetch
-const response = await fetch('https://your-domain.com/api/v1/locations?city=Hanoi', {
-  headers: {
-    'X-API-Key': 'urx_your_api_key_here'
-  }
-});
+    curl: `curl -X GET "https://your-domain.com/api/aqi?limit=10"`,
+
+    javascript: `// Fetch AQI stations
+const response = await fetch('/api/aqi?limit=10');
 const data = await response.json();
-console.log(data);`,
+console.log(data.stations);
+
+// Fetch road segments
+const roads = await fetch('/api/roads?limit=100');
+const roadData = await roads.json();
+console.log(roadData.roads);`,
 
     python: `import requests
 
-url = "https://your-domain.com/api/v1/locations"
-headers = {
-    "X-API-Key": "urx_your_api_key_here"
-}
-params = {
-    "city": "Hanoi"
-}
-
-response = requests.get(url, headers=headers, params=params)
+# Get AQI data
+url = "https://your-domain.com/api/aqi"
+params = {"limit": 10}
+response = requests.get(url, params=params)
 data = response.json()
-print(data)`,
+print(data["stations"])
+
+# Get road segments
+roads_url = "https://your-domain.com/api/roads"
+roads = requests.get(roads_url, params={"limit": 100})
+print(roads.json()["roads"])`,
 
     node: `const axios = require('axios');
 
-const config = {
-  headers: {
-    'X-API-Key': 'urx_your_api_key_here'
-  },
-  params: {
-    city: 'Hanoi'
-  }
-};
+// Get AQI stations
+axios.get('https://your-domain.com/api/aqi', {
+  params: { limit: 10 }
+})
+  .then(response => console.log(response.data.stations))
+  .catch(error => console.error(error));
 
-axios.get('https://your-domain.com/api/v1/locations', config)
-  .then(response => console.log(response.data))
+// Get road segments
+axios.get('https://your-domain.com/api/roads', {
+  params: { limit: 100 }
+})
+  .then(response => console.log(response.data.roads))
   .catch(error => console.error(error));`,
   };
 
@@ -84,14 +85,14 @@ axios.get('https://your-domain.com/api/v1/locations', config)
               API Documentation
             </h1>
             <p className="text-lg sm:text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-              Complete guide to accessing UrbanReflex air quality data programmatically
+              Complete guide to accessing UrbanReflex NGSI-LD data - Roads, AQI, Weather, and more
             </p>
             <Link
-              href="/api-keys"
+              href="/explore"
               className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-[#1e64ab] text-white font-semibold hover:bg-[#1a5690] transition-all duration-300 shadow-soft hover:shadow-medium"
             >
-              <Key className="h-5 w-5" />
-              Get Your API Key
+              <Terminal className="h-5 w-5" />
+              Explore Live Data
             </Link>
           </motion.div>
         </div>
@@ -111,31 +112,31 @@ axios.get('https://your-domain.com/api/v1/locations', config)
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
               <div className="bg-white rounded-xl p-6 shadow-soft border border-gray-100">
                 <div className="inline-flex p-3 rounded-xl bg-blue-50 text-[#1e64ab] mb-4">
-                  <Key className="h-6 w-6" />
+                  <Terminal className="h-6 w-6" />
                 </div>
-                <h3 className="text-xl font-bold text-[#30363c] mb-3">1. Get API Key</h3>
+                <h3 className="text-xl font-bold text-[#30363c] mb-3">1. Choose Endpoint</h3>
                 <p className="text-gray-600">
-                  Create a free account and generate your API key from the dashboard.
+                  Select the data you need: Roads, AQI, Weather, Streetlights, or Reports.
                 </p>
               </div>
 
               <div className="bg-white rounded-xl p-6 shadow-soft border border-gray-100">
-                <div className="inline-flex p-3 rounded-xl bg-blue-50 text-[#1e64ab] mb-4">
+                <div className="inline-flex p-3 rounded-xl bg-green-50 text-green-600 mb-4">
                   <Code className="h-6 w-6" />
                 </div>
                 <h3 className="text-xl font-bold text-[#30363c] mb-3">2. Make Request</h3>
                 <p className="text-gray-600">
-                  Include your API key in the X-API-Key header with each request.
+                  Use fetch or axios to call the API endpoint with optional query parameters.
                 </p>
               </div>
 
               <div className="bg-white rounded-xl p-6 shadow-soft border border-gray-100">
-                <div className="inline-flex p-3 rounded-xl bg-blue-50 text-[#1e64ab] mb-4">
-                  <Terminal className="h-6 w-6" />
+                <div className="inline-flex p-3 rounded-xl bg-purple-50 text-purple-600 mb-4">
+                  <Book className="h-6 w-6" />
                 </div>
-                <h3 className="text-xl font-bold text-[#30363c] mb-3">3. Get Data</h3>
+                <h3 className="text-xl font-bold text-[#30363c] mb-3">3. Get NGSI-LD Data</h3>
                 <p className="text-gray-600">
-                  Receive real-time air quality data in JSON format.
+                  Receive standardized NGSI-LD data in JSON format from our Context Broker.
                 </p>
               </div>
             </div>
@@ -149,26 +150,28 @@ axios.get('https://your-domain.com/api/v1/locations', config)
           <h2 className="text-3xl font-bold text-[#30363c] mb-6">Base URL</h2>
           <div className="bg-white rounded-xl p-6 shadow-soft border border-gray-100">
             <code className="text-lg text-[#1e64ab] font-mono">
-              {typeof window !== 'undefined' ? window.location.origin : 'https://your-domain.com'}/api/v1
+              {typeof window !== 'undefined' ? window.location.origin : 'https://your-domain.com'}/api
             </code>
+            <p className="text-sm text-gray-600 mt-4">
+              All endpoints are relative to this base URL. No authentication required for public data.
+            </p>
           </div>
         </div>
       </section>
 
-      {/* Authentication */}
+      {/* NGSI-LD Info */}
       <section className="py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-[#30363c] mb-6">Authentication</h2>
+          <h2 className="text-3xl font-bold text-[#30363c] mb-6">NGSI-LD Context Broker</h2>
           <div className="bg-white rounded-xl p-8 shadow-soft border border-gray-100">
             <p className="text-gray-600 mb-6">
-              All API requests require authentication using an API key. Include your API key in the request header:
+              UrbanReflex uses NGSI-LD standard for smart city data. All data is stored in an Orion Context Broker
+              and exposed through our API endpoints with proper context handling.
             </p>
-            <div className="bg-gray-50 rounded-lg p-4 font-mono text-sm mb-4">
-              <code className="text-[#30363c]">X-API-Key: urx_your_api_key_here</code>
-            </div>
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <p className="text-sm text-yellow-800">
-                <strong>⚠️ Keep your API key secure!</strong> Never expose it in client-side code or public repositories.
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm text-blue-800">
+                <strong>ℹ️ No API Key Required:</strong> All endpoints are publicly accessible for reading data.
+                Authentication is only needed for submitting reports or administrative actions.
               </p>
             </div>
           </div>
@@ -180,35 +183,27 @@ axios.get('https://your-domain.com/api/v1/locations', config)
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-[#30363c] mb-8">API Endpoints</h2>
 
-          {/* Locations Endpoint */}
+          {/* Roads Endpoint */}
           <div className="bg-white rounded-xl p-8 shadow-soft border border-gray-100 mb-6">
             <div className="flex items-center gap-3 mb-4">
               <span className="px-3 py-1 rounded-lg bg-green-100 text-green-700 font-mono text-sm font-bold">
                 GET
               </span>
-              <code className="text-lg font-mono text-[#30363c]">/api/v1/locations</code>
+              <code className="text-lg font-mono text-[#30363c]">/api/roads</code>
             </div>
             <p className="text-gray-600 mb-6">
-              Get a list of air quality monitoring locations.
+              Get road segments with location data.
             </p>
 
             <h4 className="font-bold text-[#30363c] mb-3">Query Parameters:</h4>
             <div className="space-y-2 mb-6">
               <div className="flex gap-4 text-sm">
-                <code className="font-mono text-[#1e64ab] min-w-[120px]">city</code>
-                <span className="text-gray-600">Filter by city name</span>
-              </div>
-              <div className="flex gap-4 text-sm">
-                <code className="font-mono text-[#1e64ab] min-w-[120px]">country</code>
-                <span className="text-gray-600">Filter by country name</span>
-              </div>
-              <div className="flex gap-4 text-sm">
                 <code className="font-mono text-[#1e64ab] min-w-[120px]">limit</code>
-                <span className="text-gray-600">Number of results (default: 100)</span>
+                <span className="text-gray-600">Number of results (default: 5000)</span>
               </div>
               <div className="flex gap-4 text-sm">
-                <code className="font-mono text-[#1e64ab] min-w-[120px]">page</code>
-                <span className="text-gray-600">Page number (default: 1)</span>
+                <code className="font-mono text-[#1e64ab] min-w-[120px]">offset</code>
+                <span className="text-gray-600">Offset for pagination (default: 0)</span>
               </div>
             </div>
 
@@ -216,65 +211,54 @@ axios.get('https://your-domain.com/api/v1/locations', config)
             <div className="relative">
               <pre className="bg-gray-50 rounded-lg p-4 overflow-x-auto text-sm">
                 <code>{`{
-  "meta": {
-    "name": "openaq-api",
-    "page": 1,
-    "limit": 100,
-    "found": 5
-  },
-  "results": [
+  "roads": [
     {
-      "id": 1,
-      "name": "Hanoi Central Station",
-      "city": "Hanoi",
-      "country": "Vietnam",
-      "coordinates": { "lat": 21.0285, "lon": 105.8542 },
-      "parameters": ["pm25", "pm10", "o3", "no2"],
-      "lastUpdated": "2025-11-18T11:39:03.345Z"
+      "id": "urn:ngsi-ld:RoadSegment:HCMC-32576911",
+      "name": "Nguyễn Huệ",
+      "location": {
+        "type": "LineString",
+        "coordinates": [[106.7, 10.78], [106.71, 10.79]]
+      },
+      "roadClass": "primary"
     }
-  ]
+  ],
+  "count": 4936,
+  "limit": 5000,
+  "offset": 0
 }`}</code>
               </pre>
             </div>
           </div>
 
-          {/* Measurements Endpoint */}
-          <div className="bg-white rounded-xl p-8 shadow-soft border border-gray-100">
+          {/* AQI Endpoint */}
+          <div className="bg-white rounded-xl p-8 shadow-soft border border-gray-100 mb-6">
             <div className="flex items-center gap-3 mb-4">
               <span className="px-3 py-1 rounded-lg bg-green-100 text-green-700 font-mono text-sm font-bold">
                 GET
               </span>
-              <code className="text-lg font-mono text-[#30363c]">/api/v1/measurements</code>
+              <code className="text-lg font-mono text-[#30363c]">/api/aqi</code>
             </div>
             <p className="text-gray-600 mb-6">
-              Get air quality measurements from monitoring locations.
+              Get air quality monitoring stations with latest measurements.
             </p>
 
             <h4 className="font-bold text-[#30363c] mb-3">Query Parameters:</h4>
             <div className="space-y-2 mb-6">
               <div className="flex gap-4 text-sm">
-                <code className="font-mono text-[#1e64ab] min-w-[120px]">city</code>
-                <span className="text-gray-600">Filter by city name</span>
+                <code className="font-mono text-[#1e64ab] min-w-[120px]">limit</code>
+                <span className="text-gray-600">Number of results (default: 100)</span>
               </div>
               <div className="flex gap-4 text-sm">
-                <code className="font-mono text-[#1e64ab] min-w-[120px]">country</code>
-                <span className="text-gray-600">Filter by country name</span>
+                <code className="font-mono text-[#1e64ab] min-w-[120px]">lat</code>
+                <span className="text-gray-600">Latitude for spatial query</span>
               </div>
               <div className="flex gap-4 text-sm">
-                <code className="font-mono text-[#1e64ab] min-w-[120px]">parameter</code>
-                <span className="text-gray-600">Filter by parameter (pm25, pm10, o3, etc.)</span>
+                <code className="font-mono text-[#1e64ab] min-w-[120px]">lon</code>
+                <span className="text-gray-600">Longitude for spatial query</span>
               </div>
               <div className="flex gap-4 text-sm">
-                <code className="font-mono text-[#1e64ab] min-w-[120px]">location_id</code>
-                <span className="text-gray-600">Filter by location ID</span>
-              </div>
-              <div className="flex gap-4 text-sm">
-                <code className="font-mono text-[#1e64ab] min-w-[120px]">date_from</code>
-                <span className="text-gray-600">Start date (ISO 8601 format)</span>
-              </div>
-              <div className="flex gap-4 text-sm">
-                <code className="font-mono text-[#1e64ab] min-w-[120px]">date_to</code>
-                <span className="text-gray-600">End date (ISO 8601 format)</span>
+                <code className="font-mono text-[#1e64ab] min-w-[120px]">maxDistance</code>
+                <span className="text-gray-600">Search radius in meters (default: 5000)</span>
               </div>
             </div>
 
@@ -282,24 +266,97 @@ axios.get('https://your-domain.com/api/v1/locations', config)
             <div className="relative">
               <pre className="bg-gray-50 rounded-lg p-4 overflow-x-auto text-sm">
                 <code>{`{
-  "meta": {
-    "name": "openaq-api",
-    "page": 1,
-    "limit": 100,
-    "found": 150
-  },
-  "results": [
+  "stations": [
     {
-      "locationId": 1,
-      "location": "Hanoi Central Station",
-      "city": "Hanoi",
-      "country": "Vietnam",
-      "parameter": "pm25",
-      "value": 35.5,
-      "unit": "µg/m³",
-      "timestamp": "2025-11-18T11:39:03.345Z"
+      "id": "urn:ngsi-ld:AirQualityObserved:HCMC-us-diplomatic-post",
+      "name": "US Diplomatic Post: Ho Chi Minh City",
+      "stationId": "us-diplomatic-post",
+      "location": {
+        "type": "Point",
+        "coordinates": [106.700035, 10.782773]
+      },
+      "pm25": 44.6,
+      "pm10": 86,
+      "o3": 45.2,
+      "no2": 25.3,
+      "so2": 8.1,
+      "co": 0.5,
+      "aqi": 123,
+      "dateObserved": "2025-11-27T15:30:00Z"
     }
-  ]
+  ],
+  "count": 19
+}`}</code>
+              </pre>
+            </div>
+          </div>
+
+          {/* Weather Endpoint */}
+          <div className="bg-white rounded-xl p-8 shadow-soft border border-gray-100 mb-6">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="px-3 py-1 rounded-lg bg-green-100 text-green-700 font-mono text-sm font-bold">
+                GET
+              </span>
+              <code className="text-lg font-mono text-[#30363c]">/api/weather</code>
+            </div>
+            <p className="text-gray-600 mb-6">
+              Get latest weather data for the city.
+            </p>
+
+            <h4 className="font-bold text-[#30363c] mb-3">Example Response:</h4>
+            <div className="relative">
+              <pre className="bg-gray-50 rounded-lg p-4 overflow-x-auto text-sm">
+                <code>{`{
+  "id": "urn:ngsi-ld:WeatherObserved:HCMC-20251127T153000Z",
+  "temperature": 28.5,
+  "relativeHumidity": 0.75,
+  "atmosphericPressure": 1013,
+  "windSpeed": 3.5,
+  "windDirection": 180,
+  "visibility": 10000,
+  "precipitation": 0,
+  "dewPoint": 23.8,
+  "dateObserved": "2025-11-27T15:30:00Z"
+}`}</code>
+              </pre>
+            </div>
+          </div>
+
+          {/* Streetlights Endpoint */}
+          <div className="bg-white rounded-xl p-8 shadow-soft border border-gray-100">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="px-3 py-1 rounded-lg bg-green-100 text-green-700 font-mono text-sm font-bold">
+                GET
+              </span>
+              <code className="text-lg font-mono text-[#30363c]">/api/streetlights</code>
+            </div>
+            <p className="text-gray-600 mb-6">
+              Get streetlight data with optional road segment filtering.
+            </p>
+
+            <h4 className="font-bold text-[#30363c] mb-3">Query Parameters:</h4>
+            <div className="space-y-2 mb-6">
+              <div className="flex gap-4 text-sm">
+                <code className="font-mono text-[#1e64ab] min-w-[120px]">roadId</code>
+                <span className="text-gray-600">Filter by road segment ID</span>
+              </div>
+              <div className="flex gap-4 text-sm">
+                <code className="font-mono text-[#1e64ab] min-w-[120px]">limit</code>
+                <span className="text-gray-600">Number of results (default: 1000)</span>
+              </div>
+            </div>
+
+            <h4 className="font-bold text-[#30363c] mb-3">Example Response:</h4>
+            <div className="relative">
+              <pre className="bg-gray-50 rounded-lg p-4 overflow-x-auto text-sm">
+                <code>{`{
+  "streetlights": [...],
+  "count": 45,
+  "statistics": {
+    "total": 45,
+    "on": 40,
+    "off": 5
+  }
 }`}</code>
               </pre>
             </div>
@@ -396,24 +453,48 @@ axios.get('https://your-domain.com/api/v1/locations', config)
         </div>
       </section>
 
-      {/* Rate Limits */}
+      {/* Additional Resources */}
       <section className="py-16 bg-gray-50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-[#30363c] mb-6">Rate Limits</h2>
-          <div className="bg-white rounded-xl p-8 shadow-soft border border-gray-100">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center">
-                <div className="text-4xl font-bold text-[#1e64ab] mb-2">1,000</div>
-                <div className="text-gray-600">Requests per hour</div>
-              </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold text-[#1e64ab] mb-2">10,000</div>
-                <div className="text-gray-600">Requests per day</div>
-              </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold text-[#1e64ab] mb-2">Unlimited</div>
-                <div className="text-gray-600">For enterprise plans</div>
-              </div>
+          <h2 className="text-3xl font-bold text-[#30363c] mb-6">Additional Resources</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white rounded-xl p-6 shadow-soft border border-gray-100">
+              <h3 className="text-xl font-bold text-[#30363c] mb-3">📊 Live Data</h3>
+              <p className="text-gray-600 mb-4">
+                Explore real-time data on our interactive map with roads, AQI stations, and weather.
+              </p>
+              <Link
+                href="/explore"
+                className="text-[#1e64ab] font-semibold hover:underline"
+              >
+                View Map →
+              </Link>
+            </div>
+            <div className="bg-white rounded-xl p-6 shadow-soft border border-gray-100">
+              <h3 className="text-xl font-bold text-[#30363c] mb-3">🌐 NGSI-LD</h3>
+              <p className="text-gray-600 mb-4">
+                Learn about NGSI-LD standard and how we use it for smart city data.
+              </p>
+              <a
+                href="https://www.etsi.org/deliver/etsi_gs/CIM/001_099/009/01.08.01_60/gs_CIM009v010801p.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#1e64ab] font-semibold hover:underline"
+              >
+                Learn More →
+              </a>
+            </div>
+            <div className="bg-white rounded-xl p-6 shadow-soft border border-gray-100">
+              <h3 className="text-xl font-bold text-[#30363c] mb-3">📖 Documentation</h3>
+              <p className="text-gray-600 mb-4">
+                Complete technical documentation for developers and integrators.
+              </p>
+              <Link
+                href="/docs"
+                className="text-[#1e64ab] font-semibold hover:underline"
+              >
+                Read Docs →
+              </Link>
             </div>
           </div>
         </div>
