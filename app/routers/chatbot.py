@@ -10,10 +10,55 @@ import time
 import asyncio
 from typing import Dict, Any
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends
-from app.schemas.chatbot import (
-    ChatRequest, ChatResponse, IndexRequest, IndexResponse, 
-    HealthStatus, ErrorResponse
-)
+from pydantic import BaseModel, Field
+from typing import List, Dict, Optional, Any
+from datetime import datetime
+
+
+class ChatRequest(BaseModel):
+    """Request model for chatbot interactions."""
+    query: str = Field(..., min_length=1, max_length=1000, description="User's question or query")
+    session_id: Optional[str] = Field(None, description="Optional session identifier for conversation tracking")
+    context_limit: Optional[int] = Field(5, ge=1, le=10, description="Maximum number of context documents to retrieve")
+
+
+class ChatResponse(BaseModel):
+    """Response model for chatbot interactions."""
+    response: str = Field(..., description="Chatbot's response to the query")
+    sources: List[Dict] = Field(default_factory=list, description="List of source documents used")
+    web_links: List[Dict] = Field(default_factory=list, description="Relevant web links found")
+    context_used: bool = Field(..., description="Whether context was used in generating the response")
+    query: str = Field(..., description="Original query from the user")
+    session_id: Optional[str] = Field(None, description="Session identifier for conversation tracking")
+    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Response timestamp")
+    processing_time: Optional[float] = Field(None, description="Time taken to process the request (seconds)")
+
+
+class IndexRequest(BaseModel):
+    """Request model for indexing operations."""
+    base_url: Optional[str] = Field(None, description="Base URL to crawl (if not provided, uses config default)")
+    max_pages: Optional[int] = Field(50, ge=1, le=200, description="Maximum number of pages to crawl")
+    recreate_index: Optional[bool] = Field(False, description="Whether to recreate the vector index")
+
+
+class IndexResponse(BaseModel):
+    """Response model for indexing operations."""
+    success: bool = Field(..., description="Whether the indexing operation was successful")
+    message: str = Field(..., description="Status message")
+    pages_crawled: Optional[int] = Field(None, description="Number of pages crawled")
+    documents_indexed: Optional[int] = Field(None, description="Number of documents indexed")
+    processing_time: Optional[float] = Field(None, description="Time taken for indexing (seconds)")
+    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Operation timestamp")
+
+
+class HealthStatus(BaseModel):
+    """Model for system health status."""
+    gemini_api: bool = Field(..., description="Gemini API connectivity status")
+    embedding_system: bool = Field(..., description="Embedding system status")
+    pinecone_connection: bool = Field(..., description="Pinecone vector database status")
+    overall: bool = Field(..., description="Overall system health")
+    error: Optional[str] = Field(None, description="Error message if any component failed")
+    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Health check timestamp")
 from app.chatbot.rag import get_rag_system, chat_with_rag
 from app.chatbot.embedding import get_embedding_manager, index_website_data
 from app.config.config import WEBSITE_CRAWL_URL
