@@ -42,9 +42,11 @@ async def chat(request: ChatRequest):
     try:
         logger.info(f"Processing chat request: {request.query[:100]}...")
         
-        # Generate response using RAG system
+        # Generate response using RAG system with session support
         response_data = await chat_with_rag(
             query=request.query,
+            session_id=request.session_id,
+            user_id=getattr(request, 'user_id', None),  # Will be set by auth middleware
             context_docs=None  # Let RAG system handle context retrieval
         )
         
@@ -55,7 +57,7 @@ async def chat(request: ChatRequest):
         chat_response = ChatResponse(
             response=response_data['response'],
             sources=response_data.get('sources', []),
-            api_links=response_data.get('api_links', []),
+            web_links=response_data.get('web_links', []),
             context_used=response_data.get('context_used', False),
             query=request.query,
             session_id=request.session_id,
