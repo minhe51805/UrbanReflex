@@ -55,9 +55,16 @@ class WebCrawler:
         if parsed.netloc and parsed.netloc != urlparse(self.base_url).netloc:
             return False
             
-        # Skip common non-content URLs
+        # Skip common non-content URLs but allow help and documentation pages
         skip_patterns = ['/api/', '/admin', '/login', '/register', '.pdf', '.jpg', '.png', '.css', '.js']
-        return not any(pattern in url.lower() for pattern in skip_patterns)
+        # Always include help and documentation pages
+        include_patterns = ['/help', '/docs', '/guide', '/tutorial', '/about', '/introduction']
+        
+        url_lower = url.lower()
+        should_skip = any(pattern in url_lower for pattern in skip_patterns)
+        should_include = any(pattern in url_lower for pattern in include_patterns)
+        
+        return not should_skip or should_include
     
     def _normalize_url(self, url: str) -> str:
         """Normalize URL to absolute form."""
@@ -77,10 +84,11 @@ class WebCrawler:
         title = soup.find('title')
         title_text = title.get_text().strip() if title else ''
         
-        # Extract main content
+        # Extract main content with priority for help/documentation
         content_selectors = [
-            'main', 'article', '.content', '.documentation', 
-            '.docs', '#content', '.main-content'
+            'main', 'article', '.content', '.documentation',
+            '.docs', '#content', '.main-content', '.help-content',
+            '.guide', '.tutorial', '.about-section'
         ]
         
         main_content = None
@@ -91,6 +99,14 @@ class WebCrawler:
         
         if not main_content:
             main_content = soup.find('body')
+        
+        # Also extract navigation and help links
+        nav_links = []
+        for nav in soup.find_all(['nav', 'menu', '.navigation']):
+            for link in nav.find_all('a', href=True):
+                href = link['href']
+                if self._is_valid_url(href):
+                    nav_links.append(self._normalize_url(href))
         
         # Extract text and clean it
         if main_content:
@@ -116,9 +132,35 @@ class WebCrawler:
             'title': title_text,
             'description': description,
             'content': text_content,
-            'links': links,
-            'crawled_at': time.time()
+            'links': links + nav_links,  # Include navigation links
+            'crawled_at': time.time(),
+            'content_type': self._classify_content_type(title_text, text_content)
         }
+    
+    def _classify_content_type(self, title: str, content: str) -> str:
+        """
+        Classify the type of content for better organization.
+        
+        Args:
+            title: Page title
+            content: Page content
+            
+        Returns:
+            Content type classification
+        """
+        title_lower = title.lower()
+        content_lower = content.lower()
+        
+        if any(keyword in title_lower for keyword in ['guide', 'help', 'tutorial', 'how to']):
+            return 'help'
+        elif any(keyword in title_lower for keyword in ['api', 'endpoint', 'documentation']):
+            return 'api'
+        elif any(keyword in title_lower for keyword in ['about', 'introduction', 'overview']):
+            return 'about'
+        elif any(keyword in title_lower for keyword in ['report', 'submit', 'issue']):
+            return 'reporting'
+        else:
+            return 'general'
     
     async def crawl_page(self, url: str) -> Dict:
         """Crawl a single page and extract content."""
