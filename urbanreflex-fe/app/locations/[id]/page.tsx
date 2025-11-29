@@ -7,7 +7,7 @@
 
 import { notFound } from 'next/navigation';
 import LocationDetailClient from '@/components/locations/LocationDetailClient';
-import { openaqClient } from '@/lib/api/openaq-client';
+import { orionClient } from '@/lib/api/orion-client';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -22,13 +22,14 @@ export default async function LocationDetailPage({ params }: PageProps) {
   }
 
   try {
-    const location = await openaqClient.getLocation(locationId);
-    
+    // Use Orion client to fetch from NGSI-LD
+    const location = await orionClient.getLocation(locationId);
+
     if (!location) {
       notFound();
     }
 
-    return <LocationDetailClient location={location} />;
+    return <LocationDetailClient location={location} useOrion={true} />;
   } catch (error) {
     console.error('Error loading location:', error);
     notFound();

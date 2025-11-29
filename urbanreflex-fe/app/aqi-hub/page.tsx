@@ -69,6 +69,24 @@ const aqiLevels = [
 
 const countryAQIs = [
   {
+    country: 'UrbanReflex NGSI-LD',
+    flag: '🌐',
+    name: 'UrbanReflex AQI',
+    description: 'Real-time air quality data from UrbanReflex NGSI-LD Context Broker with standardized measurements.',
+    pollutants: ['PM2.5', 'PM10', 'O3', 'NO2', 'SO2', 'CO'],
+    scale: '0-500',
+    breakpoints: 'Real-time monitoring with 6 health categories'
+  },
+  {
+    country: 'Vietnam',
+    flag: '🇻🇳',
+    name: 'Vietnam AQI',
+    description: 'Vietnam\'s national air quality standard based on major pollutants.',
+    pollutants: ['PM2.5', 'PM10', 'O3', 'NO2', 'SO2', 'CO'],
+    scale: '0-500',
+    breakpoints: '6 levels from Good to Hazardous'
+  },
+  {
     country: 'United States',
     flag: '🇺🇸',
     name: 'US EPA AQI',
@@ -76,33 +94,6 @@ const countryAQIs = [
     pollutants: ['PM2.5', 'PM10', 'O3', 'NO2', 'SO2', 'CO'],
     scale: '0-500',
     breakpoints: 'Non-linear scale with 6 categories'
-  },
-  {
-    country: 'European Union',
-    flag: '🇪🇺',
-    name: 'CAQI (Common Air Quality Index)',
-    description: 'European Air Quality Index used across EU member states.',
-    pollutants: ['PM2.5', 'PM10', 'O3', 'NO2'],
-    scale: '0-100+',
-    breakpoints: '5 categories with hourly and daily indices'
-  },
-  {
-    country: 'United Kingdom',
-    flag: '🇬🇧',
-    name: 'DAQI (Daily Air Quality Index)',
-    description: 'UK air quality index providing health advice for different groups.',
-    pollutants: ['PM2.5', 'PM10', 'O3', 'NO2', 'SO2'],
-    scale: '1-10',
-    breakpoints: '4 bands: Low (1-3), Moderate (4-6), High (7-9), Very High (10)'
-  },
-  {
-    country: 'India',
-    flag: '🇮🇳',
-    name: 'AQI (National Air Quality Index)',
-    description: 'India\'s national AQI launched in 2014 for major cities.',
-    pollutants: ['PM2.5', 'PM10', 'O3', 'NO2', 'SO2', 'CO', 'NH3', 'Pb'],
-    scale: '0-500',
-    breakpoints: '6 categories similar to US EPA'
   },
   {
     country: 'China',
@@ -114,13 +105,22 @@ const countryAQIs = [
     breakpoints: '6 levels from Excellent to Severely Polluted'
   },
   {
-    country: 'Australia',
-    flag: '🇦🇺',
-    name: 'Air Quality Categories',
-    description: 'Australian air quality reporting system.',
-    pollutants: ['PM2.5', 'PM10', 'O3', 'NO2', 'SO2', 'CO'],
-    scale: 'Good to Hazardous',
-    breakpoints: '6 categories with health messages'
+    country: 'India',
+    flag: '🇮🇳',
+    name: 'AQI (National Air Quality Index)',
+    description: 'India\'s national AQI launched in 2014 for major cities.',
+    pollutants: ['PM2.5', 'PM10', 'O3', 'NO2', 'SO2', 'CO', 'NH3', 'Pb'],
+    scale: '0-500',
+    breakpoints: '6 categories similar to US EPA'
+  },
+  {
+    country: 'European Union',
+    flag: '🇪🇺',
+    name: 'CAQI (Common Air Quality Index)',
+    description: 'European Air Quality Index used across EU member states.',
+    pollutants: ['PM2.5', 'PM10', 'O3', 'NO2'],
+    scale: '0-100+',
+    breakpoints: '5 categories with hourly and daily indices'
   }
 ];
 
