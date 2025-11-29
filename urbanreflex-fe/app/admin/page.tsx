@@ -1,9 +1,17 @@
+/**
+ * Author: Trương Dương Bảo Minh (minhe51805)
+ * Create at: 20-11-2025
+ * Update at: 25-11-2025
+ * Description: Admin dashboard page with tabs for reports management and user management
+ */
+
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { Shield, User, CheckCircle, XCircle } from 'lucide-react';
+import { Shield, User, CheckCircle, XCircle, AlertTriangle, Users } from 'lucide-react';
+import ReportsManagement from '@/components/admin/ReportsManagement';
 
 interface UserForAdmin {
   id: string;
@@ -19,6 +27,7 @@ export default function AdminPage() {
   const [users, setUsers] = useState<UserForAdmin[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState<'users' | 'reports'>('reports');
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
@@ -87,7 +96,38 @@ export default function AdminPage() {
       <div className="max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold text-slate-900 mb-6">Admin Dashboard</h1>
         {error && <p className="text-red-500 bg-red-100 p-3 rounded-lg mb-4">{error}</p>}
-        <div className="bg-white shadow-lg rounded-2xl overflow-hidden">
+
+        {/* Tabs */}
+        <div className="flex gap-2 mb-6">
+          <button
+            onClick={() => setActiveTab('reports')}
+            className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-colors ${
+              activeTab === 'reports'
+                ? 'bg-orange-500 text-white shadow-lg'
+                : 'bg-white text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            <AlertTriangle className="h-5 w-5" />
+            Reports Management
+          </button>
+          <button
+            onClick={() => setActiveTab('users')}
+            className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-colors ${
+              activeTab === 'users'
+                ? 'bg-orange-500 text-white shadow-lg'
+                : 'bg-white text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            <Users className="h-5 w-5" />
+            User Management
+          </button>
+        </div>
+
+        {/* Content */}
+        {activeTab === 'reports' ? (
+          <ReportsManagement />
+        ) : (
+          <div className="bg-white shadow-lg rounded-2xl overflow-hidden">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -132,7 +172,8 @@ export default function AdminPage() {
               ))}
             </tbody>
           </table>
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
