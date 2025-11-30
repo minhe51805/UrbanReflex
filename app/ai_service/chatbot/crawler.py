@@ -1,7 +1,7 @@
 """
 Author: Trần Tuấn Anh
 Created at: 2025-11-28
-Updated at: 2025-11-28
+Updated at: 2025-11-30
 Description: Web crawler module for collecting data from UrbanReflex website.
              Extracts text content, metadata, and prepares data for embedding.
 """
