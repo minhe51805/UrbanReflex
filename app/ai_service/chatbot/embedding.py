@@ -333,6 +333,9 @@ async def index_website_data(base_url: str, crawled_data: List[Dict] = None) -> 
     Returns:
         True if successful, False otherwise
     """
+    import logging
+    logger = logging.getLogger(__name__)
+    
     try:
         from app.ai_service.chatbot.crawler import WebCrawler
         
