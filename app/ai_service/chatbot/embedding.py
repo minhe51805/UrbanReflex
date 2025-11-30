@@ -337,7 +337,7 @@ async def index_website_data(base_url: str, crawled_data: List[Dict] = None) -> 
     logger = logging.getLogger(__name__)
     
     try:
-        from app.ai_service.chatbot.crawler import WebCrawler
+        from app.ai_service.chatbot.crawler import WebCrawler, crawl_website
         
         # Get embedding manager
         embedding_manager = await get_embedding_manager()
@@ -345,8 +345,7 @@ async def index_website_data(base_url: str, crawled_data: List[Dict] = None) -> 
         # If no crawled data provided, crawl the website
         if crawled_data is None:
             logger.info(f"Crawling website: {base_url}")
-            crawler = WebCrawler(base_url=base_url)
-            crawled_data = await crawler.crawl_website(max_pages=50)
+            crawled_data = await crawl_website(base_url=base_url, max_pages=50)
             
             if not crawled_data:
                 logger.error("No data crawled from website")
