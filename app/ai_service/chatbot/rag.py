@@ -76,14 +76,13 @@ class RAGSystem:
         - Contact information if additional support is needed
         """
     
-    async def generate_response(self, query: str, session_id: str = None, user_id: str = None, context_docs: List[Dict] = None) -> Dict[str, Any]:
+    async def generate_response(self, query: str, session_id: str = None, context_docs: List[Dict] = None) -> Dict[str, Any]:
         """
         Generate a response using RAG approach with chat history.
         
         Args:
             query: User's question
             session_id: Session identifier for context
-            user_id: User identifier for personalization
             context_docs: Retrieved context documents (if None, will search)
             
         Returns:
@@ -137,7 +136,7 @@ class RAGSystem:
             
             # Save chat messages if session_id provided
             if session_id:
-                await self._save_chat_message(session_id, user_id, query, response_text)
+                await self._save_chat_message(session_id, query, response_text)
             
             return {
                 'response': response_text,
@@ -306,7 +305,7 @@ class RAGSystem:
         """
         try:
             from app.models.chat_history import ChatSession
-            db = await get_database()
+            db = get_database()
             session = await db.chat_sessions.find_one({"session_id": session_id})
             
             if not session or not session.get('messages'):
@@ -327,18 +326,17 @@ class RAGSystem:
             print(f"Error getting chat history: {str(e)}")
             return ""
     
-    async def _save_chat_message(self, session_id: str, user_id: str, user_message: str, assistant_message: str):
+    async def _save_chat_message(self, session_id: str, user_message: str, assistant_message: str):
         """
         Save chat messages to database.
         
         Args:
             session_id: Session identifier
-            user_id: User identifier
             user_message: User's message
             assistant_message: Assistant's response
         """
         try:
-            db = await get_database()
+            db = get_database()
             
             # Create or update session
             now = datetime.utcnow()
@@ -358,21 +356,30 @@ class RAGSystem:
             )
             
             # Update session
-            await db.chat_sessions.update_one(
+            # First try to update existing session
+            result = await db.chat_sessions.update_one(
                 {"session_id": session_id},
                 {
                     "$set": {
-                        "user_id": user_id,
-                        "updated_at": now,
-                        "$push": {
-                            "messages": {
-                                "$each": [user_msg.model_dump(), assistant_msg.model_dump()]
-                            }
+                        "updated_at": now
+                    },
+                    "$push": {
+                        "messages": {
+                            "$each": [user_msg.model_dump(), assistant_msg.model_dump()]
                         }
                     }
-                },
-                upsert=True
+                }
             )
+            
+            # If no document was updated, create new one
+            if result.matched_count == 0:
+                await db.chat_sessions.insert_one({
+                    "session_id": session_id,
+                    "user_id": None,  # Can be updated later if user authenticates
+                    "messages": [user_msg.model_dump(), assistant_msg.model_dump()],
+                    "created_at": now,
+                    "updated_at": now
+                })
             
         except Exception as e:
             print(f"Error saving chat message: {str(e)}")
@@ -397,7 +404,7 @@ async def get_rag_system() -> RAGSystem:
     return _rag_system
 
 
-async def chat_with_rag(query: str, context_docs: List[Dict] = None) -> Dict[str, Any]:
+async def chat_with_rag(query: str, context_docs: List[Dict] = None, session_id: str = None) -> Dict[str, Any]:
     """
     Convenience function for chat interaction with RAG.
     
@@ -409,7 +416,7 @@ async def chat_with_rag(query: str, context_docs: List[Dict] = None) -> Dict[str
         Response dictionary
     """
     rag_system = await get_rag_system()
-    return await rag_system.generate_response(query, context_docs)
+    return await rag_system.generate_response(query, session_id, context_docs=context_docs)
 
 
 if __name__ == "__main__":
