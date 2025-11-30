@@ -8,7 +8,7 @@ Description: Configuration module for UrbanReflex.
 
 import os
 from dotenv import load_dotenv
-from motor.motor_asyncio import AsyncIOMotorClient
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
 # Load environment variables
 load_dotenv()
@@ -32,7 +32,7 @@ WEBSITE_CRAWL_URL = os.getenv("WEBSITE_CRAWL_URL", "https://urbanreflex.vn")
 client = None
 database = None
 
-def get_database() -> AsyncIOMotorClient:
+def get_database() -> AsyncIOMotorDatabase:
     """Get MongoDB database instance."""
     global client, database
     if client is None:
