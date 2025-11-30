@@ -1,7 +1,7 @@
 """
 Author: Trần Tuấn Anh
 Created at: 2025-11-28
-Updated at: 2025-11-28
+Updated at: 2025-11-30
 Description: Embedding module for UrbanReflex RAG system.
              Uses EmbedAnything library with Pinecone vector database.
 """
@@ -10,8 +10,8 @@ import os
 import asyncio
 from typing import List, Dict, Optional, Any
 import embed_anything
-from embed_anything.vectordb import PineconeAdapter
 from embed_anything import EmbeddingModel, WhichModel, TextEmbedConfig
+from pinecone import Pinecone, ServerlessSpec
 from app.config.config import PINECONE_API_KEY, PINECONE_INDEX_NAME
 import time
 
@@ -36,7 +36,7 @@ class EmbeddingManager:
         if not self.api_key:
             raise ValueError("Pinecone API key is required")
         
-        self.pinecone_adapter = None
+        self.pinecone_client = None
         self.embedding_model = None
         self.embed_config = TextEmbedConfig(chunk_size=512, batch_size=32)
         
@@ -48,25 +48,29 @@ class EmbeddingManager:
             recreate_index: Whether to recreate the index if it exists
         """
         try:
-            # Initialize Pinecone adapter
-            self.pinecone_adapter = PineconeAdapter(self.api_key)
+            # Initialize Pinecone client
+            self.pinecone_client = Pinecone(api_key=self.api_key)
             
             # Delete existing index if requested
             if recreate_index:
                 try:
-                    self.pinecone_adapter.delete_index(self.index_name)
+                    self.pinecone_client.delete_index(self.index_name)
                     print(f"Deleted existing index: {self.index_name}")
                 except Exception as e:
                     print(f"Could not delete index (may not exist): {e}")
             
             # Create new index with appropriate dimensions
             # Using CLIP model with 512 dimensions
-            self.pinecone_adapter.create_index(
-                dimension=512, 
-                metric="cosine",
-                index_name=self.index_name
-            )
-            print(f"Created/verified index: {self.index_name}")
+            if self.index_name not in self.pinecone_client.list_indexes().names():
+                self.pinecone_client.create_index(
+                    name=self.index_name,
+                    dimension=512,
+                    metric="cosine",
+                    spec=ServerlessSpec(cloud="aws", region="us-east-1")
+                )
+                print(f"Created index: {self.index_name}")
+            else:
+                print(f"Index {self.index_name} already exists")
             
             # Initialize CLIP embedding model
             self.embedding_model = EmbeddingModel.from_pretrained_hf(
@@ -89,7 +93,7 @@ class EmbeddingManager:
         Returns:
             True if successful, False otherwise
         """
-        if not self.pinecone_adapter or not self.embedding_model:
+        if not self.pinecone_client or not self.embedding_model:
             raise RuntimeError("Embedding manager not initialized. Call initialize() first.")
         
         try:
@@ -112,12 +116,37 @@ class EmbeddingManager:
             
             # Embed documents using EmbedAnything
             print(f"Embedding {len(documents)} documents...")
-            embedded_data = embed_anything.embed_file(
-                documents,
-                embedder=self.embedding_model,
-                adapter=self.pinecone_adapter,
-                config=self.embed_config
-            )
+            
+            # Get the Pinecone index
+            index = self.pinecone_client.Index(self.index_name)
+            
+            # Embed texts in batches
+            batch_size = self.embed_config.batch_size
+            for i in range(0, len(documents), batch_size):
+                batch = documents[i:i+batch_size]
+                texts_to_embed = [doc['text'] for doc in batch]
+                
+                # Embed the batch
+                embeddings = embed_anything.embed_text(
+                    texts_to_embed,
+                    embedder=self.embedding_model
+                )
+                
+                # Prepare vectors for upsert
+                vectors = []
+                for j, embedding_data in enumerate(embeddings):
+                    doc = batch[j]
+                    vectors.append({
+                        'id': doc['id'],
+                        'values': embedding_data['embedding'],
+                        'metadata': {
+                            'text': doc['text'],
+                            **doc['metadata']
+                        }
+                    })
+                
+                # Upsert to Pinecone
+                index.upsert(vectors=vectors)
             
             print(f"Successfully embedded {len(documents)} documents")
             return True
@@ -137,22 +166,25 @@ class EmbeddingManager:
         Returns:
             List of similar documents with metadata
         """
-        if not self.pinecone_adapter or not self.embedding_model:
+        if not self.pinecone_client or not self.embedding_model:
             raise RuntimeError("Embedding manager not initialized. Call initialize() first.")
         
         try:
             # Embed the query
-            query_embedding = embed_anything.embed_text(
+            query_embeddings = embed_anything.embed_text(
                 [query],
                 embedder=self.embedding_model
             )
             
-            if not query_embedding:
+            if not query_embeddings:
                 return []
             
+            # Get the Pinecone index
+            index = self.pinecone_client.Index(self.index_name)
+            
             # Search in Pinecone
-            results = self.pinecone_adapter.query(
-                query_embedding[0]['embedding'],
+            results = index.query(
+                vector=query_embeddings[0]['embedding'],
                 top_k=top_k,
                 include_metadata=True
             )
@@ -259,7 +291,7 @@ async def index_website_data(crawled_data: List[Dict] = None, base_url: str = No
     Returns:
         True if successful, False otherwise
     """
-    from app.chatbot.crawler import crawl_website
+    from app.ai_service.chatbot.crawler import crawl_website
     
     # Get embedding manager
     manager = await get_embedding_manager()
