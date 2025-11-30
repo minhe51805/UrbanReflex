@@ -43,7 +43,7 @@ class RAGSystem:
         
         # Configure Gemini
         genai.configure(api_key=self.api_key)
-        self.model = genai.GenerativeModel('gemini-pro')
+        self.model = genai.GenerativeModel('gemini-2.5-flash')
         
         # System prompt for UrbanReflex help assistant
         self.system_prompt = """

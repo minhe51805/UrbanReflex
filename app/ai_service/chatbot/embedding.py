@@ -8,9 +8,11 @@ Description: Embedding module for UrbanReflex RAG system.
 
 import os
 import asyncio
+import tempfile
 from typing import List, Dict, Optional, Any
 import embed_anything
 from embed_anything import EmbeddingModel, WhichModel, TextEmbedConfig
+from app.ai_service.chatbot.pinecone_adapter import PineconeAdapter
 from pinecone import Pinecone, ServerlessSpec
 from app.config.config import PINECONE_API_KEY, PINECONE_INDEX_NAME
 import time
@@ -38,6 +40,7 @@ class EmbeddingManager:
         
         self.pinecone_client = None
         self.embedding_model = None
+        self.pinecone_adapter = None
         self.embed_config = TextEmbedConfig(chunk_size=512, batch_size=32)
         
     async def initialize(self, recreate_index: bool = False):
@@ -51,10 +54,13 @@ class EmbeddingManager:
             # Initialize Pinecone client
             self.pinecone_client = Pinecone(api_key=self.api_key)
             
+            # Initialize PineconeAdapter for EmbedAnything
+            self.pinecone_adapter = PineconeAdapter(api_key=self.api_key)
+            
             # Delete existing index if requested
             if recreate_index:
                 try:
-                    self.pinecone_client.delete_index(self.index_name)
+                    self.pinecone_adapter.delete_index(self.index_name)
                     print(f"Deleted existing index: {self.index_name}")
                 except Exception as e:
                     print(f"Could not delete index (may not exist): {e}")
@@ -93,90 +99,74 @@ class EmbeddingManager:
         Returns:
             True if successful, False otherwise
         """
-        if not self.pinecone_client or not self.embedding_model:
+        if not self.pinecone_adapter or not self.embedding_model:
             raise RuntimeError("Embedding manager not initialized. Call initialize() first.")
         
         try:
-            # Prepare data for embedding
-            documents = []
-            for i, text_data in enumerate(texts):
-                if not text_data.get('content'):
-                    continue
-                    
-                doc = {
-                    'id': text_data.get('id', f"doc_{i}_{int(time.time())}"),
-                    'text': text_data['content'],
-                    'metadata': text_data.get('metadata', {})
-                }
-                documents.append(doc)
-            
-            if not documents:
-                print("No valid documents to embed")
-                return False
-            
-            # Embed documents using EmbedAnything
-            print(f"Embedding {len(documents)} documents...")
-            
-            # Get Pinecone index
-            index = self.pinecone_client.Index(self.index_name)
-            
-            # Embed texts in batches
-            batch_size = self.embed_config.batch_size
-            for i in range(0, len(documents), batch_size):
-                batch = documents[i:i+batch_size]
-                texts_to_embed = [doc['text'] for doc in batch]
+            # Create temporary files for embedding with EmbedAnything
+            with tempfile.TemporaryDirectory() as temp_dir:
+                file_paths = []
                 
-                # Embed batch using correct API
-                try:
-                    # Try to use embed_anything.embed_text function first
-                    embeddings = embed_anything.embed_text(
-                        texts_to_embed,
-                        embedder=self.embedding_model
-                    )
-                except (AttributeError, TypeError):
-                    # Fallback to direct model call
-                    print("Using fallback embedding method...")
-                    embeddings = []
-                    for text in texts_to_embed:
-                        try:
-                            # Try different method names
-                            result = self.embedding_model(text)
-                            embeddings.append({'embedding': result})
-                        except Exception as e:
-                            print(f"Model call failed: {e}")
-                            # Try another approach
-                            try:
-                                result = self.embedding_model.forward([text])
-                                embeddings.append({'embedding': result[0]})
-                            except Exception as e2:
-                                print(f"Forward call failed: {e2}")
-                                # Try encode method
-                                import torch
-                                with torch.no_grad():
-                                    result = self.embedding_model.encode(text)
-                                    embeddings.append({'embedding': result})
+                # Create temporary text files
+                for i, text_data in enumerate(texts):
+                    if not text_data.get('content'):
+                        continue
+                        
+                    file_path = os.path.join(temp_dir, f"doc_{i}.txt")
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        f.write(text_data['content'])
+                    file_paths.append(file_path)
                 
-                # Prepare vectors for upsert
-                vectors = []
-                for j, embedding_data in enumerate(embeddings):
-                    doc = batch[j]
-                    vectors.append({
-                        'id': doc['id'],
-                        'values': embedding_data['embedding'] if isinstance(embedding_data, dict) else embedding_data,
-                        'metadata': {
-                            'text': doc['text'],
-                            **doc['metadata']
-                        }
-                    })
+                if not file_paths:
+                    print("No valid documents to embed")
+                    return False
                 
-                # Upsert to Pinecone
-                index.upsert(vectors=vectors)
-            
-            print(f"Successfully embedded {len(documents)} documents")
-            return True
+                print(f"Embedding {len(file_paths)} documents...")
+                
+                # Embed files with Pinecone adapter using EmbedAnything
+                embed_data_list = embed_anything.embed_files_batch(
+                    files=file_paths,
+                    embedder=self.embedding_model,
+                    config=self.embed_config,
+                    adapter=self.pinecone_adapter
+                )
+                
+                print(f"Successfully embedded {len(embed_data_list)} documents")
+                return True
             
         except Exception as e:
             print(f"Error embedding texts: {str(e)}")
+            return False
+    
+    async def embed_webpage(self, url: str) -> bool:
+        """
+        Embed and store a webpage directly using EmbedAnything.
+        
+        Args:
+            url: URL of the webpage to embed
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        if not self.pinecone_adapter or not self.embedding_model:
+            raise RuntimeError("Embedding manager not initialized. Call initialize() first.")
+        
+        try:
+            print(f"Embedding webpage: {url}")
+            
+            # Embed webpage directly with Pinecone adapter
+            embed_data_list = embed_anything.embed_webpage(
+                url=url,
+                embedder=self.embedding_model,
+                config=self.embed_config,
+                adapter=self.pinecone_adapter
+            )
+            
+            print(f"Successfully embedded webpage {url} with {len(embed_data_list)} chunks")
+            return True
+            
+        except Exception as e:
+            print(f"Error embedding webpage: {str(e)}")
             return False
     
     async def search_similar(self, query: str, top_k: int = 5) -> List[Dict]:
@@ -195,32 +185,10 @@ class EmbeddingManager:
         
         try:
             # Embed query using correct API
-            try:
-                # Try to use embed_anything.embed_text function first
-                query_embeddings = embed_anything.embed_text(
-                    [query],
-                    embedder=self.embedding_model
-                )
-            except (AttributeError, TypeError):
-                # Fallback to direct model call
-                print("Using fallback query embedding method...")
-                try:
-                    # Try different method names
-                    query_result = self.embedding_model(query)
-                    query_embeddings = [{'embedding': query_result}]
-                except Exception as e:
-                    print(f"Model call failed: {e}")
-                    # Try another approach
-                    try:
-                        query_result = self.embedding_model.forward([query])
-                        query_embeddings = [{'embedding': query_result[0]}]
-                    except Exception as e2:
-                        print(f"Forward call failed: {e2}")
-                        # Try encode method
-                        import torch
-                        with torch.no_grad():
-                            query_result = self.embedding_model.encode(query)
-                            query_embeddings = [{'embedding': query_result}]
+            query_embeddings = embed_anything.embed_query(
+                [query],
+                embedder=self.embedding_model
+            )
             
             if not query_embeddings:
                 return []
@@ -230,7 +198,7 @@ class EmbeddingManager:
             
             # Search in Pinecone
             results = index.query(
-                vector=query_embeddings[0]['embedding'] if isinstance(query_embeddings[0], dict) else query_embeddings[0],
+                vector=query_embeddings[0].embedding,
                 top_k=top_k,
                 include_metadata=True
             )
@@ -304,6 +272,34 @@ class EmbeddingManager:
         
         # Embed documents
         return await self.embed_texts(documents)
+    
+    async def get_stats(self) -> Dict[str, Any]:
+        """
+        Get statistics about the embedding service.
+        
+        Returns:
+            Dictionary with service statistics
+        """
+        stats = {
+            "model_initialized": self.embedding_model is not None,
+            "pinecone_connected": self.pinecone_client is not None,
+            "pinecone_adapter_initialized": self.pinecone_adapter is not None,
+            "index_name": self.index_name
+        }
+        
+        # Get index stats if available
+        if self.pinecone_client:
+            try:
+                index = self.pinecone_client.Index(self.index_name)
+                index_stats = index.describe_index_stats()
+                stats["vector_count"] = index_stats.total_vector_count
+                stats["index_size"] = index_stats.index_size
+            except Exception as e:
+                print(f"Failed to get index stats: {str(e)}")
+                stats["vector_count"] = "unknown"
+                stats["index_size"] = "unknown"
+        
+        return stats
 
 
 # Global embedding manager instance
@@ -326,63 +322,44 @@ async def get_embedding_manager() -> EmbeddingManager:
     return _embedding_manager
 
 
-async def index_website_data(crawled_data: List[Dict] = None, base_url: str = None) -> bool:
+async def index_website_data(base_url: str, crawled_data: List[Dict] = None) -> bool:
     """
-    Convenience function to crawl and index website data.
+    Index website data for RAG system.
     
     Args:
-        crawled_data: Pre-crawled data (if None, will crawl base_url)
-        base_url: URL to crawl (used if crawled_data is None)
+        base_url: Base URL to crawl (if crawled_data is None)
+        crawled_data: Pre-crawled data (if provided, skips crawling)
         
     Returns:
         True if successful, False otherwise
     """
-    from app.ai_service.chatbot.crawler import crawl_website
-    
-    # Get embedding manager
-    manager = await get_embedding_manager()
-    
-    # Get data if not provided
-    if crawled_data is None:
-        if not base_url:
-            raise ValueError("Either crawled_data or base_url must be provided")
-        crawled_data = await crawl_website(base_url)
-    
-    # Process and embed data
-    return await manager.process_crawled_data(crawled_data)
-
-
-if __name__ == "__main__":
-    # Example usage
-    async def main():
-        try:
-            # Initialize embedding manager
-            manager = EmbeddingManager()
-            await manager.initialize(recreate_index=True)
+    try:
+        from app.ai_service.chatbot.crawler import WebCrawler
+        
+        # Get embedding manager
+        embedding_manager = await get_embedding_manager()
+        
+        # If no crawled data provided, crawl the website
+        if crawled_data is None:
+            logger.info(f"Crawling website: {base_url}")
+            crawler = WebCrawler(base_url=base_url)
+            crawled_data = await crawler.crawl_website(max_pages=50)
             
-            # Example documents
-            docs = [
-                {
-                    'id': 'doc1',
-                    'content': 'UrbanReflex is a smart city management platform that helps citizens report issues.',
-                    'metadata': {'source': 'documentation', 'category': 'overview'}
-                },
-                {
-                    'id': 'doc2', 
-                    'content': 'To report a streetlight issue, use the /api/v1/reports endpoint with location data.',
-                    'metadata': {'source': 'api', 'category': 'endpoints'}
-                }
-            ]
-            
-            # Embed documents
-            success = await manager.embed_texts(docs)
-            print(f"Embedding successful: {success}")
-            
-            # Search for similar documents
-            results = await manager.search_similar("How to report issues?")
-            print(f"Search results: {results}")
-            
-        except Exception as e:
-            print(f"Error: {str(e)}")
-    
-    asyncio.run(main())
+            if not crawled_data:
+                logger.error("No data crawled from website")
+                return False
+        
+        # Process crawled data and embed it
+        logger.info(f"Processing {len(crawled_data)} crawled pages...")
+        success = await embedding_manager.process_crawled_data(crawled_data)
+        
+        if success:
+            logger.info(f"Successfully indexed {len(crawled_data)} pages from {base_url}")
+        else:
+            logger.error(f"Failed to index data from {base_url}")
+        
+        return success
+        
+    except Exception as e:
+        logger.error(f"Error indexing website data: {str(e)}")
+        return False
