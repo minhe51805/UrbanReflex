@@ -26,7 +26,7 @@ app.include_router(auth.router, prefix="/auth", tags=["authentication"])
 app.include_router(items.router, prefix="/api/v1", tags=["items"])
 app.include_router(users.router, prefix="/api/v1", tags=["users"])
 app.include_router(admin.router, prefix="/admin", tags=["admin"])
-app.include_router(chatbot.router, prefix="/chatbot", tags=["chatbot"])
+app.include_router(chatbot.router, prefix="/ai-service/chatbot", tags=["chatbot"])
 
 @app.get("/")
 async def root():

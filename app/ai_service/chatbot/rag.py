@@ -11,9 +11,15 @@ import os
 import asyncio
 from typing import List, Dict, Optional, Any
 import google.generativeai as genai
-from app.config.config import GEMINI_API_KEY, get_database
+import os
+from dotenv import load_dotenv
+from google.generativeai import genai
 from app.ai_service.chatbot.embedding import get_embedding_manager
 from app.models.chat_history import ChatSession, ChatMessage
+
+# Load environment variables
+load_dotenv()
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 
 class RAGSystem:
@@ -30,7 +36,7 @@ class RAGSystem:
         Args:
             api_key: Gemini API key (defaults to environment variable)
         """
-        self.api_key = api_key or GEMINI_API_KEY
+        self.api_key = GEMINI_API_KEY
         
         if not self.api_key:
             raise ValueError("Gemini API key is required")
@@ -299,6 +305,7 @@ class RAGSystem:
             Formatted chat history string
         """
         try:
+            from app.models.chat_history import ChatSession
             db = await get_database()
             session = await db.chat_sessions.find_one({"session_id": session_id})
             

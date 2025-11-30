@@ -9,7 +9,14 @@ Description: Chat history model for UrbanReflex RAG system.
 from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel, Field
+import os
+from dotenv import load_dotenv
+from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo.errors import ConnectionFailure
 from bson import ObjectId
+
+# Load environment variables
+load_dotenv()
 
 
 class ChatMessage(BaseModel):
