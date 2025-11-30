@@ -12,7 +12,6 @@ import tempfile
 from typing import List, Dict, Optional, Any
 import embed_anything
 from embed_anything import EmbeddingModel, WhichModel, TextEmbedConfig
-from app.ai_service.chatbot.pinecone_adapter import PineconeAdapter
 from pinecone import Pinecone, ServerlessSpec
 from app.config.config import PINECONE_API_KEY, PINECONE_INDEX_NAME
 import time
@@ -40,8 +39,7 @@ class EmbeddingManager:
         
         self.pinecone_client = None
         self.embedding_model = None
-        self.pinecone_adapter = None
-        self.embed_config = TextEmbedConfig(chunk_size=256, batch_size=4)  # Very small batch size to match PineconeAdapter
+        self.embed_config = TextEmbedConfig(chunk_size=512, batch_size=8)  # Smaller batch size for stability
         
     async def initialize(self, recreate_index: bool = False):
         """
@@ -54,23 +52,20 @@ class EmbeddingManager:
             # Initialize Pinecone client
             self.pinecone_client = Pinecone(api_key=self.api_key)
             
-            # Initialize PineconeAdapter for EmbedAnything
-            self.pinecone_adapter = PineconeAdapter(api_key=self.api_key)
-            
             # Delete existing index if requested
             if recreate_index:
                 try:
-                    self.pinecone_adapter.delete_index(self.index_name)
+                    self.pinecone_client.delete_index(self.index_name)
                     print(f"Deleted existing index: {self.index_name}")
                 except Exception as e:
                     print(f"Could not delete index (may not exist): {e}")
             
             # Create new index with appropriate dimensions
-            # Using CLIP model with 512 dimensions
+            # Using BERT model with 384 dimensions
             if self.index_name not in self.pinecone_client.list_indexes().names():
                 self.pinecone_client.create_index(
                     name=self.index_name,
-                    dimension=512,
+                    dimension=384,
                     metric="cosine",
                     spec=ServerlessSpec(cloud="aws", region="us-east-1")
                 )
@@ -78,13 +73,13 @@ class EmbeddingManager:
             else:
                 print(f"Index {self.index_name} already exists")
             
-            # Initialize CLIP embedding model
+            # Initialize BERT embedding model for text
             self.embedding_model = EmbeddingModel.from_pretrained_hf(
-                WhichModel.Clip, 
-                "openai/clip-vit-base-patch16", 
+                WhichModel.Bert, 
+                "sentence-transformers/all-MiniLM-L6-v2", 
                 revision="main"
             )
-            print("Initialized CLIP embedding model")
+            print("Initialized BERT embedding model")
             
         except Exception as e:
             raise RuntimeError(f"Failed to initialize embedding manager: {str(e)}")
@@ -99,74 +94,66 @@ class EmbeddingManager:
         Returns:
             True if successful, False otherwise
         """
-        if not self.pinecone_adapter or not self.embedding_model:
+        if not self.pinecone_client or not self.embedding_model:
             raise RuntimeError("Embedding manager not initialized. Call initialize() first.")
         
         try:
-            # Create temporary files for embedding with EmbedAnything
-            with tempfile.TemporaryDirectory() as temp_dir:
-                file_paths = []
+            # Prepare data for embedding
+            documents = []
+            for i, text_data in enumerate(texts):
+                if not text_data.get('content'):
+                    continue
+                    
+                doc = {
+                    'id': text_data.get('id', f"doc_{i}_{int(time.time())}"),
+                    'text': text_data['content'],
+                    'metadata': text_data.get('metadata', {})
+                }
+                documents.append(doc)
+            
+            if not documents:
+                print("No valid documents to embed")
+                return False
+            
+            # Embed documents using EmbedAnything
+            print(f"Embedding {len(documents)} documents...")
+            
+            # Get the Pinecone index
+            index = self.pinecone_client.Index(self.index_name)
+            
+            # Embed texts in batches
+            batch_size = self.embed_config.batch_size
+            for i in range(0, len(documents), batch_size):
+                batch = documents[i:i+batch_size]
+                texts_to_embed = [doc['text'] for doc in batch]
                 
-                # Create temporary text files
-                for i, text_data in enumerate(texts):
-                    if not text_data.get('content'):
-                        continue
-                        
-                    file_path = os.path.join(temp_dir, f"doc_{i}.txt")
-                    with open(file_path, 'w', encoding='utf-8') as f:
-                        f.write(text_data['content'])
-                    file_paths.append(file_path)
-                
-                if not file_paths:
-                    print("No valid documents to embed")
-                    return False
-                
-                print(f"Embedding {len(file_paths)} documents...")
-                
-                # Embed files with Pinecone adapter using EmbedAnything
-                embed_data_list = embed_anything.embed_directory(
-                    directory=temp_dir,
-                    embedder=self.embedding_model,
-                    config=self.embed_config,
-                    adapter=self.pinecone_adapter
+                # Embed the batch
+                embeddings = embed_anything.embed_query(
+                    texts_to_embed,
+                    embedder=self.embedding_model
                 )
                 
-                print(f"Successfully embedded {len(embed_data_list)} documents")
-                return True
+                # Prepare vectors for upsert
+                vectors = []
+                for j, embedding_data in enumerate(embeddings):
+                    doc = batch[j]
+                    vectors.append({
+                        'id': doc['id'],
+                        'values': embedding_data.embedding,
+                        'metadata': {
+                            'text': doc['text'],
+                            **doc['metadata']
+                        }
+                    })
+                
+                # Upsert to Pinecone
+                index.upsert(vectors=vectors)
             
-        except Exception as e:
-            print(f"Error embedding texts: {str(e)}")
-            return False
-    
-    async def embed_webpage(self, url: str) -> bool:
-        """
-        Embed and store a webpage directly using EmbedAnything.
-        
-        Args:
-            url: URL of the webpage to embed
-            
-        Returns:
-            True if successful, False otherwise
-        """
-        if not self.pinecone_adapter or not self.embedding_model:
-            raise RuntimeError("Embedding manager not initialized. Call initialize() first.")
-        
-        try:
-            print(f"Embedding webpage: {url}")
-            
-            # Embed webpage directly with Pinecone adapter
-            embed_data_list = embed_anything.embed_webpage(
-                url=url,
-                embedder=self.embedding_model,
-                config=self.embed_config,
-                adapter=self.pinecone_adapter
-            )
-            
-            print(f"Successfully embedded webpage {url} with {len(embed_data_list)} chunks")
+            print(f"Successfully embedded {len(documents)} documents")
             return True
             
         except Exception as e:
-            print(f"Error embedding webpage: {str(e)}")
+            print(f"Error embedding texts: {str(e)}")
             return False
     
     async def search_similar(self, query: str, top_k: int = 5) -> List[Dict]:
@@ -283,7 +270,6 @@ class EmbeddingManager:
         stats = {
             "model_initialized": self.embedding_model is not None,
             "pinecone_connected": self.pinecone_client is not None,
-            "pinecone_adapter_initialized": self.pinecone_adapter is not None,
             "index_name": self.index_name
         }
         
