@@ -1,7 +1,7 @@
 """
 Author: Trần Tuấn Anh
 Created at: 2025-11-28
-Updated at: 2025-11-29
+Updated at: 2025-11-30
 Description: RAG (Retrieval-Augmented Generation) module for UrbanReflex chatbot.
              Integrates with Gemini API for intelligent responses based on retrieved context.
              Optimized for user support with detailed guidance and web links.
@@ -12,7 +12,7 @@ import asyncio
 from typing import List, Dict, Optional, Any
 import google.generativeai as genai
 from app.config.config import GEMINI_API_KEY, get_database
-from app.chatbot.embedding import get_embedding_manager
+from app.ai_service.chatbot.embedding import get_embedding_manager
 from app.models.chat_history import ChatSession, ChatMessage
 
 
