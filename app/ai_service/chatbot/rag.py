@@ -10,12 +10,12 @@ Description: RAG (Retrieval-Augmented Generation) module for UrbanReflex chatbot
 import os
 import asyncio
 from typing import List, Dict, Optional, Any
+from datetime import datetime
 import google.generativeai as genai
-import os
 from dotenv import load_dotenv
-from google.generativeai import genai
 from app.ai_service.chatbot.embedding import get_embedding_manager
 from app.models.chat_history import ChatSession, ChatMessage
+from app.config.config import get_database
 
 # Load environment variables
 load_dotenv()
