@@ -45,7 +45,7 @@ class EmbeddingManager:
         Initialize Pinecone connection and embedding model.
         
         Args:
-            recreate_index: Whether to recreate the index if it exists
+            recreate_index: Whether to recreate index if it exists
         """
         try:
             # Initialize Pinecone client
@@ -117,7 +117,7 @@ class EmbeddingManager:
             # Embed documents using EmbedAnything
             print(f"Embedding {len(documents)} documents...")
             
-            # Get the Pinecone index
+            # Get Pinecone index
             index = self.pinecone_client.Index(self.index_name)
             
             # Embed texts in batches
@@ -126,11 +126,8 @@ class EmbeddingManager:
                 batch = documents[i:i+batch_size]
                 texts_to_embed = [doc['text'] for doc in batch]
                 
-                # Embed the batch
-                embeddings = embed_anything.embed_text(
-                    texts_to_embed,
-                    embedder=self.embedding_model
-                )
+                # Embed batch using the correct API
+                embeddings = self.embedding_model.embed(texts_to_embed)
                 
                 # Prepare vectors for upsert
                 vectors = []
@@ -138,7 +135,7 @@ class EmbeddingManager:
                     doc = batch[j]
                     vectors.append({
                         'id': doc['id'],
-                        'values': embedding_data['embedding'],
+                        'values': embedding_data,
                         'metadata': {
                             'text': doc['text'],
                             **doc['metadata']
@@ -170,21 +167,18 @@ class EmbeddingManager:
             raise RuntimeError("Embedding manager not initialized. Call initialize() first.")
         
         try:
-            # Embed the query
-            query_embeddings = embed_anything.embed_text(
-                [query],
-                embedder=self.embedding_model
-            )
+            # Embed query using the correct API
+            query_embeddings = self.embedding_model.embed([query])
             
             if not query_embeddings:
                 return []
             
-            # Get the Pinecone index
+            # Get Pinecone index
             index = self.pinecone_client.Index(self.index_name)
             
             # Search in Pinecone
             results = index.query(
-                vector=query_embeddings[0]['embedding'],
+                vector=query_embeddings[0],
                 top_k=top_k,
                 include_metadata=True
             )
@@ -256,7 +250,7 @@ class EmbeddingManager:
                     'metadata': metadata
                 })
         
-        # Embed the documents
+        # Embed documents
         return await self.embed_texts(documents)
 
 
@@ -302,7 +296,7 @@ async def index_website_data(crawled_data: List[Dict] = None, base_url: str = No
             raise ValueError("Either crawled_data or base_url must be provided")
         crawled_data = await crawl_website(base_url)
     
-    # Process and embed the data
+    # Process and embed data
     return await manager.process_crawled_data(crawled_data)
 
 
