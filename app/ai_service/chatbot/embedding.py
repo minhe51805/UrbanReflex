@@ -124,8 +124,8 @@ class EmbeddingManager:
                 print(f"Embedding {len(file_paths)} documents...")
                 
                 # Embed files with Pinecone adapter using EmbedAnything
-                embed_data_list = embed_anything.embed_files_batch(
-                    files=file_paths,
+                embed_data_list = embed_anything.embed_directory(
+                    directory=temp_dir,
                     embedder=self.embedding_model,
                     config=self.embed_config,
                     adapter=self.pinecone_adapter
