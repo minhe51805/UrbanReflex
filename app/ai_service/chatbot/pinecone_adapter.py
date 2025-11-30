@@ -1,6 +1,7 @@
 """
 Author: Trần Tuấn Anh
 Created at: 2025-11-30
+Updated at: 2025-11-30
 Description: Custom PineconeAdapter for EmbedAnything library
              Implements the Adapter interface for Pinecone vector database
 """
@@ -110,12 +111,15 @@ class PineconeAdapter(Adapter):
         if data and isinstance(data[0], EmbedData):
             data = self.convert(data)
         
-        # Upsert in batches with error handling
-        batch_size = 50  # Smaller batch size to avoid chunk errors
+        # Upsert in batches with error handling and rate limiting
+        batch_size = 25  # Even smaller batch size to avoid capacity overflow
         for i in range(0, len(data), batch_size):
             batch = data[i:i+batch_size]
             try:
                 self.index.upsert(vectors=batch)
+                # Add small delay to avoid rate limiting
+                import time
+                time.sleep(0.1)  # 100ms delay between batches
             except Exception as e:
                 print(f"Error upserting batch {i//batch_size}: {str(e)}")
                 # Continue with next batch instead of failing completely

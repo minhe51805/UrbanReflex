@@ -41,7 +41,7 @@ class EmbeddingManager:
         self.pinecone_client = None
         self.embedding_model = None
         self.pinecone_adapter = None
-        self.embed_config = TextEmbedConfig(chunk_size=512, batch_size=32)
+        self.embed_config = TextEmbedConfig(chunk_size=256, batch_size=8)  # Smaller batch size to avoid capacity overflow
         
     async def initialize(self, recreate_index: bool = False):
         """
