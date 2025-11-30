@@ -31,7 +31,7 @@ WEBSITE_CRAWL_URL = os.getenv("WEBSITE_CRAWL_URL", "https://urbanreflex.example.
 VECTOR_DB_PATH = os.getenv("VECTOR_DB_PATH", "./data/vector_db")
 
 # Pinecone configuration
-PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+PINECONE_API_KEY = os.getenv("pcsk_3F66DN_3a2BiDHPM5BfWpPpPTFbK4KFpMvQQZAEALx3XJY8vzE2Awjpnyj9opX2YxYMLru")
 PINECONE_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME", "urbanreflex-help")
 
 # Database client
