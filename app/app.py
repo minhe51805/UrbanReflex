@@ -8,7 +8,8 @@ Description: Main FastAPI application instance for UrbanReflex.
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import items, users, auth, chatbot
+from app.routers import items, users, auth
+from app.ai_service.chatbot import chatbot
 from app.internal import admin
 
 app = FastAPI(title="UrbanReflex Backend", version="1.0.0")
