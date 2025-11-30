@@ -1,0 +1,59 @@
+{
+  "model": {
+    "name": "paraphrase-multilingual-MiniLM-L12-v2",
+    "cache_dir": ".cache/models"
+  },
+  "categories": {
+    "streetlight_broken": {
+      "description": "Đèn đường bị hỏng, không sáng, chập chờn, tối, đèn chiếu sáng công cộng không hoạt động, cột đèn bị gãy, bóng đèn cháy, hệ thống chiếu sáng lỗi",
+      "examples": [
+        "Đèn đường hỏng",
+        "Đèn không sáng",
+        "Cột đèn bị gãy"
+      ]
+    },
+    "waste_dump": {
+      "description": "Rác thải, xả rác bừa bãi, ô nhiễm môi trường, bốc mùi, đống rác lớn, vứt rác không đúng nơi quy định, rác thải sinh hoạt",
+      "examples": [
+        "Rác thải bừa bãi",
+        "Đống rác lớn bốc mùi"
+      ]
+    },
+    "road_damage": {
+      "description": "Ổ gà, đường hỏng, sụt lún, nứt, hư hỏng mặt đường, ổ voi, đường bị vỡ, mặt đường xuống cấp",
+      "examples": [
+        "Ổ gà nguy hiểm",
+        "Đường sụt lún"
+      ]
+    },
+    "flooding": {
+      "description": "Ngập nước, úng nước, hệ thống thoát nước không hoạt động, nước đọng, ngập lụt, nước không thoát được",
+      "examples": [
+        "Đường ngập nước",
+        "Thoát nước không hoạt động"
+      ]
+    },
+    "infrastructure_damage": {
+      "description": "Nắp cống vỡ, cống hở, cáp điện, dây điện bị hỏng, hạ tầng kỹ thuật bị hư hỏng, nắp cống bị mất",
+      "examples": [
+        "Nắp cống vỡ",
+        "Cáp điện bị hỏng"
+      ]
+    }
+  },
+  "priority": {
+    "keywords": {
+      "high": ["nguy hiểm", "khẩn cấp", "tai nạn", "cháy", "nổ"],
+      "medium": ["ảnh hưởng", "cản trở", "nhiều ngày"]
+    },
+    "default_by_category": {
+      "road_damage": "medium",
+      "flooding": "medium"
+    }
+  },
+  "thresholds": {
+    "min_confidence": 0.6,
+    "fallback_to_legacy": true
+  }
+}
+
