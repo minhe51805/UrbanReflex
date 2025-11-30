@@ -110,8 +110,13 @@ class PineconeAdapter(Adapter):
         if data and isinstance(data[0], EmbedData):
             data = self.convert(data)
         
-        # Upsert in batches
-        batch_size = 100
+        # Upsert in batches with error handling
+        batch_size = 50  # Smaller batch size to avoid chunk errors
         for i in range(0, len(data), batch_size):
             batch = data[i:i+batch_size]
-            self.index.upsert(vectors=batch)
+            try:
+                self.index.upsert(vectors=batch)
+            except Exception as e:
+                print(f"Error upserting batch {i//batch_size}: {str(e)}")
+                # Continue with next batch instead of failing completely
+                continue
