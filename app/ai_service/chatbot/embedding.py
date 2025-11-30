@@ -126,8 +126,35 @@ class EmbeddingManager:
                 batch = documents[i:i+batch_size]
                 texts_to_embed = [doc['text'] for doc in batch]
                 
-                # Embed batch using the correct API
-                embeddings = self.embedding_model.embed(texts_to_embed)
+                # Embed batch using correct API
+                try:
+                    # Try to use embed_anything.embed_text function first
+                    embeddings = embed_anything.embed_text(
+                        texts_to_embed,
+                        embedder=self.embedding_model
+                    )
+                except (AttributeError, TypeError):
+                    # Fallback to direct model call
+                    print("Using fallback embedding method...")
+                    embeddings = []
+                    for text in texts_to_embed:
+                        try:
+                            # Try different method names
+                            result = self.embedding_model(text)
+                            embeddings.append({'embedding': result})
+                        except Exception as e:
+                            print(f"Model call failed: {e}")
+                            # Try another approach
+                            try:
+                                result = self.embedding_model.forward([text])
+                                embeddings.append({'embedding': result[0]})
+                            except Exception as e2:
+                                print(f"Forward call failed: {e2}")
+                                # Try encode method
+                                import torch
+                                with torch.no_grad():
+                                    result = self.embedding_model.encode(text)
+                                    embeddings.append({'embedding': result})
                 
                 # Prepare vectors for upsert
                 vectors = []
@@ -135,7 +162,7 @@ class EmbeddingManager:
                     doc = batch[j]
                     vectors.append({
                         'id': doc['id'],
-                        'values': embedding_data,
+                        'values': embedding_data['embedding'] if isinstance(embedding_data, dict) else embedding_data,
                         'metadata': {
                             'text': doc['text'],
                             **doc['metadata']
@@ -167,8 +194,33 @@ class EmbeddingManager:
             raise RuntimeError("Embedding manager not initialized. Call initialize() first.")
         
         try:
-            # Embed query using the correct API
-            query_embeddings = self.embedding_model.embed([query])
+            # Embed query using correct API
+            try:
+                # Try to use embed_anything.embed_text function first
+                query_embeddings = embed_anything.embed_text(
+                    [query],
+                    embedder=self.embedding_model
+                )
+            except (AttributeError, TypeError):
+                # Fallback to direct model call
+                print("Using fallback query embedding method...")
+                try:
+                    # Try different method names
+                    query_result = self.embedding_model(query)
+                    query_embeddings = [{'embedding': query_result}]
+                except Exception as e:
+                    print(f"Model call failed: {e}")
+                    # Try another approach
+                    try:
+                        query_result = self.embedding_model.forward([query])
+                        query_embeddings = [{'embedding': query_result[0]}]
+                    except Exception as e2:
+                        print(f"Forward call failed: {e2}")
+                        # Try encode method
+                        import torch
+                        with torch.no_grad():
+                            query_result = self.embedding_model.encode(query)
+                            query_embeddings = [{'embedding': query_result}]
             
             if not query_embeddings:
                 return []
@@ -178,7 +230,7 @@ class EmbeddingManager:
             
             # Search in Pinecone
             results = index.query(
-                vector=query_embeddings[0],
+                vector=query_embeddings[0]['embedding'] if isinstance(query_embeddings[0], dict) else query_embeddings[0],
                 top_k=top_k,
                 include_metadata=True
             )
