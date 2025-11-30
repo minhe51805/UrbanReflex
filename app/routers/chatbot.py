@@ -59,8 +59,8 @@ class HealthStatus(BaseModel):
     overall: bool = Field(..., description="Overall system health")
     error: Optional[str] = Field(None, description="Error message if any component failed")
     timestamp: datetime = Field(default_factory=datetime.utcnow, description="Health check timestamp")
-from app.chatbot.rag import get_rag_system, chat_with_rag
-from app.chatbot.embedding import get_embedding_manager, index_website_data
+from app.ai_service.chatbot.rag import get_rag_system, chat_with_rag
+from app.ai_service.chatbot.embedding import get_embedding_manager, index_website_data
 from app.config.config import WEBSITE_CRAWL_URL
 import logging
 
