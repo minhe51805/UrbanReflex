@@ -1,7 +1,7 @@
 /**
  * Author: Trương Dương Bảo Minh (minhe51805)
  * Create at: 13-11-2025
- * Update at: 21-11-2025
+ * Update at: 29-11-2025
  * Description: Utility functions for formatting dates, numbers, AQI values, and CSS class names
  */
 
@@ -28,11 +28,24 @@ export function formatParameterValue(value: number, unit: string): string {
 
 export function getParameterDisplayName(parameterName: string): string {
   const displayNames: Record<string, string> = {
-    'pm25': 'PM₂.₅',
-    'pm10': 'PM₁₀',
-    'o3': 'O₃',
-    'no2': 'NO₂',
-    'so2': 'SO₂',
+    // Weather parameters
+    'temperature': 'TEMPERATURE',
+    'humidity': 'HUMIDITY',
+    'wind': 'WIND',
+    'weather': 'WEATHER',
+    'pressure': 'PRESSURE',
+    'windDirection': 'WINDDIRECTION',
+    'visibility': 'VISIBILITY',
+    'feelsLike': 'FEELSLIKE',
+    'precipitation': 'PRECIPITATION',
+    'cloudCover': 'CLOUDCOVER',
+    // AQI parameters
+    'aqi': 'AQI',
+    'pm25': 'PM2.5',
+    'pm10': 'PM10',
+    'o3': 'O3',
+    'no2': 'NO2',
+    'so2': 'SO2',
     'co': 'CO',
     'bc': 'BC',
   };
