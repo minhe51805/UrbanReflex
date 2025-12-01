@@ -1,7 +1,7 @@
 """
 Author: Trần Tuấn Anh
 Created at: 2025-11-27
-Updated at: 2025-11-30
+Updated at: 2025-12-1
 Description: Configuration loader for AI classifier modules.
 """
 
@@ -9,13 +9,20 @@ import json
 from pathlib import Path
 from typing import Dict, Any, List
 
-# Path to config file (same directory)
-CONFIG_FILE = Path(__file__).parent / "classifier_config.json"
+# Path to config files (same directory)
+CLASSIFIER_CONFIG_FILE = Path(__file__).parent / "classifier_config.json"
+PRIORITIZER_CONFIG_FILE = Path(__file__).parent / "prioritizer_config.json"
 
 
 def load_ai_config() -> Dict[str, Any]:
     """Loads AI classifier configuration from JSON file."""
-    with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+    with open(CLASSIFIER_CONFIG_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def load_prioritizer_config() -> Dict[str, Any]:
+    """Loads prioritizer configuration from JSON file."""
+    with open(PRIORITIZER_CONFIG_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -51,3 +58,39 @@ def get_thresholds() -> Dict[str, Any]:
     config = load_ai_config()
     return config["thresholds"]
 
+
+# Prioritizer config functions
+def get_category_weights() -> Dict[str, float]:
+    """Returns category weights for POI prioritization."""
+    config = load_prioritizer_config()
+    return config["category_weights"]
+
+
+def get_time_zones() -> Dict[str, Any]:
+    """Returns time zones configuration."""
+    config = load_prioritizer_config()
+    return config["time_zones"]
+
+
+def get_context_multipliers() -> Dict[str, float]:
+    """Returns context multipliers (report_category+poi_category)."""
+    config = load_prioritizer_config()
+    return config["context_multipliers"]
+
+
+def get_distance_decay_config() -> Dict[str, Any]:
+    """Returns distance decay parameters."""
+    config = load_prioritizer_config()
+    return config["distance_decay"]
+
+
+def get_priority_thresholds() -> Dict[str, float]:
+    """Returns priority thresholds for scoring."""
+    config = load_prioritizer_config()
+    return config["priority_thresholds"]
+
+
+def get_timezone() -> str:
+    """Returns timezone for time-aware calculations."""
+    config = load_prioritizer_config()
+    return config.get("timezone", "Asia/Ho_Chi_Minh")
