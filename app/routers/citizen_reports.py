@@ -154,7 +154,7 @@ async def classify_citizen_report(
                 }
             )
             
-            if response.status_code != 204:
+            if response.status_code not in [204, 207]:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail=f"Failed to update entity in Orion-LD: {response.text}"
@@ -167,21 +167,32 @@ async def classify_citizen_report(
         logger.info(f"Final Priority: {final_priority}")
         
         # Step 8: Get updated entity from Orion-LD
-        async with httpx.AsyncClient() as client:
-            response = await client.get(
-                f"{ORION_LD_URL}/entities/{entity_id}",
-                headers={"Accept": "application/ld+json"}
-            )
-            
-            if response.status_code != 200:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=f"Failed to retrieve updated entity: {response.text}"
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"{ORION_LD_URL}/entities/{entity_id}",
+                    headers={"Accept": "application/ld+json"}
                 )
+                
+                logger.info(f"GET updated entity response status: {response.status_code}")
+                
+                if response.status_code != 200:
+                    logger.error(f"Failed to retrieve updated entity. Status: {response.status_code}, Response: {response.text}")
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail=f"Failed to retrieve updated entity: {response.text}"
+                    )
+                
+                updated_entity = response.json()
+                logger.info(f"Successfully retrieved updated entity")
             
-            updated_entity = response.json()
-        
-        return updated_entity
+            return updated_entity
+        except Exception as e:
+            logger.error(f"Error in Step 8 - getting updated entity: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to retrieve updated entity: {str(e)}"
+            )
         
     except HTTPException:
         raise
