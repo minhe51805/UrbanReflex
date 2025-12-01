@@ -1,9 +1,8 @@
 /**
- * Data Helper Functions
- * Utilities for processing NGSI-LD data
- * 
- * Author: Backend Integration Team
- * Date: 2025-11-27
+ * Author: Trương Dương Bảo Minh (minhe51805)
+ * Create at: 27-11-2025
+ * Update at: 29-11-2025
+ * Description: Data helper utilities for processing NGSI-LD entities and smart city data
  */
 
 import { parseDateTime, getValue } from './format';
@@ -13,7 +12,7 @@ import { parseDateTime, getValue } from './format';
  */
 export function getLatestEntity<T extends { dateObserved?: any }>(entities: T[]): T | null {
   if (!entities || entities.length === 0) return null;
-  
+
   return entities.reduce((latest, current) => {
     const currentDate = parseDateTime(current.dateObserved);
     const latestDate = parseDateTime(latest.dateObserved);
@@ -26,17 +25,17 @@ export function getLatestEntity<T extends { dateObserved?: any }>(entities: T[])
  */
 export function getLatestPerStation(aqiEntities: any[]) {
   const grouped: Record<string, any> = {};
-  
+
   aqiEntities.forEach(entity => {
     const stationId = entity.stationId || entity.name || entity.id;
     const currentDate = parseDateTime(entity.dateObserved);
     const existing = grouped[stationId];
-    
+
     if (!existing || currentDate > parseDateTime(existing.dateObserved)) {
       grouped[stationId] = entity;
     }
   });
-  
+
   return Object.values(grouped).sort((a, b) => {
     const dateA = parseDateTime(a.dateObserved);
     const dateB = parseDateTime(b.dateObserved);
@@ -50,18 +49,18 @@ export function getLatestPerStation(aqiEntities: any[]) {
 export function calculateDewPoint(tempC: number | any, humidity: number | any): number | null {
   const temp = typeof tempC === 'object' ? getValue(tempC) : tempC;
   const hum = typeof humidity === 'object' ? getValue(humidity) : humidity;
-  
+
   if (!temp || !hum) return null;
-  
+
   // Convert humidity to 0-1 range if needed
   const h = hum > 1 ? hum / 100 : hum;
-  
+
   // Magnus formula approximation
   const a = 17.27;
   const b = 237.7;
   const alpha = ((a * temp) / (b + temp)) + Math.log(h);
   const dewPoint = (b * alpha) / (a - alpha);
-  
+
   return Math.round(dewPoint * 10) / 10;
 }
 
@@ -72,7 +71,7 @@ export function getCenterPoint(coordinates: number[][]): [number, number] {
   if (!coordinates || coordinates.length === 0) {
     return [0, 0];
   }
-  
+
   const midIndex = Math.floor(coordinates.length / 2);
   return coordinates[midIndex] as [number, number];
 }
@@ -81,8 +80,8 @@ export function getCenterPoint(coordinates: number[][]): [number, number] {
  * Filter streetlights by road segment ID
  */
 export function filterStreetlightsByRoad(streetlights: any[], roadId: string) {
-  return streetlights.filter(sl => 
-    sl.refRoadSegment === roadId || 
+  return streetlights.filter(sl =>
+    sl.refRoadSegment === roadId ||
     getValue(sl.refRoadSegment) === roadId
   );
 }
@@ -91,10 +90,10 @@ export function filterStreetlightsByRoad(streetlights: any[], roadId: string) {
  * Count streetlight states
  */
 export function countStreetlightStates(streetlights: any[]) {
-  const on = streetlights.filter(sl => 
+  const on = streetlights.filter(sl =>
     getValue(sl.powerState) === 'on' || sl.powerState === 'on'
   ).length;
-  
+
   return {
     total: streetlights.length,
     on,
@@ -107,7 +106,7 @@ export function countStreetlightStates(streetlights: any[]) {
  */
 export function formatWeatherData(weather: any) {
   if (!weather) return null;
-  
+
   return {
     temperature: getValue(weather.temperature),
     feelsLike: getValue(weather.feelsLikeTemperature),
@@ -131,7 +130,7 @@ export function formatWeatherData(weather: any) {
  */
 export function formatAQIData(aqi: any) {
   if (!aqi) return null;
-  
+
   return {
     aqi: getValue(aqi.aqi),
     pm25: getValue(aqi.pm25),
@@ -152,7 +151,7 @@ export function formatAQIData(aqi: any) {
  */
 export function formatReportData(report: any) {
   if (!report) return null;
-  
+
   return {
     id: report.id,
     title: getValue(report.title),
