@@ -6,25 +6,14 @@ Description: A module to adjust CitizenReport priority based on proximity to sen
              Uses weighted distance decay algorithm with time-aware and context-aware scoring.
 """
 
-import sys
 import json
 import math
-from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any, List, Optional, Tuple
 
-# Fix encoding for Windows console
-if sys.platform == 'win32':
-    sys.stdout.reconfigure(encoding='utf-8')
-
 import requests
 
-# Add project root to path to import config
-sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
-
-from config.config import ORION_LD_URL
-from config.data_model import EntityType, get_context
-from scripts.ai.ai_config import (
+from app.ai_service.classifier_report.ai_config import (
     get_category_weights,
     get_time_zones,
     get_context_multipliers,
@@ -43,6 +32,21 @@ except ImportError:
         TIMEZONE_AVAILABLE = True
     except ImportError:
         TIMEZONE_AVAILABLE = False
+
+# Configuration constants
+ORION_LD_URL = "http://localhost:1026"  # Default Orion-LD URL
+
+# Entity types for NGSI-LD
+class EntityType:
+    POINT_OF_INTEREST = "PointOfInterest"
+
+# Context helper
+def get_context(entity_type: str) -> List[str]:
+    """Get context URL for entity type."""
+    contexts = {
+        "PointOfInterest": ["https://raw.githubusercontent.com/smart-data-models/dataModel.PointOfInterest/master/context.jsonld"]
+    }
+    return contexts.get(entity_type, [])
 
 
 def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
