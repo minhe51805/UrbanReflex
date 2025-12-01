@@ -1,7 +1,8 @@
 {
   "model": {
-    "name": "paraphrase-multilingual-MiniLM-L12-v2",
-    "cache_dir": ".cache/models"
+    "name": "VoVanPhuc/sup-SimCSE-VietNamese-phobert-base",
+    "cache_dir": ".cache/models",
+    "fallback": "paraphrase-multilingual-MiniLM-L12-v2"
   },
   "categories": {
     "streetlight_broken": {
