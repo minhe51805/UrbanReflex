@@ -186,6 +186,54 @@ async def classify_citizen_report(
                 updated_entity = response.json()
                 logger.info(f"Successfully retrieved updated entity")
             
+            # If Orion-LD doesn't return the updated fields, construct the response manually
+            if "category" not in updated_entity or "categoryConfidence" not in updated_entity:
+                logger.info("Orion-LD didn't return AI fields, constructing response manually")
+                updated_entity.update({
+                    "category": {
+                        "type": "Property",
+                        "value": category
+                    },
+                    "categoryConfidence": {
+                        "type": "Property",
+                        "value": confidence
+                    },
+                    "priority": {
+                        "type": "Property",
+                        "value": final_priority
+                    },
+                    "severity": {
+                        "type": "Property",
+                        "value": severity
+                    },
+                    "status": {
+                        "type": "Property",
+                        "value": "auto_classified"
+                    },
+                    "dateModified": {
+                        "type": "Property",
+                        "value": {
+                            "@type": "DateTime",
+                            "@value": datetime.utcnow().isoformat() + "Z"
+                        }
+                    },
+                    "autoPriorityReason": {
+                        "type": "Property",
+                        "value": poi_check.get("reason", "NLP-based priority")
+                    },
+                    "aiProcessedAt": {
+                        "type": "Property",
+                        "value": {
+                            "@type": "DateTime",
+                            "@value": datetime.utcnow().isoformat() + "Z"
+                        }
+                    },
+                    "aiConfidence": {
+                        "type": "Property",
+                        "value": confidence
+                    }
+                })
+            
             return updated_entity
         except Exception as e:
             logger.error(f"Error in Step 8 - getting updated entity: {str(e)}")
