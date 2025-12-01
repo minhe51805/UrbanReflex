@@ -101,13 +101,11 @@ async def classify_citizen_report(
         update_data = {
             "category": {
                 "type": "Property",
-                "value": category,
-                "metadata": {
-                    "confidence": {
-                        "type": "Property",
-                        "value": confidence
-                    }
-                }
+                "value": category
+            },
+            "categoryConfidence": {
+                "type": "Property",
+                "value": confidence
             },
             "priority": {
                 "type": "Property",
