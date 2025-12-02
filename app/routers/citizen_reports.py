@@ -143,7 +143,67 @@ async def classify_citizen_report(
             }
         }
         
-        # Step 7: Update entity in Orion-LD
+        # Add custom context for AI attributes
+        options = {
+            "params": {
+                "options": {
+                    "keyValues": True,
+                    "overwrite": True
+                }
+            }
+        }
+        
+        # Step 7: Update entity in Orion-LD using PATCH with keyValues format
+        logger.info(f"Sending PATCH request with AI fields")
+        
+        # Prepare update data with keyValues format
+        now = datetime.utcnow()
+        update_data = {
+            "category": {
+                "type": "Property",
+                "value": category
+            },
+            "categoryConfidence": {
+                "type": "Property",
+                "value": confidence
+            },
+            "priority": {
+                "type": "Property",
+                "value": final_priority
+            },
+            "severity": {
+                "type": "Property",
+                "value": severity
+            },
+            "status": {
+                "type": "Property",
+                "value": "auto_classified"
+            },
+            "dateModified": {
+                "type": "Property",
+                "value": {
+                    "@type": "DateTime",
+                    "@value": now.isoformat() + "Z"
+                }
+            },
+            "autoPriorityReason": {
+                "type": "Property",
+                "value": poi_check.get("reason", "NLP-based priority")
+            },
+            "aiProcessedAt": {
+                "type": "Property",
+                "value": {
+                    "@type": "DateTime",
+                    "@value": now.isoformat() + "Z"
+                }
+            },
+            "aiConfidence": {
+                "type": "Property",
+                "value": confidence
+            }
+        }
+        
+        # Update entity using PATCH with keyValues format
         async with httpx.AsyncClient() as client:
             response = await client.patch(
                 f"{ORION_LD_URL}/entities/{entity_id}/attrs",
@@ -153,6 +213,9 @@ async def classify_citizen_report(
                     "Accept": "application/json"
                 }
             )
+            
+            logger.info(f"PATCH response status: {response.status_code}")
+            logger.info(f"PATCH response body: {response.text}")
             
             if response.status_code not in [204, 207]:
                 raise HTTPException(
