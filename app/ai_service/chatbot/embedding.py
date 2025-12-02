@@ -73,13 +73,23 @@ class EmbeddingManager:
             else:
                 print(f"Index {self.index_name} already exists")
             
-            # Initialize BERT embedding model for text
-            self.embedding_model = EmbeddingModel.from_pretrained_hf(
-                WhichModel.Bert, 
-                "sentence-transformers/all-MiniLM-L6-v2", 
-                revision="main"
-            )
-            print("Initialized BERT embedding model")
+            # Initialize Vietnamese BERT embedding model for text
+            try:
+                self.embedding_model = EmbeddingModel.from_pretrained_hf(
+                    WhichModel.Bert,
+                    "VoVanPhuc/sup-SimCSE-VietNamese-phobert-base",
+                    revision="main"
+                )
+                print("Initialized Vietnamese BERT embedding model")
+            except Exception as e:
+                print(f"Failed to load Vietnamese model, falling back to multilingual: {str(e)}")
+                # Fallback to multilingual model if Vietnamese model fails
+                self.embedding_model = EmbeddingModel.from_pretrained_hf(
+                    WhichModel.Bert,
+                    "sentence-transformers/all-MiniLM-L6-v2",
+                    revision="main"
+                )
+                print("Initialized fallback multilingual embedding model")
             
         except Exception as e:
             raise RuntimeError(f"Failed to initialize embedding manager: {str(e)}")
