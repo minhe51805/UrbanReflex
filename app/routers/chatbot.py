@@ -51,6 +51,20 @@ class IndexResponse(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.utcnow, description="Operation timestamp")
 
 
+class ClearIndexResponse(BaseModel):
+    """Response model for clear index operations."""
+    success: bool = Field(..., description="Whether the operation was successful")
+    message: str = Field(..., description="Status message")
+    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Operation timestamp")
+
+
+class RecreateIndexResponse(BaseModel):
+    """Response model for recreate index operations."""
+    success: bool = Field(..., description="Whether the operation was successful")
+    message: str = Field(..., description="Status message")
+    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Operation timestamp")
+
+
 class HealthStatus(BaseModel):
     """Model for system health status."""
     gemini_api: bool = Field(..., description="Gemini API connectivity status")
@@ -61,7 +75,8 @@ class HealthStatus(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.utcnow, description="Health check timestamp")
 from app.ai_service.chatbot.rag import get_rag_system, chat_with_rag
 from app.ai_service.chatbot.embedding import get_embedding_manager, index_website_data
-from app.config.config import WEBSITE_CRAWL_URL
+from app.ai_service.chatbot.pinecone_adapter import PineconeAdapter
+from app.config.config import WEBSITE_CRAWL_URL, PINECONE_API_KEY, PINECONE_INDEX_NAME
 import logging
 
 # Configure logging
@@ -323,7 +338,7 @@ async def get_system_stats():
             "configuration": {
                 "default_crawl_url": WEBSITE_CRAWL_URL,
                 "max_context_docs": 10,
-                "embedding_model": "openai/clip-vit-base-patch16",
+                "embedding_model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
                 "llm_model": "gemini-pro"
             }
         }
@@ -339,4 +354,98 @@ async def get_system_stats():
         raise HTTPException(
             status_code=500,
             detail=f"Failed to get system stats: {str(e)}"
+        )
+
+
+@router.delete("/clear-index", response_model=ClearIndexResponse)
+async def clear_pinecone_index():
+    """
+    Clear all data from the Pinecone vector index.
+    
+    Returns:
+        ClearIndexResponse with operation status
+    """
+    try:
+        logger.info("Clearing Pinecone index...")
+        
+        # Get embedding manager to access Pinecone client
+        embedding_manager = await get_embedding_manager()
+        
+        # Create PineconeAdapter instance
+        pinecone_adapter = PineconeAdapter(
+            api_key=PINECONE_API_KEY,
+            index_name=PINECONE_INDEX_NAME
+        )
+        
+        # Initialize the adapter
+        await pinecone_adapter.initialize()
+        
+        # Clear the index
+        success = await pinecone_adapter.clear_index()
+        
+        if success:
+            logger.info("Pinecone index cleared successfully")
+            return ClearIndexResponse(
+                success=True,
+                message="Pinecone vector index cleared successfully"
+            )
+        else:
+            logger.error("Failed to clear Pinecone index")
+            return ClearIndexResponse(
+                success=False,
+                message="Failed to clear Pinecone vector index"
+            )
+            
+    except Exception as e:
+        logger.error(f"Error clearing Pinecone index: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to clear Pinecone index: {str(e)}"
+        )
+
+
+@router.post("/recreate-index", response_model=RecreateIndexResponse)
+async def recreate_pinecone_index():
+    """
+    Recreate the Pinecone vector index (delete and create fresh).
+    
+    Returns:
+        RecreateIndexResponse with operation status
+    """
+    try:
+        logger.info("Recreating Pinecone index...")
+        
+        # Get embedding manager to access Pinecone client
+        embedding_manager = await get_embedding_manager()
+        
+        # Create PineconeAdapter instance
+        pinecone_adapter = PineconeAdapter(
+            api_key=PINECONE_API_KEY,
+            index_name=PINECONE_INDEX_NAME
+        )
+        
+        # Initialize the adapter
+        await pinecone_adapter.initialize()
+        
+        # Recreate the index
+        success = await pinecone_adapter.recreate_index()
+        
+        if success:
+            logger.info("Pinecone index recreated successfully")
+            return RecreateIndexResponse(
+                success=True,
+                message="Pinecone vector index recreated successfully"
+            )
+        else:
+            logger.error("Failed to recreate Pinecone index")
+            return RecreateIndexResponse(
+                success=False,
+                message="Failed to recreate Pinecone vector index"
+            )
+            
+    except Exception as e:
+        logger.error(f"Error recreating Pinecone index: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to recreate Pinecone index: {str(e)}"
         )

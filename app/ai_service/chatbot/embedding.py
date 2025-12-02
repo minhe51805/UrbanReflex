@@ -61,7 +61,7 @@ class EmbeddingManager:
                     print(f"Could not delete index (may not exist): {e}")
             
             # Create new index with appropriate dimensions
-            # Using BERT model with 384 dimensions
+            # Using keepitreal/vietnamese-sbert model with 384 dimensions
             if self.index_name not in self.pinecone_client.list_indexes().names():
                 self.pinecone_client.create_index(
                     name=self.index_name,
@@ -73,23 +73,24 @@ class EmbeddingManager:
             else:
                 print(f"Index {self.index_name} already exists")
             
-            # Initialize Vietnamese BERT embedding model for text
+            # Initialize embedding model for text
             try:
+                # Use sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2 model (stable multilingual)
                 self.embedding_model = EmbeddingModel.from_pretrained_hf(
                     WhichModel.Bert,
-                    "VoVanPhuc/sup-SimCSE-VietNamese-phobert-base",
+                    "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
                     revision="main"
                 )
-                print("Initialized Vietnamese BERT embedding model")
+                print("Initialized multilingual embedding model")
             except Exception as e:
-                print(f"Failed to load Vietnamese model, falling back to multilingual: {str(e)}")
-                # Fallback to multilingual model if Vietnamese model fails
+                print(f"Failed to load multilingual model, using English fallback: {str(e)}")
+                # Final fallback to English model
                 self.embedding_model = EmbeddingModel.from_pretrained_hf(
                     WhichModel.Bert,
                     "sentence-transformers/all-MiniLM-L6-v2",
                     revision="main"
                 )
-                print("Initialized fallback multilingual embedding model")
+                print("Initialized English fallback embedding model")
             
         except Exception as e:
             raise RuntimeError(f"Failed to initialize embedding manager: {str(e)}")

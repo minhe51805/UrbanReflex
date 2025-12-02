@@ -20,17 +20,32 @@ class PineconeAdapter(Adapter):
     Implements the Adapter interface for Pinecone vector database
     """
     
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str, index_name: str = "default"):
         """
         Initialize Pinecone adapter
         
         Args:
             api_key: Pinecone API key
+            index_name: Name of the index to use
         """
         super().__init__(api_key)
         self.pc = Pinecone(api_key=api_key)
-        self.index_name = None
+        self.index_name = index_name
         self.index = None
+    
+    async def initialize(self):
+        """
+        Initialize the adapter by connecting to existing index
+        """
+        try:
+            # Check if index exists
+            if self.index_name in self.pc.list_indexes().names():
+                self.index = self.pc.Index(self.index_name)
+                print(f"Connected to existing index: {self.index_name}")
+            else:
+                print(f"Index {self.index_name} does not exist yet")
+        except Exception as e:
+            print(f"Error initializing Pinecone adapter: {str(e)}")
     
     def create_index(self, dimension: int, metric: str = "cosine", index_name: str = "default", **kwargs):
         """
@@ -124,3 +139,47 @@ class PineconeAdapter(Adapter):
                 print(f"Error upserting batch {i//batch_size}: {str(e)}")
                 # Continue with next batch instead of failing completely
                 continue
+    
+    async def clear_index(self, index_name: str = None) -> bool:
+        """
+        Clear all data from Pinecone index.
+        
+        Args:
+            index_name: Name of index to clear (defaults to instance index)
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        index_name = index_name or self.index_name
+        try:
+            self.pc.delete_index(index_name)
+            print(f"Successfully deleted index: {index_name}")
+            return True
+        except Exception as e:
+            print(f"Error deleting index {index_name}: {str(e)}")
+            return False
+    
+    async def recreate_index(self, dimension: int = 384, metric: str = "cosine") -> bool:
+        """
+        Recreate Pinecone index with fresh configuration.
+        
+        Args:
+            dimension: Embedding dimension
+            metric: Distance metric (cosine, euclidean, etc.)
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        index_name = self.index_name
+        try:
+            # Delete existing index
+            await self.clear_index(index_name)
+            
+            # Create new index
+            self.create_index(dimension, metric, index_name)
+            
+            print(f"Successfully recreated index: {index_name}")
+            return True
+        except Exception as e:
+            print(f"Error recreating index {index_name}: {str(e)}")
+            return False
