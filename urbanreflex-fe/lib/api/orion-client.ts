@@ -1,6 +1,7 @@
 /**
  * Author: Trương Dương Bảo Minh (minhe51805)
- * Create at: [Current Date]
+ * Create at: 27-11-2025
+ * Update at: 01-12-2025
  * Description: Orion-LD NGSI-LD API client for fetching air quality data from local context broker
  */
 
@@ -327,3 +328,4 @@ export async function getLatestMeasurements(locationId: number): Promise<Measure
   return orionClient.getLatestMeasurements(locationId);
 }
 
+ 
