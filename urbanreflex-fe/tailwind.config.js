@@ -25,43 +25,43 @@ module.exports = {
       background: "var(--background)",
       foreground: "var(--foreground)",
       primary: {
-        50: '#f0f9ff',
-        100: '#e0f2fe',
-        200: '#bae6fd',
-        300: '#7dd3fc',
-        400: '#38bdf8',
-        500: '#0ea5e9',
-        600: '#0284c7',
-        700: '#0369a1',
-        800: '#075985',
-        900: '#0c4a6e',
-        DEFAULT: '#0284c7',
+        50: '#ECEBEA',  // Very light grey/off-white (from palette #3)
+        100: '#E8F4F6', // Very light aqua (derived from #64BABE)
+        200: '#B8E1E5', // Light aqua (derived from #64BABE)
+        300: '#64BABE', // Light aqua/sky-blue (from palette #6)
+        400: '#008EA0', // Medium teal (from palette #5)
+        500: '#008EA0', // Medium teal - main primary
+        600: '#085979', // Dark teal (from palette #4)
+        700: '#064A5F', // Darker teal (derived)
+        800: '#043B4A', // Even darker (derived)
+        900: '#022C35', // Darkest (derived)
+        DEFAULT: '#008EA0',
       },
       secondary: {
-        50: '#f0fdfa',
-        100: '#ccfbf1',
-        200: '#99f6e4',
-        300: '#5eead4',
-        400: '#2dd4bf',
-        500: '#14b8a6',
-        600: '#0d9488',
-        700: '#0f766e',
-        800: '#115e59',
-        900: '#134e4a',
-        DEFAULT: '#0d9488',
+        50: '#FEF5F5',  // Very light red (derived from #F3505A)
+        100: '#FCE8E9', // Light coral (derived)
+        200: '#F9B5B9', // Light salmon (derived)
+        300: '#F3505A', // Coral/salmon-pink (from palette #2)
+        400: '#D4343F', // Deep red (from palette #1)
+        500: '#F3505A', // Coral - main secondary
+        600: '#D4343F', // Deep red
+        700: '#B82A33', // Darker red (derived)
+        800: '#9C2128', // Even darker (derived)
+        900: '#80181D', // Darkest (derived)
+        DEFAULT: '#F3505A',
       },
       accent: {
-        50: '#fdf4ff',
-        100: '#fae8ff',
-        200: '#f5d0fe',
-        300: '#f0abfc',
-        400: '#e879f9',
-        500: '#d946ef',
-        600: '#c026d3',
-        700: '#a21caf',
-        800: '#86198f',
-        900: '#701a75',
-        DEFAULT: '#c026d3',
+        50: '#ECEBEA',  // Very light grey (from palette #3)
+        100: '#F5F5F5', // Light grey (derived)
+        200: '#E0E0E0', // Medium grey (derived)
+        300: '#64BABE', // Light aqua (from palette #6)
+        400: '#008EA0', // Medium teal (from palette #5)
+        500: '#64BABE', // Light aqua - main accent
+        600: '#008EA0', // Medium teal
+        700: '#085979', // Dark teal (from palette #4)
+        800: '#064A5F', // Darker (derived)
+        900: '#043B4A', // Darkest (derived)
+        DEFAULT: '#64BABE',
       },
       'neutral-soft': {
         50: '#fafafa',
