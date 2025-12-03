@@ -1,7 +1,7 @@
 """
 Author: Trần Tuấn Anh
 Created at: 2025-11-28
-Updated at: 2025-11-30
+Updated at: 2025-12-02
 Description: Embedding module for UrbanReflex RAG system.
              Uses EmbedAnything library with Pinecone vector database.
 """

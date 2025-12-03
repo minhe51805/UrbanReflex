@@ -1,7 +1,7 @@
 """
 Author: Trần Tuấn Anh
 Created at: 2025-11-27
-Updated at: 2025-12-01
+Updated at: 2025-12-03
 Description: NLP classifier for CitizenReport entities using vector embeddings.
              Supports both vector embeddings (primary) and rule-based (fallback).
              Optimized for Vietnamese text processing with PhoBERT-based embeddings.
@@ -10,13 +10,23 @@ Description: NLP classifier for CitizenReport entities using vector embeddings.
 import logging
 from typing import Dict, Optional, Any, List
 
-from app.ai_service.classifier_report.ai_config import (
-    get_category_descriptions,
-    get_priority_keywords,
-    get_priority_defaults,
-    get_model_config,
-    get_thresholds
-)
+# Try to import from app package first, fallback to direct import
+try:
+    from app.ai_service.classifier_report.ai_config import (
+        get_category_descriptions,
+        get_priority_keywords,
+        get_priority_defaults,
+        get_model_config,
+        get_thresholds
+    )
+except ImportError:
+    from ai_config import (
+        get_category_descriptions,
+        get_priority_keywords,
+        get_priority_defaults,
+        get_model_config,
+        get_thresholds
+    )
 
 # Configure logging
 logger = logging.getLogger(__name__)

@@ -1,7 +1,7 @@
 """
 Author: Trần Tuấn Anh
 Created at: 2025-11-30
-Updated at: 2025-11-30
+Updated at: 2025-12-02
 Description: Custom PineconeAdapter for EmbedAnything library
              Implements the Adapter interface for Pinecone vector database
 """

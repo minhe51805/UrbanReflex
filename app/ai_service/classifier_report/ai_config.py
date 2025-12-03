@@ -1,7 +1,7 @@
 """
 Author: Trần Tuấn Anh
 Created at: 2025-11-27
-Updated at: 2025-12-1
+Updated at: 2025-12-03
 Description: Configuration loader for AI classifier modules.
 """
 

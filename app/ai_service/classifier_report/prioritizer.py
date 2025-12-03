@@ -1,7 +1,7 @@
 """
 Author: Trần Tuấn Anh
 Created at: 2025-11-27
-Updated at: 2025-12-01
+Updated at: 2025-12-03
 Description: A module to adjust CitizenReport priority based on proximity to sensitive POIs.
              Uses weighted distance decay algorithm with time-aware and context-aware scoring.
 """
@@ -13,14 +13,25 @@ from typing import Dict, Any, List, Optional, Tuple
 
 import requests
 
-from app.ai_service.classifier_report.ai_config import (
-    get_category_weights,
-    get_time_zones,
-    get_context_multipliers,
-    get_distance_decay_config,
-    get_priority_thresholds,
-    get_timezone
-)
+# Try to import from app package first, fallback to direct import
+try:
+    from app.ai_service.classifier_report.ai_config import (
+        get_category_weights,
+        get_time_zones,
+        get_context_multipliers,
+        get_distance_decay_config,
+        get_priority_thresholds,
+        get_timezone
+    )
+except ImportError:
+    from ai_config import (
+        get_category_weights,
+        get_time_zones,
+        get_context_multipliers,
+        get_distance_decay_config,
+        get_priority_thresholds,
+        get_timezone
+    )
 
 # Try to import timezone support
 try:
@@ -34,7 +45,7 @@ except ImportError:
         TIMEZONE_AVAILABLE = False
 
 # Configuration constants
-ORION_LD_URL = "http://localhost:1026"  # Default Orion-LD URL
+ORION_LD_URL = "http://103.178.233.233:1026/"  # Real Orion-LD URL
 
 # Entity types for NGSI-LD
 class EntityType:
