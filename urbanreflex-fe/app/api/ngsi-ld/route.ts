@@ -1,7 +1,7 @@
 /**
  * Author: Trương Dương Bảo Minh (minhe51805)
  * Create at: 22-11-2025
- * Update at: 26-11-2025
+ * Update at: 01-12-2025
  * Description: NGSI-LD API Proxy Route Proxies requests to Orion Context Broker to avoid CORS issues
  */
 
@@ -90,34 +90,89 @@ export async function POST(request: NextRequest) {
     console.log('📤 POST to NGSI-LD:', {
       url,
       type,
-      entityId: body.id,
-      entityType: body.type
+      entityId: body?.id,
+      entityType: body?.type,
+      bodyKeys: body ? Object.keys(body) : [],
+      bodySize: body ? JSON.stringify(body).length : 0
+    });
+
+    // Ensure body exists and is valid
+    if (!body || typeof body !== 'object' || Object.keys(body).length === 0) {
+      console.error('❌ Empty or invalid body:', body);
+      return NextResponse.json(
+        {
+          type: 'error',
+          title: 'Bad Request',
+          detail: 'Request body is empty or invalid'
+        },
+        { status: 400 }
+      );
+    }
+
+    // Stringify body for forwarding
+    const bodyString = JSON.stringify(body);
+    console.log('📤 Forwarding body to NGSI-LD:', {
+      bodyLength: bodyString.length,
+      firstChars: bodyString.substring(0, 200)
+    });
+
+    // Build headers for NGSI-LD
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      'Link': buildLinkHeader(type),
+    };
+
+    console.log('📤 Sending to NGSI-LD:', {
+      url,
+      method: 'POST',
+      headers: {
+        'Content-Type': headers['Content-Type'],
+        'Link': headers['Link']?.substring(0, 100) + '...'
+      },
+      bodyLength: bodyString.length
     });
 
     const response = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Link': buildLinkHeader(type),
-      },
-      body: JSON.stringify(body),
+      headers,
+      body: bodyString,
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({
-        type: 'error',
-        title: 'Request Failed',
-        detail: `HTTP ${response.status}: ${response.statusText}`
-      }));
+      let errorData;
+      try {
+        const errorText = await response.text();
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = {
+            type: 'error',
+            title: 'Request Failed',
+            detail: errorText || `HTTP ${response.status}: ${response.statusText}`
+          };
+        }
+      } catch {
+        errorData = {
+          type: 'error',
+          title: 'Request Failed',
+          detail: `HTTP ${response.status}: ${response.statusText}`
+        };
+      }
 
       // Log the error for debugging
       console.error('❌ NGSI-LD POST Error:', {
         status: response.status,
-        error,
-        body: JSON.stringify(body, null, 2)
+        statusText: response.statusText,
+        error: errorData,
+        body: JSON.stringify(body, null, 2),
+        headers: Object.fromEntries(response.headers.entries())
       });
 
-      return NextResponse.json(error, { status: response.status });
+      return NextResponse.json({
+        ...errorData,
+        status: response.status,
+        statusText: response.statusText
+      }, { status: response.status });
     }
 
     // POST usually returns 201 with no body
