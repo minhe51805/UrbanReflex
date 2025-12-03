@@ -1,7 +1,7 @@
 /**
  * Author: Trương Dương Bảo Minh (minhe51805)
  * Create at: 27-11-2025
- * Update at: 29-11-2025
+ * Update at: 01-12-2025
  * Description: Data helper utilities for processing NGSI-LD entities and smart city data
  */
 
