@@ -1,7 +1,7 @@
 /**
  * Author: Trương Dương Bảo Minh (minhe51805)
  * Create at: 13-11-2025
- * Update at: 19-11-2025
+ * Update at: 01-12-2025
  * Description: Location list component displaying air quality monitoring locations with AQI indicators and navigation links
  */
 
@@ -53,11 +53,10 @@ export default function LocationList({ locations, onLocationClick }: LocationLis
                 </div>
               </div>
               <div className="flex flex-col items-end gap-2">
-                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                  location.isMonitor 
-                    ? 'bg-blue-100 text-blue-800' 
+                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${location.isMonitor
+                    ? 'bg-blue-100 text-blue-800'
                     : 'bg-green-100 text-green-800'
-                }`}>
+                  }`}>
                   {location.isMonitor ? 'Monitor' : 'Air Sensor'}
                 </span>
               </div>
