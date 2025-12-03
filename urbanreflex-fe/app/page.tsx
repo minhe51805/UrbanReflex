@@ -1,7 +1,7 @@
 /**
  * Author: Trương Dương Bảo Minh (minhe51805)
  * Create at: 13-11-2025
- * Update at: 19-11-2025
+ * Update at: 01-12-2025
  * Description: Homepage component that displays the main landing page with hero section, featured locations, use cases, and interactive map
  */
 
@@ -76,3 +76,4 @@ export default function Home() {
     </main>
   );
 }
+ 
