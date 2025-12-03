@@ -1,7 +1,7 @@
 /**
  * Author: Trương Dương Bảo Minh (minhe51805)
  * Create at: 13-11-2025
- * Update at: 19-11-2025
+ * Update at: 01-12-2025
  * Description: Main navigation header component with responsive mobile menu and dropdown navigation for the application
  */
 
@@ -29,10 +29,6 @@ export default function Header() {
     {
       name: 'Explore the data',
       href: '/explore',
-    },
-    {
-      name: 'AQI Stations',
-      href: '/aqi-stations',
     },
     {
       name: 'Why open data?',
