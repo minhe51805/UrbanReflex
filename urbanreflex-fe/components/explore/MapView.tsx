@@ -1,7 +1,7 @@
 /**
  * Author: Trương Dương Bảo Minh (minhe51805)
  * Create at: 13-11-2025
- * Update at: 27-11-2025
+ * Update at: 01-12-2025
  * Description: Interactive fullscreen map view component using MapLibre GL with 10km radius marker clustering. Zoom > 14 shows individual markers, zoom ≤ 14 shows clusters.
  */
 
@@ -19,13 +19,38 @@ interface MapViewProps {
   zoom?: number;
 }
 
+const EARTH_RADIUS_KM = 6371;
+
+const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
+
+const haversineDistanceKm = (lat1: number, lng1: number, lat2: number, lng2: number) => {
+  const dLat = toRadians(lat2 - lat1);
+  const dLng = toRadians(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return EARTH_RADIUS_KM * c;
+};
+
+const getLocationClusterRadiusThresholdKm = (zoom: number) => {
+  if (zoom <= 4) return 400; // continent
+  if (zoom <= 6) return 200; // large country
+  if (zoom <= 8) return 80;  // region
+  if (zoom <= 10) return 40; // province
+  if (zoom <= 12) return 20; // metro area
+  if (zoom <= 14) return 8;  // district
+  return 2; // street view
+};
+
 const MapView = memo(function MapView({
   locations,
   onLocationClick,
   center = [0, 20],
   zoom = 2,
 }: MapViewProps) {
-  const stableOnLocationClick = useCallback(onLocationClick || (() => {}), [onLocationClick]);
+  const stableOnLocationClick = useCallback(onLocationClick || (() => { }), [onLocationClick]);
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
@@ -133,18 +158,49 @@ const MapView = memo(function MapView({
     markersRef.current.forEach(marker => marker.remove());
     markersRef.current = [];
 
-    const bounds = map.current.getBounds();
-    const bbox: [number, number, number, number] = [
-      bounds.getWest(),
-      bounds.getSouth(),
-      bounds.getEast(),
-      bounds.getNorth(),
-    ];
+    // Tính cluster trên toàn bản đồ, không phụ thuộc viewport hiện tại,
+    // để khi pan nhẹ thì cụm/node không bị "mất" chỉ vì nó vừa ra khỏi bbox.
+    const worldBbox: [number, number, number, number] = [-180, -85, 180, 85];
 
-    // Get clusters from supercluster
-    const clusters = supercluster.getClusters(bbox, Math.floor(currentZoom));
+    const zoomLevel = Math.floor(currentZoom);
 
-    clusters.forEach((cluster) => {
+    // Get clusters from supercluster (global, then MapLibre tự cắt theo viewport)
+    const rawClusters = supercluster.getClusters(worldBbox, zoomLevel);
+    const renderQueue = [...rawClusters];
+    const resolvedClusters: typeof rawClusters = [];
+
+    const computeClusterSpreadKm = (clusterFeature: typeof rawClusters[number]) => {
+      const pointCount = clusterFeature.properties.point_count || 0;
+      if (!pointCount) return 0;
+      const sampleSize = Math.min(pointCount, 25);
+      const [clusterLng, clusterLat] = clusterFeature.geometry.coordinates as [number, number];
+      let maxDistance = 0;
+      const leaves = supercluster.getLeaves(clusterFeature.id as number, sampleSize, 0);
+      leaves.forEach((leaf) => {
+        const [leafLng, leafLat] = leaf.geometry.coordinates as [number, number];
+        const distance = haversineDistanceKm(clusterLat, clusterLng, leafLat, leafLng);
+        if (distance > maxDistance) {
+          maxDistance = distance;
+        }
+      });
+      return maxDistance;
+    };
+
+    while (renderQueue.length) {
+      const clusterFeature = renderQueue.pop()!;
+      if (clusterFeature.properties.cluster) {
+        const spreadKm = computeClusterSpreadKm(clusterFeature);
+        const thresholdKm = getLocationClusterRadiusThresholdKm(zoomLevel);
+        if (spreadKm > thresholdKm) {
+          const children = supercluster.getChildren(clusterFeature.id as number);
+          renderQueue.push(...children);
+          continue;
+        }
+      }
+      resolvedClusters.push(clusterFeature);
+    }
+
+    resolvedClusters.forEach((cluster) => {
       const [longitude, latitude] = cluster.geometry.coordinates;
       const { cluster: isCluster, point_count: pointCount } = cluster.properties;
 
@@ -185,16 +241,23 @@ const MapView = memo(function MapView({
         markersRef.current.push(marker);
 
         // Zoom in on cluster click
+        // IMPORTANT:
+        // - Chỉ thay đổi zoom, giữ nguyên center hiện tại của map.
+        // - Không dùng "around" theo toạ độ cụm để tránh cảm giác
+        //   cụm bị trượt lên/xuống rồi mới tách.
         el.addEventListener('click', () => {
           const expansionZoom = Math.min(
             supercluster.getClusterExpansionZoom(cluster.id as number),
             18
           );
-          map.current?.flyTo({
-            center: [longitude, latitude],
-            zoom: expansionZoom,
-            duration: 1000,
-          });
+          if (map.current) {
+            const currentCenter = map.current.getCenter();
+            map.current.easeTo({
+              center: [currentCenter.lng, currentCenter.lat],
+              zoom: expansionZoom,
+              duration: 800,
+            });
+          }
         });
 
       } else {
@@ -275,22 +338,11 @@ const MapView = memo(function MapView({
     });
   }, [locations, mapLoaded, currentZoom, supercluster, stableOnLocationClick]);
 
-  // Update markers on map move
-  useEffect(() => {
-    if (!map.current || !mapLoaded) return;
-
-    const updateMarkers = () => {
-      if (map.current) {
-        setCurrentZoom(map.current.getZoom());
-      }
-    };
-
-    map.current.on('moveend', updateMarkers);
-
-    return () => {
-      map.current?.off('moveend', updateMarkers);
-    };
-  }, [mapLoaded]);
+  // NOTE:
+  // We cố ý KHÔNG cập nhật lại clustering theo pan (moveend).
+  // Cụm chỉ được tính lại khi zoom level thay đổi (xử lý trong sự kiện 'zoom' ở trên),
+  // nên khi bạn kéo map qua lại mà chưa đến ngưỡng tách/gom mới, cụm hiện tại sẽ
+  // giữ nguyên cấu trúc – giống behaviour “chết cứng” mà bạn mô tả.
 
   return (
     <div className="relative w-full h-full">
