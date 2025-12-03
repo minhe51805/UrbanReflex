@@ -1,3 +1,10 @@
+/**
+ * Author: Trương Dương Bảo Minh (minhe51805)
+ * Create at: 13-11-2025
+ * Update at: 01-12-2025
+ * Description: AQI Hub section component promoting UrbanReflex's air quality index methodology and NGSI-LD standardization
+ */
+
 'use client'
 
 import Link from 'next/link';
@@ -49,4 +56,4 @@ export default function AQIHubSection() {
     </section>
   )
 }
- 
+
