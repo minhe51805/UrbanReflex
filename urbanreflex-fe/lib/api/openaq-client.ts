@@ -1,7 +1,7 @@
 /**
  * Author: Trương Dương Bảo Minh (minhe51805)
  * Create at: 13-11-2025
- * Update at: 21-11-2025
+ * Update at: 01-12-2025
  * Description: OpenAQ API client for fetching air quality data including locations, measurements, and parameters
  */
 
