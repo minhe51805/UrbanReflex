@@ -1,9 +1,8 @@
 /**
- * Road Data API Client
- * Handles fetching comprehensive road segment data including weather, AQI, streetlights, and reports
- * 
- * Author: Backend Integration Team
- * Date: 2025-11-27
+ * Author: Trương Dương Bảo Minh (minhe51805)
+ * Create at: 27-11-2025
+ * Update at: 01-12-2025
+ * Description: Road Data API Client handling comprehensive road segment data including weather, AQI, streetlights, and reports
  */
 
 import { parseDateTime, getValue } from '@/lib/utils/format';
@@ -64,7 +63,7 @@ export async function fetchLatestWeather() {
 
   const response = await fetch(`${API_BASE}?${params}`);
   if (!response.ok) throw new Error(`Failed to fetch weather: ${response.statusText}`);
-  
+
   const data = await response.json();
   if (!Array.isArray(data) || data.length === 0) {
     throw new Error('No weather data available');
@@ -156,3 +155,4 @@ export async function createCitizenReport(reportData: any) {
   return response.json();
 }
 
+ 
