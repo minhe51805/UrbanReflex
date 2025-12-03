@@ -1,7 +1,7 @@
 /**
  * Author: Trương Dương Bảo Minh (minhe51805)
  * Create at: 13-11-2025
- * Update at: 15-11-2025
+ * Update at: 01-12-2025
  * Description: About page component displaying mission, vision, and team information with animated sections
  */
 
