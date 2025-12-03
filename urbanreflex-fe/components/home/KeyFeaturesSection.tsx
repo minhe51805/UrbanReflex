@@ -1,7 +1,7 @@
 /**
  * Author: Trương Dương Bảo Minh (minhe51805)
  * Create at: 13-11-2025
- * Update at: 15-11-2025
+ * Update at: 01-12-2025
  * Description: Key features section component showcasing main features with icons and descriptions
  */
 
@@ -61,7 +61,7 @@ export default function KeyFeaturesSection() {
                   <feature.icon className="h-8 w-8" />
                 </div>
               </div>
-              
+
               <div className="flex-1">
                 <h3 className="text-2xl font-bold text-gray-900 mb-3">
                   {feature.title}
