@@ -7,6 +7,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { AlertTriangle, X, Send, MapPin, Camera, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Image from 'next/image';
@@ -24,6 +25,7 @@ interface FloatingReportButtonProps {
 
 export default function FloatingReportButton({ selectedRoad }: FloatingReportButtonProps) {
   const { user } = useAuth();
+  const router = useRouter();
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
@@ -36,8 +38,7 @@ export default function FloatingReportButton({ selectedRoad }: FloatingReportBut
   const [error, setError] = useState<string | null>(null);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
-  // Only show button for logged-in users
-  if (!user) return null;
+  // Button always visible, but modal only works for logged-in users
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -90,10 +91,12 @@ export default function FloatingReportButton({ selectedRoad }: FloatingReportBut
       const report = {
         id: reportId,
         type: 'RoadReport',
-        relatedRoad: {
+        refRoadSegment: {
           type: 'Relationship',
           object: selectedRoad.id
         },
+        // Alternative: try as string if Relationship format fails
+        // refRoadSegment: selectedRoad.id,
         location: {
           type: 'GeoProperty',
           value: {
@@ -146,6 +149,8 @@ export default function FloatingReportButton({ selectedRoad }: FloatingReportBut
         }
       };
 
+      console.log('📤 Submitting report:', JSON.stringify(report, null, 2));
+
       const response = await fetch('/api/ngsi-ld?type=RoadReport', {
         method: 'POST',
         headers: {
@@ -155,7 +160,28 @@ export default function FloatingReportButton({ selectedRoad }: FloatingReportBut
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to submit report: ${response.status}`);
+        let errorData;
+        try {
+          const errorText = await response.text();
+          console.error('❌ Error response text:', errorText);
+          try {
+            errorData = JSON.parse(errorText);
+          } catch {
+            errorData = { detail: errorText };
+          }
+        } catch {
+          errorData = {};
+        }
+        
+        console.error('❌ Report submission failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData,
+          report: JSON.stringify(report, null, 2)
+        });
+        
+        const errorMessage = errorData.detail || errorData.message || errorData.title || `Failed to submit report: ${response.status} ${response.statusText}`;
+        throw new Error(errorMessage);
       }
 
       await fetch('/api/admin/reports', {
@@ -199,21 +225,27 @@ export default function FloatingReportButton({ selectedRoad }: FloatingReportBut
 
   return (
     <>
-      {/* Floating Button */}
+      {/* Floating Button - Always visible */}
       <button
         onClick={() => {
+          if (!user) {
+            router.push('/login');
+            return;
+          }
           if (!selectedRoad) {
-            setError('Please click on a road on the map first');
-            setTimeout(() => setError(null), 3000);
+            setError('Vui lòng chọn một đường trên bản đồ trước khi báo cáo');
+            setTimeout(() => setError(null), 4000);
             return;
           }
           setShowModal(true);
         }}
-        className="fixed bottom-8 right-8 z-40 flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold rounded-full shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all"
-        title={selectedRoad ? `Report issue for ${selectedRoad.name}` : 'Select a road first'}
+        className="fixed bottom-8 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-6 py-4 bg-white border-2 border-orange-500 text-orange-600 hover:bg-orange-50 font-bold rounded-full shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all backdrop-blur-sm"
+        title={!user ? 'Login to report' : selectedRoad ? `Report issue for ${selectedRoad.name}` : 'Select a road first'}
       >
-        <AlertTriangle className="h-6 w-6" />
-        <span className="hidden sm:inline">Report Issue</span>
+        <div className="bg-transparent p-2 rounded-full flex items-center justify-center">
+          <AlertTriangle className="h-5 w-5 text-orange-600 stroke-2" fill="currentColor" />
+        </div>
+        <span className="hidden sm:inline text-orange-600 font-bold">Báo cáo</span>
       </button>
 
       {/* Error Toast */}
