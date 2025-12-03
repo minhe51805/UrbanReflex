@@ -1,7 +1,7 @@
 /**
  * Author: Trương Dương Bảo Minh (minhe51805)
  * Create at: 13-11-2025
- * Update at: 25-11-2025
+ * Update at: 01-12-2025
  * Description: Interactive map component displaying Vietnam road network with location markers and popups
  */
 
@@ -81,7 +81,7 @@ const RoadMapView = memo(forwardRef<RoadMapViewRef, RoadMapViewProps>(function R
   const vietnamZoom = 10;
 
   // Memoize onRoadClick to keep dependency stable
-  const stableOnRoadClick = useCallback(onRoadClick || (() => {}), [onRoadClick]);
+  const stableOnRoadClick = useCallback(onRoadClick || (() => { }), [onRoadClick]);
 
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
@@ -184,7 +184,7 @@ const RoadMapView = memo(forwardRef<RoadMapViewRef, RoadMapViewProps>(function R
           'match',
           ['get', 'roadType'],
           'primary', '#dc2626',
-          'secondary', '#ea580c', 
+          'secondary', '#ea580c',
           'tertiary', '#ca8a04',
           'residential', '#2563eb',
           '#6b7280'
@@ -305,10 +305,10 @@ const RoadMapView = memo(forwardRef<RoadMapViewRef, RoadMapViewProps>(function R
 
             console.log('✅ Marker added:', marker.current);
 
-            // Create and show new popup
+            // Create and show new popup (có nút X để tắt)
             popup.current = new maplibregl.Popup({
               offset: 25,
-              closeButton: false,
+              closeButton: true,
               className: 'road-popup',
             })
               .setLngLat([lng, lat])
