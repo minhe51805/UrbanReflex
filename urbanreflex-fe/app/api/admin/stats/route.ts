@@ -1,3 +1,10 @@
+/**
+ * Author: Trương Dương Bảo Minh (minhe51805)
+ * Create at: 20-11-2025
+ * Update at: 25-11-2025
+ * Description: API route for admin dashboard statistics - GET overview and analytics data
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 
 // GET - Get admin statistics
