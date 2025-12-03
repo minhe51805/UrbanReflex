@@ -1,7 +1,7 @@
 /**
  * Author: Trương Dương Bảo Minh (minhe51805)
  * Create at: 13-11-2025
- * Update at: 19-11-2025
+ * Update at: 01-12-2025
  * Description: Footer component with navigation links, social media links, and newsletter subscription form
  */
 
@@ -29,7 +29,7 @@ export default function Footer() {
           <Link href="/" className="inline-flex items-center gap-2">
             <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/30">
               <svg viewBox="0 0 24 24" className="w-6 h-6 text-white" fill="currentColor">
-                <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
+                <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" />
               </svg>
             </div>
             <span className="text-xl font-bold">UrbanReflex</span>
