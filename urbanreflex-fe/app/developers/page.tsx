@@ -1,7 +1,7 @@
 /**
  * Author: Trương Dương Bảo Minh (minhe51805)
  * Create at: 13-11-2025
- * Update at: 15-11-2025
+ * Update at: 01-12-2025
  * Description: Developers page component with API documentation, code examples, and integration guides
  */
 
@@ -79,7 +79,7 @@ export default function DevelopersPage() {
               UrbanReflex <span className="text-[#1e64ab]">API</span>
             </h1>
             <p className="text-lg sm:text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-              Access global air quality data through our free, open API. 
+              Access global air quality data through our free, open API.
               No authentication required.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
