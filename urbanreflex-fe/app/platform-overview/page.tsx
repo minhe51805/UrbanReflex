@@ -1,7 +1,7 @@
 /**
  * Author: Trương Dương Bảo Minh (minhe51805)
  * Create at: 17-11-2025
- * Update at: 17-11-2025
+ * Update at: 01-12-2025
  * Description: Platform overview page showcasing OpenAQ's open-source platform and data access methods
  */
 
