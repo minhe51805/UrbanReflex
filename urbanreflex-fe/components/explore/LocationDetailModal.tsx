@@ -1,7 +1,7 @@
 /**
  * Author: Trương Dương Bảo Minh (minhe51805)
  * Create at: 16-11-2025
- * Update at: 19-11-2025
+ * Update at: 01-12-2025
  * Description: Modal component displaying detailed location information and latest measurements when clicking on map markers
  */
 
@@ -109,11 +109,10 @@ export default function LocationDetailModal({ location, onClose }: LocationDetai
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Location Type and Info */}
           <div className="flex flex-wrap gap-3">
-            <span className={`px-3 py-1.5 rounded-full text-xs font-semibold ${
-              location.isMonitor
+            <span className={`px-3 py-1.5 rounded-full text-xs font-semibold ${location.isMonitor
                 ? 'bg-blue-100 text-blue-800'
                 : 'bg-green-100 text-green-800'
-            }`}>
+              }`}>
               {location.isMonitor ? 'Reference Monitor' : 'Air Sensor'}
             </span>
             {location.isMobile && (
