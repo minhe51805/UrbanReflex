@@ -1,2 +1,307 @@
-# LightRight
-LightRight is a civic-tech platform to optimize urban street lighting. Citizens submit geo-tagged reports of dark or over-lit spots; the map aggregates hotspots, suggests time-based lighting schedules (sunrise/sunset, nearby schools/parks), and tracks fixes via NGSI-LD open data.
+# UrbanReflex
+
+<div align="center">
+
+[![Next.js](https://img.shields.io/badge/Next.js-16.0-black?logo=next.js&logoColor=white)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38bdf8?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![NGSI-LD](https://img.shields.io/badge/NGSI--LD-Compliant-00A3E0)](https://www.etsi.org/deliver/etsi_gs/CIM/001_099/009/01.08.01_60/gs_CIM009v010801p.pdf)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
+
+**Enterprise-Grade Smart City Platform for Air Quality Monitoring & Urban Infrastructure Management**
+
+[Features](#features) • [Quick Start](#quick-start) • [Documentation](#documentation) • [Architecture](#architecture) • [API Reference](#api-reference) • [Contributing](#contributing)
+
+</div>
+
+---
+
+## Overview
+
+**UrbanReflex** is a production-ready smart city platform that integrates **air quality monitoring** with **urban infrastructure management**. Built on NGSI-LD standards and modern web technologies, it delivers real-time insights into environmental conditions and city infrastructure.
+
+### Key Capabilities
+
+![Air Quality](https://img.shields.io/badge/Feature-Air%20Quality%20Monitoring-blue)
+**Air Quality Monitoring** - Real-time AQI data from OpenAQ with interactive visualizations
+
+![Smart City](https://img.shields.io/badge/Feature-Smart%20City%20Integration-green)
+**Smart City Integration** - NGSI-LD compliant data from Orion Context Broker
+
+![Mapping](https://img.shields.io/badge/Feature-Advanced%20Mapping-orange)
+**Advanced Mapping** - Road networks, streetlights, and POI visualization with clustering
+
+![Analytics](https://img.shields.io/badge/Feature-Analytics%20Dashboard-purple)
+**Analytics Dashboard** - Comprehensive admin panel for data management
+
+![APIs](https://img.shields.io/badge/Feature-Open%20APIs-red)
+**Open APIs** - RESTful endpoints with authentication and rate limiting
+
+![Responsive](https://img.shields.io/badge/Feature-Responsive%20Design-yellow)
+**Responsive Design** - Mobile-first approach with modern UI/UX
+
+---
+
+## Features
+
+### Air Quality Monitoring
+- **Real-time Data** - Live AQI measurements from 10,000+ global stations
+- **Interactive Maps** - MapLibre GL with clustering and heatmaps
+- **Location Details** - Historical charts, health recommendations, data export
+- **Advanced Search** - Filter by location, parameters, and time range
+
+### Smart City Infrastructure
+- **Road Networks** - Real-time road segment data visualization
+- **Streetlights** - Infrastructure monitoring and management
+- **Weather Integration** - Live weather data correlated with air quality
+- **Citizen Reports** - Community-driven issue reporting system
+
+### Developer Tools
+- **API Keys Management** - Generate, revoke, and monitor API usage
+- **Comprehensive Documentation** - Interactive examples in 4 languages
+- **OpenAPI Specification** - Auto-generated API docs
+- **Testing Tools** - Built-in endpoint testing utilities
+
+### Admin Dashboard
+- **Report Management** - Track and resolve citizen-submitted issues
+- **Analytics** - Real-time statistics and trends
+- **User Management** - Role-based access control
+- **Data Quality** - Automated anomaly detection
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+- Node.js 18+ and npm/pnpm
+- OpenAQ API key (optional, uses mock data in dev)
+- Access to NGSI-LD Context Broker (optional)
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/minhe51805/UrbanReflex.git
+cd UrbanReflex/urbanreflex-fe
+
+# Install dependencies
+npm install
+
+# Configure environment
+cp .env.example .env.local
+# Edit .env.local with your API keys
+
+# Run development server
+npm run dev
+```
+
+Visit `http://localhost:3000` to see the application.
+
+### Environment Variables
+
+```env
+# OpenAQ API (Optional - falls back to mock data)
+NEXT_PUBLIC_OPENAQ_API_KEY=your_openaq_key
+
+# NGSI-LD Context Broker (Optional)
+NEXT_PUBLIC_NGSILAD_BROKER_URL=http://103.178.233.233:1026
+
+# Application
+NEXT_PUBLIC_API_BASE_URL=http://localhost:3000
+```
+
+---
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Frontend (Next.js 16)                 │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐ │
+│  │   Pages     │  │ Components  │  │  Data Viz       │ │
+│  │  (App Dir)  │  │ (React 19)  │  │ MapLibre/Charts │ │
+│  └──────┬──────┘  └──────┬──────┘  └────────┬────────┘ │
+│         └─────────────────┴──────────────────┘          │
+└──────────────────────────┬──────────────────────────────┘
+                           │
+          ┌────────────────┼────────────────┐
+          ▼                ▼                ▼
+    ┌──────────┐    ┌──────────┐    ┌──────────┐
+    │ OpenAQ   │    │ NGSI-LD  │    │  Custom  │
+    │   API    │    │  Broker  │    │   APIs   │
+    └──────────┘    └──────────┘    └──────────┘
+```
+
+### Tech Stack
+
+**Frontend**
+- Next.js 16 (App Router)
+- React 19
+- TypeScript 5
+- Tailwind CSS 3.4
+- Framer Motion
+
+**Data Visualization**
+- MapLibre GL (maps)
+- Chart.js (charts)
+- Supercluster (clustering)
+
+**Smart City Integration**
+- NGSI-LD (ETSI standard)
+- Orion Context Broker
+- Smart Data Models
+
+**APIs**
+- OpenAQ (air quality)
+- Custom RESTful endpoints
+- API key authentication
+
+For detailed architecture, see [ARCHITECTURE.md](./urbanreflex-fe/docs/ARCHITECTURE.md).
+
+---
+
+## Documentation
+
+Comprehensive documentation is available in the `/urbanreflex-fe/docs` folder:
+
+### Core Documentation
+- **[System Architecture](./urbanreflex-fe/docs/ARCHITECTURE.md)** - Technical architecture and data flows
+- **[API Endpoints](./urbanreflex-fe/docs/API-Endpoints.md)** - Complete API reference
+- **[Admin Dashboard](./urbanreflex-fe/docs/ADMIN-DASHBOARD.md)** - Admin panel usage guide
+- **[NGSI-LD Integration](./urbanreflex-fe/docs/NGSI-LD-Integration.md)** - Smart city data integration
+
+### Developer Guides
+- **[Code Examples](./urbanreflex-fe/docs/Code-Examples.md)** - Copy-paste ready examples
+- **[Testing Guide](./urbanreflex-fe/docs/Testing-Guide.md)** - Testing strategies and tools
+- **[Security Best Practices](./urbanreflex-fe/docs/Security-Best-Practices.md)** - Security guidelines
+- **[Deployment Guide](./urbanreflex-fe/docs/Deployment-Guide.md)** - Production deployment steps
+
+### Quick References
+- **[Documentation Index](./urbanreflex-fe/docs/INDEX.md)** - Complete docs table of contents
+- **[API Endpoints](./urbanreflex-fe/docs/API_ENDPOINTS.md)** - Quick API reference
+- **[Migration Guide](./urbanreflex-fe/docs/MIGRATION_GUIDE.md)** - Version migration instructions
+
+---
+
+## Live Demo
+
+### Explore Key Features
+
+- **Homepage**: Air quality overview with featured locations
+- **Map Explorer**: `/explore` - Interactive global map
+- **Location Details**: `/locations/[id]` - Detailed air quality data
+- **Admin Dashboard**: `/admin` - Management interface
+- **API Docs**: `/api-docs` - Interactive API documentation
+- **Live Data**: `/live-data` - Real-time NGSI-LD data
+
+---
+
+## Development
+
+### Project Structure
+
+```
+urbanreflex-fe/
+├── app/                    # Next.js App Router pages
+│   ├── api/               # API routes
+│   │   ├── aqi/          # Air quality endpoints
+│   │   ├── ngsi-ld/      # NGSI-LD proxy
+│   │   ├── roads/        # Roads infrastructure
+│   │   └── admin/        # Admin endpoints
+│   ├── explore/          # Map explorer page
+│   ├── admin/            # Admin dashboard
+│   └── ...               # Other pages
+├── components/            # React components
+│   ├── home/             # Homepage sections
+│   ├── explore/          # Map components
+│   ├── admin/            # Admin components
+│   └── ui/               # Reusable UI components
+├── lib/                   # Utilities and APIs
+│   ├── api/              # API clients
+│   └── utils/            # Helper functions
+├── types/                 # TypeScript definitions
+├── docs/                  # Documentation
+└── public/                # Static assets
+```
+
+### Available Scripts
+
+```bash
+npm run dev      # Start development server
+npm run build    # Build for production
+npm start        # Start production server
+npm run lint     # Run ESLint
+```
+
+### Key Technologies
+
+- **State Management**: React Context API
+- **Styling**: Tailwind CSS with custom design system
+- **Maps**: MapLibre GL with custom layers
+- **Charts**: Chart.js with responsive configuration
+- **Icons**: Lucide React
+- **Animations**: Framer Motion
+
+---
+
+## Security
+
+- **API Authentication**: API key-based with rate limiting
+- **Role-Based Access**: Admin/user role separation
+- **Input Validation**: Comprehensive validation on all endpoints
+- **CORS Configuration**: Secure cross-origin policies
+- **Environment Variables**: Sensitive data in env files
+
+See [Security Best Practices](./urbanreflex-fe/docs/Security-Best-Practices.md) for details.
+
+---
+
+## Deployment
+
+### Vercel (Recommended)
+
+```bash
+npx vercel
+```
+
+### Docker
+
+```bash
+docker build -t urbanreflex .
+docker run -p 3000:3000 urbanreflex
+```
+
+### Traditional Hosting
+
+```bash
+npm run build
+npm start
+```
+
+See full deployment guide: [Deployment Guide](./urbanreflex-fe/docs/Deployment-Guide.md)
+
+---
+
+## Contribution
+
+Thanks to all contributors, your help is greatly appreciated!
+
+Contributions are welcome! Please read the contribution guidelines and code of conduct to learn how to participate.
+
+---
+
+## Support
+
+If you like this project, please give it a ⭐ star.
+
+If you have any issues or feature requests, please create an [issue](https://github.com/minhe51805/UrbanReflex/issues).
+
+---
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+ 
