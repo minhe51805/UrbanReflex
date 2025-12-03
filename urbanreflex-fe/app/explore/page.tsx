@@ -1,18 +1,19 @@
 /**
  * Author: Trương Dương Bảo Minh (minhe51805)
  * Create at: 13-11-2025
- * Update at: 25-11-2025
+ * Update at: 01-12-2025
  * Description: Explore page with Vietnam road network visualization and community reporting system
  */
 
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Search, Filter, X, List, Map as MapIcon, Menu, Route, Minus, Maximize2, MapPin } from 'lucide-react';
-import EnhancedRoadMapView, { EnhancedRoadMapViewRef } from '@/components/explore/EnhancedRoadMapView';
+import EnhancedRoadMapView, { EnhancedRoadMapViewRef, ReportMarker } from '@/components/explore/EnhancedRoadMapView';
 import RoadDetailModal from '@/components/explore/RoadDetailModal';
 import ReportsListSidebar from '@/components/explore/ReportsListSidebar';
+import FloatingReportButton from '@/components/explore/FloatingReportButton';
 
 interface RoadSegment {
   id: string;
@@ -34,8 +35,112 @@ interface RoadSegment {
   [key: string]: any; // Allow additional fields from API
 }
 
-export default function ExplorePage() {
+// Chuẩn hoá toạ độ về dạng [lng, lat] giống logic trên map component,
+// để tránh trường hợp dữ liệu trả về [lat, lng] làm nhảy sai vị trí.
+const normalizeLngLat = (coord: number[]): [number, number] => {
+  if (!Array.isArray(coord) || coord.length < 2) {
+    return [0, 0];
+  }
+
+  let [a, b] = coord;
+
+  const looksLikeLatLng = Math.abs(a) <= 90 && Math.abs(b) > 90;
+  if (looksLikeLatLng) {
+    return [b, a];
+  }
+
+  return [a, b];
+};
+
+// Virtualized Road List Component for performance
+// Simplified version - only render first 50 items initially, load more on scroll
+function VirtualizedRoadList({ roads, onRoadClick }: { roads: RoadSegment[]; onRoadClick: (road: RoadSegment) => void }) {
+  const [visibleCount, setVisibleCount] = useState(50);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const scrollTop = container.scrollTop;
+      const scrollHeight = container.scrollHeight;
+      const clientHeight = container.clientHeight;
+
+      // Load more when user scrolls near bottom (80% of scroll)
+      if (scrollTop + clientHeight >= scrollHeight * 0.8 && visibleCount < roads.length) {
+        setVisibleCount(prev => Math.min(prev + 50, roads.length));
+      }
+    };
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+    };
+  }, [roads.length, visibleCount]);
+
+  // Reset visible count when roads change
+  useEffect(() => {
+    setVisibleCount(50);
+  }, [roads.length]);
+
+  const visibleRoads = roads.slice(0, visibleCount);
+
+  return (
+    <div ref={containerRef} className="h-full overflow-y-auto">
+      <div className="p-4 space-y-3">
+        {visibleRoads.map((road) => (
+          <div
+            key={road.id}
+            onClick={() => onRoadClick(road)}
+            className="group bg-white border-2 border-gray-200 rounded-xl p-4 hover:shadow-xl hover:border-primary-300 transition-all cursor-pointer transform hover:-translate-y-1"
+          >
+            <div className="flex items-start justify-between mb-3">
+              <h3 className="font-bold text-gray-900 text-base group-hover:text-primary-600 transition-colors flex-1">
+                {road.name}
+              </h3>
+              <span className={`px-3 py-1 rounded-lg text-[11px] font-bold uppercase shadow-sm ${road.roadType === 'primary' ? 'bg-gradient-to-r from-red-100 to-red-200 text-red-800' :
+                  road.roadType === 'secondary' ? 'bg-gradient-to-r from-orange-100 to-orange-200 text-orange-800' :
+                    road.roadType === 'tertiary' ? 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800' :
+                      road.roadType === 'residential' ? 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800' :
+                        'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800'
+                }`}>
+                {road.roadType}
+              </span>
+            </div>
+            <div className="flex items-center gap-4 text-sm text-gray-600">
+              <div className="flex items-center gap-1">
+                <span className="font-semibold text-gray-700">📏</span>
+                <span className="font-medium">{road.length.toFixed(0)}m</span>
+              </div>
+              {road.laneCount && (
+                <div className="flex items-center gap-1">
+                  <span className="font-semibold text-gray-700">🛣️</span>
+                  <span className="font-medium">{road.laneCount} lanes</span>
+                </div>
+              )}
+              {road.surface && (
+                <div className="flex items-center gap-1">
+                  <span className="font-semibold text-gray-700">⚙️</span>
+                  <span className="font-medium capitalize">{road.surface}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+        {visibleCount < roads.length && (
+          <div className="text-center py-4 text-gray-500 text-sm">
+            Loading more roads... ({visibleCount} / {roads.length})
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ExplorePageContent() {
   const searchParams = useSearchParams();
+  const MAX_ROADS_DISPLAY = 2500;
   const [roadSegments, setRoadSegments] = useState<RoadSegment[]>([]);
   const [filteredRoadSegments, setFilteredRoadSegments] = useState<RoadSegment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,12 +153,27 @@ export default function ExplorePage() {
   const [isSearchMinimized, setIsSearchMinimized] = useState(false);
   const mapRef = useRef<EnhancedRoadMapViewRef>(null);
   const [initialRoadLoaded, setInitialRoadLoaded] = useState(false);
-  const [highlightLocation, setHighlightLocation] = useState<number[] | null>(null);
+  const [highlightLocation, setHighlightLocation] = useState<[number, number] | null>(null);
   const [highlightLabel, setHighlightLabel] = useState<string>('');
+  const [areaReports, setAreaReports] = useState<ReportMarker[]>([]);
+  const totalRoadCount = filteredRoadSegments.length;
+
+  const displayedRoadSegments = useMemo(
+    () => filteredRoadSegments.slice(0, MAX_ROADS_DISPLAY),
+    [filteredRoadSegments, MAX_ROADS_DISPLAY]
+  );
+
+  const displayedRoadCount = displayedRoadSegments.length;
 
   useEffect(() => {
     loadRoadSegments();
   }, []);
+
+  useEffect(() => {
+    if (!showReportsSidebar) {
+      setAreaReports([]);
+    }
+  }, [showReportsSidebar]);
 
   // Handle query params to auto-select and zoom to road
   useEffect(() => {
@@ -73,7 +193,7 @@ export default function ExplorePage() {
         // Find nearest road by coordinates
         const targetLng = parseFloat(lng);
         const targetLat = parseFloat(lat);
-        
+
         // Find the nearest road
         let nearestRoad: RoadSegment | null = null;
         let minDistance = Infinity;
@@ -101,27 +221,54 @@ export default function ExplorePage() {
     }
   }, [loading, roadSegments, searchParams, initialRoadLoaded]);
 
-  const handleRoadSelection = (road: RoadSegment) => {
+  const handleRoadSelection = useCallback((road: RoadSegment) => {
     setSelectedRoad(road);
-    
+
     // Zoom to the road on map
     if (mapRef.current) {
       mapRef.current.zoomToRoad(road);
     }
-    
+
     // Show reports for this road's location
     const centerIndex = Math.floor(road.location.coordinates.length / 2);
-    const [lng, lat] = road.location.coordinates[centerIndex];
+    const rawCenter = road.location.coordinates[centerIndex] || [0, 0];
+    const [lng, lat] = normalizeLngLat(rawCenter);
     const centerLocation: [number, number] = [lng, lat];
     setReportsLocation(centerLocation);
     setHighlightLocation(centerLocation);
     setHighlightLabel(road.name);
     setShowReportsSidebar(true);
-  };
+  }, []);
 
   const loadRoadSegments = async () => {
     try {
       setLoading(true);
+
+      // Check cache first
+      const CACHE_KEY = 'urbanreflex_road_segments';
+      const CACHE_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours
+
+      try {
+        const cachedData = localStorage.getItem(CACHE_KEY);
+        if (cachedData) {
+          const { data, timestamp } = JSON.parse(cachedData);
+          const now = Date.now();
+
+          // Check if cache is still valid (less than 24 hours old)
+          if (now - timestamp < CACHE_EXPIRY) {
+            console.log('✅ Using cached road segments:', data.length);
+            setRoadSegments(data);
+            setFilteredRoadSegments(data);
+            setLoading(false);
+            return;
+          } else {
+            console.log('⏰ Cache expired, fetching fresh data...');
+            localStorage.removeItem(CACHE_KEY);
+          }
+        }
+      } catch (error) {
+        console.warn('⚠️ Error reading cache:', error);
+      }
 
       // Backend has limit of 1000 per request, so we need to paginate
       const BATCH_SIZE = 1000;
@@ -153,6 +300,19 @@ export default function ExplorePage() {
       }
 
       console.log(`✅ Finished loading ${allRoads.length} road segments`);
+
+      // Save to cache
+      try {
+        const cacheData = {
+          data: allRoads,
+          timestamp: Date.now(),
+        };
+        localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+        console.log('💾 Cached road segments for future use');
+      } catch (error) {
+        console.warn('⚠️ Error saving cache:', error);
+      }
+
       setRoadSegments(allRoads);
       setFilteredRoadSegments(allRoads);
 
@@ -163,42 +323,67 @@ export default function ExplorePage() {
     }
   };
 
-  const handleRoadTypeFilter = (roadType: string) => {
-    if (roadType === 'all') {
-      setFilteredRoadSegments(roadSegments);
-      return;
+  // Debounce hook for search
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Memoized filtered results based on search query and road type
+  const [activeRoadTypeFilter, setActiveRoadTypeFilter] = useState<string>('all');
+
+  const filteredRoadSegmentsMemo = useMemo(() => {
+    let filtered = roadSegments;
+
+    // Apply road type filter
+    if (activeRoadTypeFilter !== 'all') {
+      filtered = filtered.filter(road => road.roadType === activeRoadTypeFilter);
     }
 
-    const filtered = roadSegments.filter(road => road.roadType === roadType);
-    setFilteredRoadSegments(filtered);
-  };
+    // Apply search query filter
+    if (searchQuery.trim()) {
+      const queryLower = searchQuery.toLowerCase();
+      filtered = filtered.filter(road =>
+        road.name.toLowerCase().includes(queryLower) ||
+        road.roadType.toLowerCase().includes(queryLower)
+      );
+    }
 
-  const handleSearch = (query: string) => {
+    return filtered;
+  }, [roadSegments, activeRoadTypeFilter, searchQuery]);
+
+  // Update filteredRoadSegments when memoized result changes
+  useEffect(() => {
+    setFilteredRoadSegments(filteredRoadSegmentsMemo);
+  }, [filteredRoadSegmentsMemo]);
+
+  const handleRoadTypeFilter = useCallback((roadType: string) => {
+    setActiveRoadTypeFilter(roadType);
+  }, []);
+
+  const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
-    if (!query.trim()) {
-      setFilteredRoadSegments(roadSegments);
-      return;
+
+    // Clear previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
     }
 
-    const filtered = roadSegments.filter(road =>
-      road.name.toLowerCase().includes(query.toLowerCase()) ||
-      road.roadType.toLowerCase().includes(query.toLowerCase())
-    );
-    setFilteredRoadSegments(filtered);
-  };
+    // Debounce search - update filter after 300ms of no typing
+    searchTimeoutRef.current = setTimeout(() => {
+      // Filter is now handled by useMemo, no need to manually update
+    }, 300);
+  }, []);
 
-  const toggleSidebar = (view?: 'filters' | 'list') => {
+  const toggleSidebar = useCallback((view?: 'filters' | 'list') => {
     if (view) {
       setSidebarView(view);
       setShowSidebar(true);
     } else {
       setShowSidebar(!showSidebar);
     }
-  };
+  }, [showSidebar]);
 
-  const handleRoadClick = (road: RoadSegment) => {
+  const handleRoadClick = useCallback((road: RoadSegment) => {
     handleRoadSelection(road);
-  };
+  }, []);
 
   return (
     <div className="relative w-full h-screen overflow-hidden bg-gray-50">
@@ -206,10 +391,11 @@ export default function ExplorePage() {
       <div className="absolute inset-0">
         <EnhancedRoadMapView
           ref={mapRef}
-          roadSegments={filteredRoadSegments}
+          roadSegments={displayedRoadSegments}
           onRoadClick={handleRoadClick}
           highlightLocation={highlightLocation}
           highlightLabel={highlightLabel}
+          reportMarkers={areaReports}
         />
       </div>
 
@@ -229,21 +415,13 @@ export default function ExplorePage() {
 
             <button
               onClick={() => toggleSidebar('list')}
-              className={`flex items-center gap-2 px-5 py-3 rounded-xl font-semibold transition-all text-sm shadow-lg ${
-                showSidebar && sidebarView === 'list'
+              className={`flex items-center gap-2 px-5 py-3 rounded-xl font-semibold transition-all text-sm shadow-lg ${showSidebar && sidebarView === 'list'
                   ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-primary-500/30'
                   : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200'
-              }`}
+                }`}
             >
               <List className="h-5 w-5" />
               <span className="hidden sm:inline font-bold">Roads</span>
-              <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                showSidebar && sidebarView === 'list'
-                  ? 'bg-white/20 text-white'
-                  : 'bg-primary-100 text-primary-700'
-              }`}>
-                {filteredRoadSegments.length}
-              </span>
             </button>
           </div>
         ) : (
@@ -273,21 +451,13 @@ export default function ExplorePage() {
 
                 <button
                   onClick={() => toggleSidebar('list')}
-                  className={`flex items-center gap-2 px-5 py-3 rounded-xl font-semibold transition-all text-sm shadow-lg ${
-                    showSidebar && sidebarView === 'list'
+                  className={`flex items-center gap-2 px-5 py-3 rounded-xl font-semibold transition-all text-sm shadow-lg ${showSidebar && sidebarView === 'list'
                       ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-primary-500/30'
                       : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200'
-                  }`}
+                    }`}
                 >
                   <List className="h-5 w-5" />
                   <span className="hidden sm:inline font-bold">Roads</span>
-                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                    showSidebar && sidebarView === 'list'
-                      ? 'bg-white/20 text-white'
-                      : 'bg-primary-100 text-primary-700'
-                  }`}>
-                    {filteredRoadSegments.length}
-                  </span>
                 </button>
               </div>
 
@@ -332,9 +502,8 @@ export default function ExplorePage() {
 
       {/* Sidebar Panel - Redesigned - Moved to Left */}
       <div
-        className={`absolute top-[15rem] left-0 bottom-0 w-full sm:w-[420px] bg-white/95 backdrop-blur-xl shadow-2xl transform transition-transform duration-300 ease-in-out z-20 ${
-          showSidebar ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`absolute top-[15rem] left-0 bottom-0 w-full sm:w-[420px] bg-white/95 backdrop-blur-xl shadow-2xl transform transition-transform duration-300 ease-in-out z-10 ${showSidebar ? 'translate-x-0' : '-translate-x-full'
+          }`}
       >
         {/* Sidebar Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200 bg-white/80 backdrop-blur-md">
@@ -345,10 +514,6 @@ export default function ExplorePage() {
               </div>
               Road Segments
             </h2>
-            <p className="text-gray-600 text-sm mt-1 flex items-center gap-1.5">
-              <MapPin className="h-3.5 w-3.5" />
-              {filteredRoadSegments.length} roads found
-            </p>
           </div>
           <button
             onClick={() => setShowSidebar(false)}
@@ -358,7 +523,7 @@ export default function ExplorePage() {
           </button>
         </div>
 
-        {/* Sidebar Content */}
+        {/* Sidebar Content - Virtualized */}
         <div className="h-[calc(100vh-9rem-88px)] overflow-y-auto">
           {loading ? (
             <div className="flex items-center justify-center h-full">
@@ -368,56 +533,18 @@ export default function ExplorePage() {
               </div>
             </div>
           ) : (
-            <div className="p-4 space-y-3">
-              {filteredRoadSegments.map((road) => (
-                <div
-                  key={road.id}
-                  onClick={() => {
-                    if (mapRef.current) {
-                      mapRef.current.zoomToRoad(road);
-                    }
-                    handleRoadSelection(road);
-                    if (window.innerWidth < 640) {
-                      setShowSidebar(false);
-                    }
-                  }}
-                  className="group bg-white border-2 border-gray-200 rounded-xl p-4 hover:shadow-xl hover:border-primary-300 transition-all cursor-pointer transform hover:-translate-y-1"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <h3 className="font-bold text-gray-900 text-base group-hover:text-primary-600 transition-colors flex-1">
-                      {road.name}
-                    </h3>
-                    <span className={`px-3 py-1 rounded-lg text-[11px] font-bold uppercase shadow-sm ${
-                      road.roadType === 'primary' ? 'bg-gradient-to-r from-red-100 to-red-200 text-red-800' :
-                      road.roadType === 'secondary' ? 'bg-gradient-to-r from-orange-100 to-orange-200 text-orange-800' :
-                      road.roadType === 'tertiary' ? 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800' :
-                      road.roadType === 'residential' ? 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800' :
-                      'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800'
-                    }`}>
-                      {road.roadType}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-4 text-sm text-gray-600">
-                    <div className="flex items-center gap-1">
-                      <span className="font-semibold text-gray-700">📏</span>
-                      <span className="font-medium">{road.length.toFixed(0)}m</span>
-                    </div>
-                    {road.laneCount && (
-                      <div className="flex items-center gap-1">
-                        <span className="font-semibold text-gray-700">🛣️</span>
-                        <span className="font-medium">{road.laneCount} lanes</span>
-                      </div>
-                    )}
-                    {road.surface && (
-                      <div className="flex items-center gap-1">
-                        <span className="font-semibold text-gray-700">⚙️</span>
-                        <span className="font-medium capitalize">{road.surface}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <VirtualizedRoadList
+              roads={displayedRoadSegments}
+              onRoadClick={(road) => {
+                if (mapRef.current) {
+                  mapRef.current.zoomToRoad(road);
+                }
+                handleRoadSelection(road);
+                if (window.innerWidth < 640) {
+                  setShowSidebar(false);
+                }
+              }}
+            />
           )}
         </div>
       </div>
@@ -447,9 +574,38 @@ export default function ExplorePage() {
         <ReportsListSidebar
           location={reportsLocation}
           radius={1}
-          onClose={() => setShowReportsSidebar(false)}
+          onClose={() => {
+            setShowReportsSidebar(false);
+            setAreaReports([]);
+          }}
+          onApprovedReportsUpdate={setAreaReports}
         />
       )}
+
+      {/* Floating Report Button */}
+      <FloatingReportButton
+        selectedRoad={selectedRoad ? {
+          id: selectedRoad.id,
+          name: selectedRoad.name,
+          location: selectedRoad.location
+        } : null}
+      />
     </div>
   );
 }
+
+export default function ExplorePage() {
+  return (
+    <Suspense fallback={
+      <div className="relative w-full h-screen overflow-hidden bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-14 w-14 border-4 border-primary-200 border-t-primary-500"></div>
+          <p className="mt-4 text-gray-600 font-semibold">Loading...</p>
+        </div>
+      </div>
+    }>
+      <ExplorePageContent />
+    </Suspense>
+  );
+}
+ 
