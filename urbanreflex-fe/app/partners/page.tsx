@@ -1,7 +1,7 @@
 /**
  * Author: Trương Dương Bảo Minh (minhe51805)
  * Create at: 16-11-2025
- * Update at: 25-11-2025
+ * Update at: 01-12-2025
  * Description: Documentation page with professional layout
  */
 
