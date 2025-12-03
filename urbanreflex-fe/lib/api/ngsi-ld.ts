@@ -1,6 +1,8 @@
 /**
- * NGSI-LD API Client for Orion Context Broker
- * Base URL: http://103.178.233.233:1026
+ * Author: Trương Dương Bảo Minh (minhe51805)
+ * Create at: 27-11-2025
+ * Update at: 01-12-2025
+ * Description: NGSI-LD API Client for Orion Context Broker to fetch entities and handle context
  */
 
 // Context URLs for different entity types
@@ -43,13 +45,13 @@ function buildLinkHeader(type: EntityType): string {
  */
 function buildQueryString(params: QueryParams): string {
   const searchParams = new URLSearchParams();
-  
+
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null) {
       searchParams.append(key, value.toString());
     }
   });
-  
+
   return searchParams.toString();
 }
 
@@ -62,7 +64,7 @@ export async function fetchEntities<T = any>(
 ): Promise<T[]> {
   const queryString = buildQueryString({ type, ...params });
   const url = `${BASE_URL}/entities?${queryString}`;
-  
+
   try {
     const response = await fetch(url, {
       headers: {
@@ -93,7 +95,7 @@ export async function fetchEntityById<T = any>(
 ): Promise<T> {
   const queryString = options.keyValues ? '?options=keyValues' : '';
   const url = `${BASE_URL}/entities/${encodeURIComponent(entityId)}${queryString}`;
-  
+
   try {
     const response = await fetch(url, {
       headers: {
@@ -122,7 +124,7 @@ export async function createEntity(
   entity: any
 ): Promise<void> {
   const url = `${BASE_URL}/entities`;
-  
+
   try {
     const response = await fetch(url, {
       method: 'POST',
@@ -152,7 +154,7 @@ export async function updateEntityAttrs(
   attrs: any
 ): Promise<void> {
   const url = `${BASE_URL}/entities/${encodeURIComponent(entityId)}/attrs`;
-  
+
   try {
     const response = await fetch(url, {
       method: 'PATCH',
@@ -173,3 +175,4 @@ export async function updateEntityAttrs(
   }
 }
 
+ 
