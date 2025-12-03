@@ -8,14 +8,18 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // OpenAQ Brand Colors
+        // New Color Palette
         'brand': {
-          'purple': '#7867eb',
-          'blue': '#198cff',
+          'red': '#D4343F',        // Deep red
+          'coral': '#F3505A',      // Coral/salmon-pink
+          'neutral': '#ECEBEA',    // Very light grey
+          'dark-teal': '#085979',  // Dark teal
+          'teal': '#008EA0',       // Medium teal
+          'aqua': '#64BABE',       // Light aqua
         },
         // Grays
         'sky-120': '#1f2937',
-        'lavender-100': '#7867eb',
+        'lavender-100': '#008EA0', // Updated to use new palette
         'smoke-100': '#6b7280',
       },
       fontFamily: {
@@ -39,3 +43,4 @@ const config: Config = {
   plugins: [],
 }
 export default config
+ 
