@@ -1,7 +1,7 @@
 /**
  * Author: Trương Dương Bảo Minh (minhe51805)
  * Create at: 13-11-2025
- * Update at: 29-11-2025
+ * Update at: 01-12-2025
  * Description: Utility functions for formatting dates, numbers, AQI values, and CSS class names
  */
 
