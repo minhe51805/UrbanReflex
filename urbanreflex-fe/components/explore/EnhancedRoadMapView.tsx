@@ -1,15 +1,14 @@
 /**
  * Author: Trương Dương Bảo Minh (minhe51805)
  * Create at: 27-11-2025
- * Description: Enhanced map with all data layers and location clustering
+ * Description: Simple map with road segments and markers
  */
 
 'use client';
 
-import { useEffect, useRef, useState, memo, useImperativeHandle, forwardRef, useMemo } from 'react';
-import { Route as RouteIcon, Lightbulb, Landmark, AlertTriangle } from 'lucide-react';
+import { useEffect, useRef, useState, memo, useImperativeHandle, forwardRef, useCallback } from 'react';
+import { Route as RouteIcon } from 'lucide-react';
 import maplibregl from 'maplibre-gl';
-import Supercluster from 'supercluster';
 
 interface RoadSegment {
   id: string;
@@ -28,25 +27,14 @@ interface RoadSegment {
   [key: string]: any;
 }
 
-interface Streetlight {
+export interface ReportMarker {
   id: string;
-  state: string;
-  location: { type: 'Point'; coordinates: number[]; };
-}
-
-interface CitizenReport {
-  id: string;
-  category: string;
-  description: string;
-  location: { type: 'Point'; coordinates: number[]; };
-  dateCreated: string;
-}
-
-interface POI {
-  id: string;
-  name: string;
-  category: string;
-  location: { type: 'Point'; coordinates: number[]; };
+  title: string;
+  status: string;
+  coordinates: [number, number];
+  description?: string;
+  category?: string;
+  priority?: string;
 }
 
 interface EnhancedRoadMapViewProps {
@@ -54,39 +42,177 @@ interface EnhancedRoadMapViewProps {
   onRoadClick?: (road: RoadSegment) => void;
   highlightLocation?: [number, number] | null;
   highlightLabel?: string;
+  reportMarkers?: ReportMarker[];
 }
 
 export interface EnhancedRoadMapViewRef {
   zoomToRoad: (road: RoadSegment) => void;
 }
 
+// Ensure coordinates are always in [lng, lat] order (GeoJSON standard)
+// Enhanced validation with Vietnam-specific checks for better accuracy
+const normalizeLngLat = (coord: number[]): [number, number] => {
+  if (!Array.isArray(coord) || coord.length < 2) {
+    return [0, 0];
+  }
+
+  let [a, b] = coord;
+
+  // Validate ranges: lng should be -180 to 180, lat should be -90 to 90
+  const aIsLng = a >= -180 && a <= 180;
+  const aIsLat = a >= -90 && a <= 90;
+  const bIsLng = b >= -180 && b <= 180;
+  const bIsLat = b >= -90 && b <= 90;
+
+  // Vietnam-specific: lng ~102-110, lat ~8-24
+  // This helps identify correct format for Vietnam coordinates
+  const isVietnamLng = a >= 102 && a <= 110;
+  const isVietnamLat = b >= 8 && b <= 24;
+  const isVietnamLngSwapped = b >= 102 && b <= 110;
+  const isVietnamLatSwapped = a >= 8 && a <= 24;
+
+  // If both are valid, check which combination makes more sense
+  if (aIsLng && bIsLat) {
+    // Already [lng, lat] - correct format
+    // Prefer Vietnam-specific validation
+    if (isVietnamLng && isVietnamLat) {
+      return [a, b]; // Confirmed correct for Vietnam
+    }
+    return [a, b];
+  } else if (aIsLat && bIsLng) {
+    // [lat, lng] - need to swap
+    // Prefer Vietnam-specific validation
+    if (isVietnamLatSwapped && isVietnamLngSwapped) {
+      return [b, a]; // Confirmed swapped for Vietnam
+    }
+    return [b, a];
+  } else if (aIsLng && bIsLng) {
+    // Both are lng - invalid, but assume first is lng, second is lat (edge case)
+    return [a, b];
+  } else if (aIsLat && bIsLat) {
+    // Both are lat - invalid, but assume first is lat, second is lng (edge case)
+    return [b, a];
+  }
+
+  // Fallback: if |a| <= 90 and |b| > 90, likely [lat, lng]
+  if (Math.abs(a) <= 90 && Math.abs(b) > 90) {
+    return [b, a];
+  }
+
+  // Default: assume already [lng, lat]
+  return [a, b];
+};
+
+// Optional external style URL (Google Maps–like) - configure via env if desired
+// Example (MapTiler Streets, similar to Google Maps):
+// NEXT_PUBLIC_MAP_STYLE_URL="https://api.maptiler.com/maps/streets-v2/style.json?key=YOUR_KEY"
+const MAP_STYLE_URL = process.env.NEXT_PUBLIC_MAP_STYLE_URL;
+
+const normalizeStatusKey = (status: string) =>
+  (status || '')
+    .toString()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_|_$/g, '');
+
 const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoadMapViewProps>(function EnhancedRoadMapView({
   roadSegments,
   onRoadClick,
   highlightLocation,
   highlightLabel,
+  reportMarkers = [],
 }, ref) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
-  const [streetlights, setStreetlights] = useState<Streetlight[]>([]);
-  const [reports, setReports] = useState<CitizenReport[]>([]);
-  const [pois, setPois] = useState<POI[]>([]);
   const [weatherData, setWeatherData] = useState<any>(null);
-  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
-  const [currentZoom, setCurrentZoom] = useState(10);
-  const userLocationMarkerRef = useRef<maplibregl.Marker | null>(null);
-  const roadMarkersRef = useRef<maplibregl.Marker[]>([]);
-  const [is3DMode, setIs3DMode] = useState(false);
-  const [isLegendCollapsed, setIsLegendCollapsed] = useState(false);
-  const legendItems = useMemo(() => ([
-    { label: 'Road Segments', icon: RouteIcon, bg: 'bg-blue-50', color: 'text-blue-600' },
-    { label: 'Streetlights', icon: Lightbulb, bg: 'bg-amber-50', color: 'text-amber-500' },
-    { label: 'Citizen Reports', icon: AlertTriangle, bg: 'bg-rose-50', color: 'text-rose-500' },
-    { label: 'Points of Interest', icon: Landmark, bg: 'bg-purple-50', color: 'text-purple-600' },
-  ]), []);
   const highlightMarkerRef = useRef<maplibregl.Marker | null>(null);
-  // Highlight selected road location
+  const reportMarkerRefs = useRef<maplibregl.Marker[]>([]);
+  const geoJsonPopupRef = useRef<maplibregl.Popup | null>(null);
+  const [isLegendCollapsed, setIsLegendCollapsed] = useState(false);
+
+  const vietnamCenter: [number, number] = [106.6297, 10.8231];
+  const vietnamZoom = 10;
+
+  // Fetch weather data
+  useEffect(() => {
+    const fetchWeather = async () => {
+      try {
+        const weatherRes = await fetch('/api/ngsi-ld?type=WeatherObserved&options=keyValues&limit=1');
+        const weatherDataRes = await weatherRes.json();
+        if (Array.isArray(weatherDataRes) && weatherDataRes.length > 0) {
+          setWeatherData(weatherDataRes[0]);
+        }
+      } catch (error) {
+        console.error('Error fetching weather:', error);
+      }
+    };
+    fetchWeather();
+  }, []);
+
+  // Initialize map
+  useEffect(() => {
+    if (!mapContainer.current || map.current) return;
+
+    const baseOptions: maplibregl.MapOptions = {
+      container: mapContainer.current,
+      center: vietnamCenter,
+      zoom: vietnamZoom,
+    };
+
+    // If a vector style URL is provided, use it (Google Maps–like look)
+    // Otherwise, fall back to our local raster tiles.
+    const options: maplibregl.MapOptions = MAP_STYLE_URL
+      ? {
+          ...baseOptions,
+          style: MAP_STYLE_URL,
+        }
+      : {
+          ...baseOptions,
+          style: {
+            version: 8,
+            sources: {
+              'osm-tiles': {
+                type: 'raster',
+                tiles: ['/api/tiles/{z}/{x}/{y}'],
+                tileSize: 256,
+                attribution: '© OpenStreetMap contributors',
+              },
+            },
+            layers: [{ id: 'osm-tiles', type: 'raster', source: 'osm-tiles' }],
+          } as any,
+        };
+
+    map.current = new maplibregl.Map(options as any);
+
+    map.current.addControl(new maplibregl.FullscreenControl(), 'top-right');
+
+    map.current.on('load', () => {
+      setMapLoaded(true);
+    });
+
+    // Handle window resize
+    const handleResize = () => {
+      if (map.current) {
+        map.current.resize();
+      }
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      map.current?.remove();
+      map.current = null;
+    };
+
+    // Cleanup report markers
+    reportMarkerRefs.current.forEach(marker => marker.remove());
+    reportMarkerRefs.current = [];
+  }, []);
+
+  // Highlight marker
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
 
@@ -138,546 +264,574 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
         </div>
       `;
 
-      highlightMarkerRef.current = new maplibregl.Marker({ element: el, anchor: 'bottom' })
+      const popup = new maplibregl.Popup({ 
+        offset: [0, -10],
+        closeButton: true,      // allow user to close
+        closeOnClick: true,     // clicking map will also close
+        className: 'highlight-popup'
+      }).setHTML(`
+        <div style="padding:10px;">
+          <div style="font-weight:600; color:#111827;">${highlightLabel || 'Selected Road'}</div>
+          <div style="font-size:12px; color:#6b7280;">${highlightLocation[1].toFixed(4)}, ${highlightLocation[0].toFixed(4)}</div>
+        </div>
+      `);
+
+      highlightMarkerRef.current = new maplibregl.Marker({ 
+        element: el, 
+        anchor: 'bottom',
+        draggable: false
+      })
         .setLngLat(highlightLocation)
-        .setPopup(
-          new maplibregl.Popup({ offset: 15 }).setHTML(`
-            <div style="padding:10px;">
-              <div style="font-weight:600; color:#111827;">${highlightLabel || 'Selected Road'}</div>
-              <div style="font-size:12px; color:#6b7280;">${highlightLocation[1].toFixed(4)}, ${highlightLocation[0].toFixed(4)}</div>
-            </div>
-          `)
-        )
+        .setPopup(popup)
         .addTo(map.current);
+
+      // Khi đóng popup thì remove luôn marker để không còn pin trên map
+      popup.on('close', () => {
+        if (highlightMarkerRef.current) {
+          highlightMarkerRef.current.remove();
+          highlightMarkerRef.current = null;
+        }
+      });
     }
   }, [highlightLocation, highlightLabel, mapLoaded]);
 
-  // Helper: Convert LineString to Polygon (buffer effect)
-  const lineToPolygon = (coordinates: number[][], widthInMeters: number = 5): number[][] => {
-    if (coordinates.length < 2) return [];
+  // Report markers for approved reports (Đang xử lý / Đã giải quyết)
+  useEffect(() => {
+    // Remove existing report markers
+    reportMarkerRefs.current.forEach(marker => marker.remove());
+    reportMarkerRefs.current = [];
 
-    const offsetPoints = (coords: number[][], offset: number): number[][] => {
-      const result: number[][] = [];
-      for (let i = 0; i < coords.length - 1; i++) {
-        const [x1, y1] = coords[i];
-        const [x2, y2] = coords[i + 1];
-        const dx = x2 - x1;
-        const dy = y2 - y1;
-        const len = Math.sqrt(dx * dx + dy * dy);
-        const perpX = -dy / len * offset;
-        const perpY = dx / len * offset;
-        result.push([x1 + perpX, y1 + perpY]);
-      }
-      const last = coords[coords.length - 1];
-      const prev = coords[coords.length - 2];
-      const dx = last[0] - prev[0];
-      const dy = last[1] - prev[1];
-      const len = Math.sqrt(dx * dx + dy * dy);
-      const perpX = -dy / len * offset;
-      const perpY = dx / len * offset;
-      result.push([last[0] + perpX, last[1] + perpY]);
-      return result;
+    if (!map.current || !mapLoaded || !reportMarkers.length) return;
+
+    const resolvedKeys = new Set(['resolved', 'da_giai_quyet', 'hoan_thanh', 'resolved_status']);
+    const inProgressKeys = new Set(['in_progress', 'dang_xu_ly', 'processing', 'dieu_tra']);
+
+    const escapeHtml = (value: string | undefined) =>
+      (value ?? '')
+        .toString()
+        .replace(/[&<>"']/g, (char) => {
+          switch (char) {
+            case '&': return '&amp;';
+            case '<': return '&lt;';
+            case '>': return '&gt;';
+            case '"': return '&quot;';
+            case '\'': return '&#39;';
+            default: return char;
+          }
+        });
+
+    reportMarkers.forEach((report) => {
+      if (!Array.isArray(report.coordinates) || report.coordinates.length < 2) return;
+      const [rawLng, rawLat] = report.coordinates;
+      const [lng, lat] = normalizeLngLat([rawLng, rawLat]);
+
+      if (!isFinite(lng) || !isFinite(lat)) return;
+
+      const normalizedStatus = normalizeStatusKey(report.status);
+      const isResolved = resolvedKeys.has(normalizedStatus);
+      const isInProgress = inProgressKeys.has(normalizedStatus);
+
+      if (!isResolved && !isInProgress) return;
+
+      const color = isResolved ? '#22c55e' : '#f97316';
+      const label = isResolved ? 'Đã giải quyết' : 'Đang xử lý';
+      const icon = isResolved ? '✔' : '⏳';
+
+      const markerEl = document.createElement('div');
+      markerEl.style.width = '30px';
+      markerEl.style.height = '30px';
+      markerEl.style.position = 'relative';
+      markerEl.style.cursor = 'pointer';
+      markerEl.innerHTML = `
+        <div style="
+          position:absolute;
+          bottom:-4px;
+          left:50%;
+          transform:translateX(-50%);
+          width:18px;
+          height:6px;
+          background:rgba(0,0,0,0.25);
+          border-radius:50%;
+          filter:blur(2px);
+        "></div>
+        <div style="
+          position:absolute;
+          top:0;
+          left:50%;
+          transform:translate(-50%, -20%) rotate(-45deg);
+          width:32px;
+          height:32px;
+          background:${color};
+          border-radius:50% 50% 50% 0;
+          border:2px solid white;
+          box-shadow:0 8px 18px rgba(0,0,0,0.25);
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          color:white;
+          font-weight:700;
+          font-size:14px;
+        ">
+          ${icon}
+        </div>
+      `;
+
+      const popup = new maplibregl.Popup({
+        offset: [0, -10],
+        closeButton: true,
+        closeOnClick: true,
+        className: 'report-marker-popup',
+      }).setHTML(`
+        <div style="min-width:180px; max-width:240px;">
+          <div style="font-weight:600; font-size:14px; color:#111827; margin-bottom:4px;">${escapeHtml(report.title)}</div>
+          <div style="font-size:12px; color:#374151; margin-bottom:6px;">${escapeHtml(report.description || '')}</div>
+          <div style="display:flex; flex-direction:column; gap:4px; font-size:12px; color:#6b7280;">
+            <div><strong>Trạng thái:</strong> <span style="color:${color}; font-weight:600;">${label}</span></div>
+            ${report.category ? `<div><strong>Loại:</strong> ${escapeHtml(report.category)}</div>` : ''}
+            ${report.priority ? `<div><strong>Ưu tiên:</strong> ${escapeHtml(report.priority)}</div>` : ''}
+            <div><strong>Vị trí:</strong> ${lat.toFixed(4)}, ${lng.toFixed(4)}</div>
+          </div>
+        </div>
+      `);
+
+      const marker = new maplibregl.Marker({
+        element: markerEl,
+        anchor: 'bottom',
+      })
+        .setLngLat([lng, lat])
+        .setPopup(popup)
+        .addTo(map.current!);
+
+      reportMarkerRefs.current.push(marker);
+    });
+
+    return () => {
+      reportMarkerRefs.current.forEach(marker => marker.remove());
+      reportMarkerRefs.current = [];
     };
+  }, [reportMarkers, mapLoaded]);
 
-    const offsetDegrees = widthInMeters / 111320; // rough conversion
-    const leftSide = offsetPoints(coordinates, offsetDegrees);
-    const rightSide = offsetPoints(coordinates, -offsetDegrees).reverse();
-
-    return [...leftSide, ...rightSide, leftSide[0]];
-  };
-
+  // Zoom to road function
   useImperativeHandle(ref, () => ({
     zoomToRoad: (road: RoadSegment) => {
       if (!map.current || !road.location.coordinates.length) return;
-      const coordinates = road.location.coordinates;
       const bounds = new maplibregl.LngLatBounds();
-      coordinates.forEach(coord => bounds.extend([coord[0], coord[1]]));
+      road.location.coordinates.forEach(coord => {
+        const [lng, lat] = normalizeLngLat(coord);
+        bounds.extend([lng, lat]);
+      });
       map.current.fitBounds(bounds, { padding: 50, maxZoom: 16, duration: 1000 });
     }
   }), []);
 
-  const vietnamCenter: [number, number] = [106.6297, 10.8231];
-  const vietnamZoom = 10;
+  // ---------- GeoJSON layer for road nodes (points) ----------
 
-
-  // Get user's current location
-  // Temporarily disable geolocation to prevent map jumping
+  // Build / update GeoJSON source from roadSegments
   useEffect(() => {
-    // Set to Ho Chi Minh City center
-    setUserLocation([106.6297, 10.8231]);
-  }, []);
+    if (!map.current || !mapLoaded) return;
 
-  // Fetch all data layers
-  useEffect(() => {
-    const fetchAllData = async () => {
-      try {
-        const [lightsRes, reportsRes, poisRes, weatherRes] = await Promise.all([
-          fetch('/api/ngsi-ld?type=Streetlight&options=keyValues'),
-          fetch('/api/ngsi-ld?type=CitizenReport&options=keyValues'),
-          fetch('/api/ngsi-ld?type=PointOfInterest&options=keyValues'),
-          fetch('/api/ngsi-ld?type=WeatherObserved&options=keyValues&limit=1'),
-        ]);
-
-        const lightsData = await lightsRes.json();
-        if (Array.isArray(lightsData)) setStreetlights(lightsData);
-
-        const reportsData = await reportsRes.json();
-        if (Array.isArray(reportsData)) setReports(reportsData);
-
-        const poisData = await poisRes.json();
-        if (Array.isArray(poisData)) setPois(poisData);
-
-        const weatherDataRes = await weatherRes.json();
-        if (Array.isArray(weatherDataRes) && weatherDataRes.length > 0) {
-          setWeatherData(weatherDataRes[0]);
-        }
-      } catch (error) {
-        console.error('Error fetching data layers:', error);
+    const mapInstance = map.current;
+    if (!roadSegments.length) {
+      const src = mapInstance.getSource('road-points') as maplibregl.GeoJSONSource | undefined;
+      if (src) {
+        src.setData({
+          type: 'FeatureCollection',
+          features: [],
+        } as any);
       }
-    };
+      return;
+    }
 
-    fetchAllData();
-  }, []);
-
-  // Initialize map
-  useEffect(() => {
-    if (!mapContainer.current || map.current) return;
-
-    map.current = new maplibregl.Map({
-      container: mapContainer.current,
-      style: {
-        version: 8,
-        sources: {
-          'osm-tiles': {
-            type: 'raster',
-            tiles: [
-              '/api/tiles/{z}/{x}/{y}',
-            ],
-            tileSize: 256,
-            attribution: '© OpenStreetMap contributors',
-          },
-        },
-        layers: [{ id: 'osm-tiles', type: 'raster', source: 'osm-tiles' }],
-      },
-      center: vietnamCenter,
-      zoom: vietnamZoom,
-    });
-
-    map.current.addControl(new maplibregl.FullscreenControl(), 'top-right');
-
-    map.current.on('load', () => setMapLoaded(true));
-
-    // Track zoom level for clustering
-    map.current.on('zoom', () => {
-      setCurrentZoom(map.current?.getZoom() || 10);
-    });
-
-    return () => {
-      map.current?.remove();
-      map.current = null;
-    };
-  }, []);
-
-  // Initialize Supercluster for Road markers (like diemcuutro.com)
-  const roadCluster = useMemo(() => {
-    const cluster = new Supercluster({
-      radius: 100,        // Clustering radius
-      maxZoom: 15,        // Cluster up to zoom 15
-      minZoom: 0,
-      minPoints: 2,       // Minimum 2 points to form a cluster
-    });
-
-    // Convert roads to points (use center point of each road)
+    // Build features for all roads (MapLibre sẽ tự ẩn/hiện theo zoom qua circle-opacity)
     const features = roadSegments
-      .filter(road => road.location?.coordinates && road.location.coordinates.length > 0)
       .map((road) => {
-        // Get center point of the road
-        const coords = road.location.coordinates;
-        const centerIndex = Math.floor(coords.length / 2);
-        const [lng, lat] = coords[centerIndex];
+        const coords = road.location?.coordinates;
+        if (!coords || !coords.length) return null;
+
+          const midIndex = Math.floor(coords.length / 2);
+        const raw = coords[midIndex];
+        if (!Array.isArray(raw) || raw.length < 2) return null;
+
+        const [lng, lat] = normalizeLngLat(raw);
+          if (
+            typeof lng !== 'number' ||
+            typeof lat !== 'number' ||
+            isNaN(lng) ||
+            isNaN(lat) ||
+            !isFinite(lng) ||
+            !isFinite(lat)
+          ) {
+          return null;
+          }
 
         return {
           type: 'Feature' as const,
           properties: {
-            cluster: false,
-            roadId: road.id,
-            road: road,
+            id: road.id,
+            name: road.name,
+            roadType: road.roadType,
+            length: road.length,
+            laneCount: road.laneCount ?? null,
+            surface: road.surface ?? null,
           },
           geometry: {
             type: 'Point' as const,
             coordinates: [lng, lat],
           },
         };
-      });
+      })
+      .filter(Boolean) as any[];
 
-    if (features.length > 0) {
-      cluster.load(features);
-    }
-
-    return cluster;
-  }, [roadSegments]);
-
-  // Render road markers with clustering (like diemcuutro.com)
-  useEffect(() => {
-    if (!map.current || !mapLoaded || !roadSegments.length) return;
-
-    const updateMarkers = () => {
-      if (!map.current) return;
-
-      // Clear existing road markers
-      roadMarkersRef.current.forEach(marker => marker.remove());
-      roadMarkersRef.current = [];
-
-      const bounds = map.current.getBounds();
-      const bbox: [number, number, number, number] = [
-        bounds.getWest(),
-        bounds.getSouth(),
-        bounds.getEast(),
-        bounds.getNorth(),
-      ];
-
-      const zoom = map.current.getZoom();
-      // Get clusters from supercluster
-      const clusters = roadCluster.getClusters(bbox, Math.floor(zoom));
-
-    clusters.forEach((cluster) => {
-      const [longitude, latitude] = cluster.geometry.coordinates;
-      const { cluster: isCluster, point_count: pointCount } = cluster.properties;
-
-      if (isCluster) {
-        // Create cluster marker (like diemcuutro.com - circular with number)
-        const el = document.createElement('div');
-        
-        // Calculate size and color based on point count (like diemcuutro.com)
-        let size = 40;
-        let bgColor = '#f59e0b'; // Yellow/Orange
-
-        if (pointCount > 10) {
-          size = 50;
-          bgColor = '#ea580c'; // Orange
-        }
-        if (pointCount > 30) {
-          size = 60;
-          bgColor = '#d97706'; // Darker orange
-        }
-        if (pointCount > 50) {
-          size = 70;
-          bgColor = '#b45309'; // Brown
-        }
-        if (pointCount > 100) {
-          size = 80;
-          bgColor = '#92400e'; // Dark brown
-        }
-
-        el.style.position = 'relative';
-        el.style.width = `${size}px`;
-        el.style.height = `${size}px`;
-        el.style.cursor = 'pointer';
-
-        // Create cluster marker like diemcuutro.com
-        el.innerHTML = `
-          <div style="
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: ${bgColor}33;
-            border-radius: 50%;
-            transform: scale(1.3);
-          "></div>
-          <div class="road-cluster-inner" style="
-            position: relative;
-            width: 100%;
-            height: 100%;
-            background: ${bgColor};
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: ${size > 50 ? '18px' : '16px'};
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            border: 3px solid white;
-            transition: all 0.2s ease;
-          ">
-            ${pointCount}
-          </div>
-        `;
-
-        // Hover effects
-        el.addEventListener('mouseenter', () => {
-          const innerDiv = el.querySelector('.road-cluster-inner') as HTMLElement;
-          if (innerDiv) {
-            innerDiv.style.transform = 'scale(1.15)';
-            innerDiv.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.4)';
-          }
-        });
-
-        el.addEventListener('mouseleave', () => {
-          const innerDiv = el.querySelector('.road-cluster-inner') as HTMLElement;
-          if (innerDiv) {
-            innerDiv.style.transform = 'scale(1)';
-            innerDiv.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)';
-          }
-        });
-
-        const marker = new maplibregl.Marker({ element: el })
-          .setLngLat([longitude, latitude])
-          .addTo(map.current!);
-
-        roadMarkersRef.current.push(marker);
-
-        // Zoom in on cluster click
-        el.addEventListener('click', () => {
-          const expansionZoom = Math.min(
-            roadCluster.getClusterExpansionZoom(cluster.id as number),
-            18
-          );
-          map.current?.flyTo({
-            center: [longitude, latitude],
-            zoom: expansionZoom,
-            duration: 1000,
-          });
-        });
-
-      } else {
-        // Create individual road marker (pin style like diemcuutro.com)
-        const road = cluster.properties.road as RoadSegment;
-        const el = document.createElement('div');
-        el.style.position = 'relative';
-        el.style.width = '32px';
-        el.style.height = '40px';
-        el.style.cursor = 'pointer';
-
-        // Create pin marker like diemcuutro.com
-        el.innerHTML = `
-          <div style="
-            position: relative;
-            width: 100%;
-            height: 100%;
-          ">
-            <!-- Pin shadow -->
-            <div style="
-              position: absolute;
-              bottom: 0;
-              left: 50%;
-              transform: translateX(-50%);
-              width: 16px;
-              height: 6px;
-              background: rgba(0, 0, 0, 0.2);
-              border-radius: 50%;
-              filter: blur(2px);
-            "></div>
-
-            <!-- Pin body -->
-            <div style="
-              position: absolute;
-              top: 0;
-              left: 50%;
-              transform: translateX(-50%);
-              width: 28px;
-              height: 28px;
-              background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-              border-radius: 50% 50% 50% 0;
-              transform: translateX(-50%) rotate(-45deg);
-              box-shadow: 0 3px 10px rgba(59, 130, 246, 0.4);
-              border: 2px solid white;
-            ">
-              <!-- Road icon -->
-              <div style="
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%) rotate(45deg);
-                font-size: 14px;
-                line-height: 1;
-              ">🛣️</div>
-            </div>
-          </div>
-        `;
-
-        el.addEventListener('click', () => {
-          if (onRoadClick) {
-            onRoadClick(road);
-          }
-        });
-
-        // Add popup on hover
-        const popup = new maplibregl.Popup({
-          closeButton: false,
-          closeOnClick: false,
-          offset: 15,
-        });
-
-        el.addEventListener('mouseenter', () => {
-          popup
-            .setLngLat([longitude, latitude])
-            .setHTML(`
-              <div style="padding: 10px; min-width: 200px;">
-                <div style="font-weight: 600; font-size: 14px; margin-bottom: 6px; color: #1f2937;">
-                  ${road.name || 'Unnamed Road'}
-                </div>
-                <div style="font-size: 12px; color: #6b7280; margin-bottom: 6px;">
-                  ${road.roadType || 'unknown'} road
-                </div>
-                <div style="font-size: 11px; color: #6b7280;">
-                  ${road.length ? `${road.length.toFixed(0)}m` : ''}
-                </div>
-              </div>
-            `)
-            .addTo(map.current!);
-        });
-
-        el.addEventListener('mouseleave', () => {
-          popup.remove();
-        });
-
-        const marker = new maplibregl.Marker({
-          element: el,
-          anchor: 'bottom'
-        })
-          .setLngLat([longitude, latitude])
-          .addTo(map.current!);
-
-        roadMarkersRef.current.push(marker);
-      }
-    });
+    const geojson: any = {
+      type: 'FeatureCollection',
+      features,
     };
 
-    // Initial update
-    updateMarkers();
+    const existingSource = mapInstance.getSource('road-points') as maplibregl.GeoJSONSource | undefined;
 
-    // Throttle function for smooth updates during zoom/move
-    let throttleTimer: ReturnType<typeof setTimeout> | null = null;
-    let rafId: number | null = null;
-    
-    const throttledUpdate = () => {
-      if (throttleTimer) return;
+    if (existingSource) {
+      existingSource.setData(geojson);
+    } else {
+      // Enable built-in clustering to group nearby roads (roughly by area/district)
+      mapInstance.addSource('road-points', {
+        type: 'geojson',
+        data: geojson,
+        cluster: true,
+        clusterRadius: 60,   // pixels
+        clusterMaxZoom: 14,  // beyond this zoom, show individual points
+      } as any);
+
+      // Cluster circles
+          if (mapInstance && !mapInstance.getLayer('road-clusters')) {
+        mapInstance.addLayer({
+          id: 'road-clusters',
+          type: 'circle',
+          source: 'road-points',
+          filter: ['has', 'point_count'],
+          paint: {
+            'circle-radius': [
+              'step',
+              ['get', 'point_count'],
+              14,   // default radius
+              10, 20,
+              30, 30,
+              60, 40,
+            ],
+            'circle-color': [
+              'step',
+              ['get', 'point_count'],
+              // Use project primary blue shades instead of arbitrary greens
+              '#bfdbfe',    // small cluster (light blue)
+              10, '#60a5fa', // medium cluster
+              30, '#3b82f6', // large cluster
+              60, '#1d4ed8', // very large cluster
+            ],
+            'circle-stroke-color': '#ffffff',
+            'circle-stroke-width': 2,
+            // Fade clusters in/out smoothly theo zoom
+            'circle-opacity': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              10, 0,
+              11, 0.9,
+              14, 0.9,
+              15, 0,
+            ],
+          },
+        } as any);
+      }
+
+      // Cluster count labels
+      if (mapInstance && !mapInstance.getLayer('road-cluster-count')) {
+        mapInstance.addLayer({
+          id: 'road-cluster-count',
+          type: 'symbol',
+          source: 'road-points',
+          filter: ['has', 'point_count'],
+          layout: {
+            'text-field': ['get', 'point_count'],
+            'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
+            'text-size': 12,
+          },
+          paint: {
+            'text-color': '#ffffff',
+          },
+        } as any);
+      }
+
+      // Unclustered individual road points (only when zoomed in enough)
+      // Layer viền trắng bên ngoài (đặt trước để nằm phía dưới)
+      if (mapInstance && !mapInstance.getLayer('road-points-circle-white')) {
+        mapInstance.addLayer({
+          id: 'road-points-circle-white',
+          type: 'circle',
+          source: 'road-points',
+          filter: ['!', ['has', 'point_count']],
+          paint: {
+            'circle-radius': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              14, 9,
+              16, 12,
+              18, 15,
+            ],
+            'circle-color': '#ffffff', // Màu trắng cho viền
+            'circle-opacity': 0, // Không fill
+            'circle-stroke-color': '#ffffff', // Viền trắng
+            'circle-stroke-width': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              14, 2,
+              16, 2.5,
+              18, 3,
+            ],
+            'circle-stroke-opacity': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              13.5, 0,
+              14, 0.9,
+            ],
+          },
+        } as any);
+      }
       
-      // Use requestAnimationFrame for smoother updates
-      if (rafId) cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(() => {
-        updateMarkers();
-        setCurrentZoom(map.current?.getZoom() || 10);
-        throttleTimer = setTimeout(() => {
-          throttleTimer = null;
-        }, 16); // ~60fps
-      });
-    };
+      // Layer donut xanh chính (đặt sau để nằm phía trên viền trắng)
+      if (mapInstance && !mapInstance.getLayer('road-points-circle')) {
+        mapInstance.addLayer({
+          id: 'road-points-circle',
+          type: 'circle',
+          source: 'road-points',
+          filter: ['!', ['has', 'point_count']],
+          paint: {
+            'circle-radius': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              14, 7,
+              16, 10,
+              18, 13,
+            ],
+            'circle-color': '#3b82f6', // Tất cả cùng một màu xanh
+            'circle-opacity': 0, // Không fill, chỉ stroke để tạo donut effect
+            'circle-stroke-color': '#3b82f6', // Màu vòng donut
+            'circle-stroke-width': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              14, 5,
+              16, 6,
+              18, 7,
+            ],
+            'circle-stroke-opacity': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              13.5, 0,
+              14, 0.9,
+            ],
+          },
+        } as any);
+          }
+    }
+  }, [roadSegments, mapLoaded]);
 
-    // Listen to zoom and move events for real-time updates
-    map.current.on('zoom', throttledUpdate);
-    map.current.on('move', throttledUpdate);
-    map.current.on('zoomend', updateMarkers);
-    map.current.on('moveend', updateMarkers);
-
-    return () => {
-      if (throttleTimer) {
-        clearTimeout(throttleTimer);
-        throttleTimer = null;
-      }
-      if (rafId) {
-        cancelAnimationFrame(rafId);
-        rafId = null;
-      }
-      if (map.current) {
-        map.current.off('zoom', throttledUpdate);
-        map.current.off('move', throttledUpdate);
-        map.current.off('zoomend', updateMarkers);
-        map.current.off('moveend', updateMarkers);
-      }
-      roadMarkersRef.current.forEach(marker => marker.remove());
-      roadMarkersRef.current = [];
-    };
-  }, [roadSegments, mapLoaded, roadCluster, onRoadClick]);
-
-
-  // Toggle 3D mode
+  // Hover & click for GeoJSON circles & clusters
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
+    const mapInstance = map.current;
 
-    const has3DLayer = map.current.getLayer('roads-3d-extrusion');
-    const has2DLayer = map.current.getLayer('roads-3d');
+    const handleMouseEnter = (e: any) => {
+      if (!e.features || !e.features.length) return;
+      mapInstance.getCanvas().style.cursor = 'pointer';
 
-    if (has3DLayer && has2DLayer) {
-      map.current.setLayoutProperty('roads-3d-extrusion', 'visibility', is3DMode ? 'visible' : 'none');
-      map.current.setLayoutProperty('roads-3d', 'visibility', is3DMode ? 'none' : 'visible');
-      map.current.setLayoutProperty('roads-3d-outline', 'visibility', is3DMode ? 'none' : 'visible');
+      const feature = e.features[0];
+      const props = feature.properties || {};
+      const [lng, lat] = feature.geometry.coordinates;
 
-      // Animate camera
-      map.current.easeTo({
-        pitch: is3DMode ? 60 : 0,
-        bearing: is3DMode ? 30 : 0,
-        duration: 1000,
-      });
+      const { id, name, roadType, length, laneCount, surface } = props;
+
+      const popupHtml = `
+        <div style="padding: 12px; min-width: 200px;">
+          <div style="font-weight: 600; font-size: 14px; color: #111827; margin-bottom: 6px;">
+            ${name || 'Unnamed Road'}
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+            <span style="
+              display: inline-block;
+              padding: 2px 8px;
+              background: rgba(37, 99, 235, 0.08);
+              color: #1d4ed8;
+              border-radius: 4px;
+              font-size: 11px;
+              font-weight: 600;
+              text-transform: uppercase;
+            ">${roadType || 'road'}</span>
+          </div>
+          <div style="font-size: 12px; color: #6b7280; margin-top: 6px;">
+            ${length ? `📏 ${Number(length).toFixed(0)}m` : ''}
+            ${laneCount ? ` • 🛣️ ${laneCount} lanes` : ''}
+            ${surface ? ` • 🏔️ ${surface}` : ''}
+          </div>
+          <div style="font-size: 10px; color: #9ca3af; margin-top: 4px; font-family: monospace;">
+            ID: ${id ? String(id).substring(0, 8) : 'n/a'}...
+          </div>
+        </div>
+          `;
+
+      if (!geoJsonPopupRef.current) {
+        geoJsonPopupRef.current = new maplibregl.Popup({
+          offset: [0, -12],
+          closeButton: true,      // hiển thị nút X để tắt popup
+          closeOnClick: false,
+          className: 'road-marker-popup',
+          maxWidth: '300px',
+        });
+      }
+
+      geoJsonPopupRef.current
+            .setLngLat([lng, lat])
+        .setHTML(popupHtml)
+        .addTo(mapInstance);
+    };
+
+    const handleMouseLeave = () => {
+      mapInstance.getCanvas().style.cursor = '';
+      if (geoJsonPopupRef.current) {
+        geoJsonPopupRef.current.remove();
+      }
+    };
+    
+    const handleClick = (e: any) => {
+      if (!e.features || !e.features.length) return;
+      const feature = e.features[0];
+      const props = feature.properties || {};
+
+      // If this is a cluster, zoom into it instead of opening detail
+      if (props.cluster) {
+        const clusterId = props.cluster_id;
+        const source = mapInstance.getSource('road-points') as any;
+        if (!source || typeof source.getClusterExpansionZoom !== 'function') return;
+
+        source.getClusterExpansionZoom(clusterId, (err: any, zoom: number) => {
+          if (err) return;
+          mapInstance.easeTo({
+            center: feature.geometry.coordinates,
+            zoom,
+          });
+        });
+        return;
+      }
+
+      // Unclustered point → open road detail
+      const roadId = props.id;
+      if (!roadId || !onRoadClick) return;
+      const road = roadSegments.find((r) => r.id === roadId);
+      if (road) {
+        onRoadClick(road);
+      }
+    };
+
+    // Check if mapInstance exists before adding event listeners
+    if (!mapInstance) return;
+    
+    try {
+      if (mapInstance.getLayer('road-points-circle')) {
+        mapInstance.on('mouseenter', 'road-points-circle', handleMouseEnter);
+        mapInstance.on('mouseleave', 'road-points-circle', handleMouseLeave);
+        mapInstance.on('click', 'road-points-circle', handleClick);
+      }
+    } catch (e) {
+      console.warn('Error adding event listeners to road-points-circle:', e);
     }
-  }, [is3DMode, mapLoaded]);
+    
+    try {
+      if (mapInstance.getLayer('road-clusters')) {
+        mapInstance.on('mouseenter', 'road-clusters', () => {
+          try {
+            if (mapInstance.getCanvas()) {
+              mapInstance.getCanvas().style.cursor = 'pointer';
+            }
+          } catch (e) {
+            // Ignore
+          }
+        });
+        mapInstance.on('mouseleave', 'road-clusters', () => {
+          try {
+            if (mapInstance.getCanvas()) {
+              mapInstance.getCanvas().style.cursor = '';
+            }
+          } catch (e) {
+            // Ignore
+          }
+        });
+        mapInstance.on('click', 'road-clusters', handleClick);
+      }
+    } catch (e) {
+      console.warn('Error adding event listeners to road-clusters:', e);
+    }
 
-  // Add Streetlights markers
-  useEffect(() => {
-    if (!map.current || !mapLoaded || !streetlights.length) return;
-    const markers: maplibregl.Marker[] = [];
-
-    streetlights.forEach((light) => {
-      if (!light.location?.coordinates) return;
-      const [lng, lat] = light.location.coordinates;
-      const isOn = light.state === 'on';
-      const el = document.createElement('div');
-      el.innerHTML = `<div style="font-size: 20px; cursor: pointer; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">${isOn ? '💡' : '🔦'}</div>`;
-      el.addEventListener('click', () => {
-        new maplibregl.Popup({ offset: 15 }).setLngLat([lng, lat]).setHTML(`<div style="padding: 8px;"><div style="font-weight: bold; font-size: 12px;">${isOn ? '💡 Light ON' : '🔦 Light OFF'}</div></div>`).addTo(map.current!);
-      });
-      const marker = new maplibregl.Marker({ element: el }).setLngLat([lng, lat]).addTo(map.current!);
-      markers.push(marker);
-    });
-
-    return () => markers.forEach(m => m.remove());
-  }, [streetlights, mapLoaded]);
-
-  // Add Citizen Reports markers
-  useEffect(() => {
-    if (!map.current || !mapLoaded || !reports.length) return;
-    const markers: maplibregl.Marker[] = [];
-
-    reports.forEach((report) => {
-      if (!report.location?.coordinates) return;
-      const [lng, lat] = report.location.coordinates;
-      const el = document.createElement('div');
-      el.innerHTML = `<div style="background: #ef4444; color: white; padding: 8px; border-radius: 50%; font-size: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); border: 2px solid white; cursor: pointer; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">📍</div>`;
-      el.addEventListener('click', () => {
-        new maplibregl.Popup({ offset: 20 }).setLngLat([lng, lat]).setHTML(`<div style="padding: 12px;"><h3 style="font-weight: bold; margin-bottom: 8px;">${report.category}</h3><div style="font-size: 12px; color: #666;">${report.description}</div></div>`).addTo(map.current!);
-      });
-      const marker = new maplibregl.Marker({ element: el }).setLngLat([lng, lat]).addTo(map.current!);
-      markers.push(marker);
-    });
-
-    return () => markers.forEach(m => m.remove());
-  }, [reports, mapLoaded]);
-
-  // Add POIs markers
-  useEffect(() => {
-    if (!map.current || !mapLoaded || !pois.length) return;
-    const markers: maplibregl.Marker[] = [];
-
-    pois.forEach((poi) => {
-      if (!poi.location?.coordinates) return;
-      const [lng, lat] = poi.location.coordinates;
-      const el = document.createElement('div');
-      el.innerHTML = `<div style="background: #8b5cf6; color: white; padding: 6px 10px; border-radius: 16px; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); border: 2px solid white; cursor: pointer; white-space: nowrap;">🏥 ${poi.name}</div>`;
-      el.addEventListener('click', () => {
-        new maplibregl.Popup({ offset: 15 }).setLngLat([lng, lat]).setHTML(`<div style="padding: 12px;"><h3 style="font-weight: bold; margin-bottom: 8px;">🏥 ${poi.name}</h3><div style="font-size: 12px; color: #666;"><div><strong>Category:</strong> ${poi.category}</div></div></div>`).addTo(map.current!);
-      });
-      const marker = new maplibregl.Marker({ element: el }).setLngLat([lng, lat]).addTo(map.current!);
-      markers.push(marker);
-    });
-
-    return () => markers.forEach(m => m.remove());
-  }, [pois, mapLoaded]);
+    return () => {
+      // Check if mapInstance exists before accessing its methods
+      if (!mapInstance) return;
+      
+      try {
+        if (mapInstance.getCanvas()) {
+          mapInstance.getCanvas().style.cursor = '';
+        }
+      } catch (e) {
+        // Map may be destroyed, ignore
+      }
+      
+      if (geoJsonPopupRef.current) {
+        try {
+          geoJsonPopupRef.current.remove();
+        } catch (e) {
+          // Popup may already be removed, ignore
+        }
+      }
+      
+      try {
+        if (mapInstance.getLayer('road-points-circle')) {
+          mapInstance.off('mouseenter', 'road-points-circle', handleMouseEnter);
+          mapInstance.off('mouseleave', 'road-points-circle', handleMouseLeave);
+          mapInstance.off('click', 'road-points-circle', handleClick);
+        }
+      } catch (e) {
+        // Layer may not exist, ignore
+      }
+      
+      try {
+        if (mapInstance.getLayer('road-clusters')) {
+          mapInstance.off('click', 'road-clusters', handleClick);
+          mapInstance.off('mouseenter', 'road-clusters', () => {});
+          mapInstance.off('mouseleave', 'road-clusters', () => {});
+        }
+      } catch (e) {
+        // Layer may not exist, ignore
+      }
+    };
+  }, [mapLoaded, roadSegments, onRoadClick]);
 
   return (
     <div className="relative w-full h-full">
+      <style>{`
+        .road-marker-popup .maplibregl-popup-content {
+          background: white;
+          border: 1px solid #e5e7eb;
+          border-radius: 12px;
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+          padding: 0 !important;
+        }
+        .road-marker-popup .maplibregl-popup-tip {
+          border-top-color: white;
+          border-left-color: transparent;
+          border-right-color: transparent;
+        }
+      `}</style>
       <div ref={mapContainer} className="w-full h-full" />
 
       {/* Weather Info Card */}
@@ -693,8 +847,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
         </div>
       )}
 
-
-      {/* Map Legend - UrbanReflex */}
+      {/* Map Legend */}
       {isLegendCollapsed ? (
         <button
           onClick={() => setIsLegendCollapsed(false)}
@@ -720,24 +873,12 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
             </button>
           </div>
           <div className="space-y-2.5 text-xs">
-            {legendItems.map((item) => (
-              <div key={item.label} className="flex items-center gap-2.5">
-                <div className={`flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg ${item.bg}`}>
-                  <item.icon className={`h-4 w-4 ${item.color}`} />
-                </div>
-                <span className="text-gray-700 font-medium">{item.label}</span>
+            <div className="flex items-center gap-2.5">
+              <div className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg bg-blue-50">
+                <RouteIcon className="h-4 w-4 text-blue-600" />
               </div>
-            ))}
-            
-            {/* 3D Roads (conditional) */}
-            {is3DMode && (
-              <div className="flex items-center gap-2.5 pt-2 border-t border-gray-200">
-                <div className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg bg-slate-50">
-                  <span className="text-lg">🏗️</span>
-                </div>
-                <span className="text-gray-700 font-medium">3D Roads (AQI colored)</span>
-              </div>
-            )}
+              <span className="text-gray-700 font-medium">Road Segments</span>
+      </div>
           </div>
         </div>
       )}
@@ -746,7 +887,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
         <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
           <div className="text-center">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
-            <p className="mt-4 text-gray-600 font-medium">Loading enhanced map...</p>
+            <p className="mt-4 text-gray-600 font-medium">Loading map...</p>
           </div>
         </div>
       )}
@@ -755,4 +896,3 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
 }));
 
 export default EnhancedRoadMapView;
-
