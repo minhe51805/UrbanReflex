@@ -1,7 +1,7 @@
 /**
  * Author: Trương Dương Bảo Minh (minhe51805)
  * Create at: 20-11-2025
- * Update at: 25-11-2025
+ * Update at: 01-12-2025
  * Description: Report button component for road issue reporting with image upload capability
  */
 
@@ -222,19 +222,17 @@ export default function ReportButton({ roadId, roadName, location }: ReportButto
       {/* Modal */}
       {showModal && (
         <div
-          className={`fixed z-[60] transition-all duration-300 ${
-            isMinimized
+          className={`fixed z-[60] transition-all duration-300 ${isMinimized
               ? 'bottom-6 right-6 w-80'
               : 'inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4'
-          }`}
+            }`}
           onClick={isMinimized ? undefined : () => setShowModal(false)}
         >
           <div
-            className={`bg-white shadow-2xl overflow-hidden flex flex-col transition-all duration-300 ${
-              isMinimized
+            className={`bg-white shadow-2xl overflow-hidden flex flex-col transition-all duration-300 ${isMinimized
                 ? 'rounded-2xl'
                 : 'rounded-3xl max-w-lg w-full max-h-[90vh]'
-            }`}
+              }`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header with Gradient */}
@@ -263,152 +261,152 @@ export default function ReportButton({ roadId, roadName, location }: ReportButto
 
             {/* Content */}
             {!isMinimized && (
-            <form onSubmit={handleSubmit} className="p-6 space-y-5 overflow-y-auto flex-1">
-              {/* Road Info */}
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-2xl border-2 border-blue-200">
-                <p className="text-xs text-blue-700 font-bold mb-2 uppercase tracking-wide">Reporting for:</p>
-                <p className="text-base font-bold text-blue-900 mb-2">{roadName || 'Unnamed Road'}</p>
-                <p className="text-xs text-blue-700 font-medium flex items-center gap-2">
-                  <MapPin className="h-4 w-4" />
-                  {location.coordinates[0][1].toFixed(4)}°, {location.coordinates[0][0].toFixed(4)}°
-                </p>
-              </div>
+              <form onSubmit={handleSubmit} className="p-6 space-y-5 overflow-y-auto flex-1">
+                {/* Road Info */}
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-2xl border-2 border-blue-200">
+                  <p className="text-xs text-blue-700 font-bold mb-2 uppercase tracking-wide">Reporting for:</p>
+                  <p className="text-base font-bold text-blue-900 mb-2">{roadName || 'Unnamed Road'}</p>
+                  <p className="text-xs text-blue-700 font-medium flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    {location.coordinates[0][1].toFixed(4)}°, {location.coordinates[0][0].toFixed(4)}°
+                  </p>
+                </div>
 
-              {/* Category */}
-              <div>
-                <label className="block text-sm font-bold text-gray-900 mb-2">Category *</label>
-                <select
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white font-medium"
-                  required
-                >
-                  <option value="road_damage">🛣️ Road Damage</option>
-                  <option value="pothole">🕳️ Pothole</option>
-                  <option value="traffic_sign">🚦 Traffic Sign Issue</option>
-                  <option value="streetlight">💡 Streetlight Problem</option>
-                  <option value="drainage">💧 Drainage Issue</option>
-                  <option value="other">❓ Other</option>
-                </select>
-              </div>
+                {/* Category */}
+                <div>
+                  <label className="block text-sm font-bold text-gray-900 mb-2">Category *</label>
+                  <select
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white font-medium"
+                    required
+                  >
+                    <option value="road_damage">🛣️ Road Damage</option>
+                    <option value="pothole">🕳️ Pothole</option>
+                    <option value="traffic_sign">🚦 Traffic Sign Issue</option>
+                    <option value="streetlight">💡 Streetlight Problem</option>
+                    <option value="drainage">💧 Drainage Issue</option>
+                    <option value="other">❓ Other</option>
+                  </select>
+                </div>
 
-              {/* Title */}
-              <div>
-                <label className="block text-sm font-bold text-gray-900 mb-2">Title *</label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent font-medium"
-                  placeholder="Brief description of the issue"
-                  required
-                />
-              </div>
+                {/* Title */}
+                <div>
+                  <label className="block text-sm font-bold text-gray-900 mb-2">Title *</label>
+                  <input
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent font-medium"
+                    placeholder="Brief description of the issue"
+                    required
+                  />
+                </div>
 
-              {/* Description */}
-              <div>
-                <label className="block text-sm font-bold text-gray-900 mb-2">Description *</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none font-medium"
-                  rows={4}
-                  placeholder="Detailed description of the issue..."
-                  required
-                />
-              </div>
+                {/* Description */}
+                <div>
+                  <label className="block text-sm font-bold text-gray-900 mb-2">Description *</label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none font-medium"
+                    rows={4}
+                    placeholder="Detailed description of the issue..."
+                    required
+                  />
+                </div>
 
-              {/* Image Upload */}
-              <div>
-                <label className="block text-sm font-bold text-gray-900 mb-3">
-                  📸 Photos (Optional, max 3)
-                </label>
+                {/* Image Upload */}
+                <div>
+                  <label className="block text-sm font-bold text-gray-900 mb-3">
+                    📸 Photos (Optional, max 3)
+                  </label>
 
-                {/* Image Previews */}
-                {imagePreviews.length > 0 && (
-                  <div className="grid grid-cols-3 gap-3 mb-4">
-                    {imagePreviews.map((preview, index) => (
-                      <div key={index} className="relative group">
-                        <Image
-                          src={preview}
-                          alt={`Preview ${index + 1}`}
-                          width={120}
-                          height={120}
-                          className="w-full h-28 object-cover rounded-xl border-2 border-gray-300 shadow-md"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeImage(index)}
-                          className="absolute -top-2 -right-2 p-2 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all shadow-lg hover:bg-red-600 hover:scale-110"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                  {/* Image Previews */}
+                  {imagePreviews.length > 0 && (
+                    <div className="grid grid-cols-3 gap-3 mb-4">
+                      {imagePreviews.map((preview, index) => (
+                        <div key={index} className="relative group">
+                          <Image
+                            src={preview}
+                            alt={`Preview ${index + 1}`}
+                            width={120}
+                            height={120}
+                            className="w-full h-28 object-cover rounded-xl border-2 border-gray-300 shadow-md"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute -top-2 -right-2 p-2 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all shadow-lg hover:bg-red-600 hover:scale-110"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Upload Button */}
+                  {formData.images.length < 3 && (
+                    <label className="flex flex-col items-center justify-center gap-2 px-6 py-6 border-3 border-dashed border-gray-300 rounded-2xl cursor-pointer hover:border-orange-500 hover:bg-orange-50 transition-all group">
+                      <div className="bg-orange-100 p-3 rounded-full group-hover:bg-orange-200 transition-colors">
+                        <Camera className="h-6 w-6 text-orange-600" />
                       </div>
-                    ))}
+                      <span className="text-sm font-semibold text-gray-700 group-hover:text-orange-600 transition-colors">
+                        {formData.images.length === 0 ? 'Add Photos' : `Add More (${3 - formData.images.length} left)`}
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleImageChange}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                  <p className="text-xs text-gray-500 mt-2 text-center">
+                    Upload clear photos of the issue. Max 3 images, 5MB each.
+                  </p>
+                </div>
+
+                {/* Error/Success Messages */}
+                {error && (
+                  <div className="bg-gradient-to-r from-red-50 to-red-100 border-2 border-red-300 text-red-800 px-4 py-3 rounded-xl text-sm font-medium flex items-start gap-2">
+                    <span className="text-lg">❌</span>
+                    <span>{error}</span>
+                  </div>
+                )}
+                {success && (
+                  <div className="bg-gradient-to-r from-green-50 to-green-100 border-2 border-green-300 text-green-800 px-4 py-3 rounded-xl text-sm font-medium flex items-start gap-2">
+                    <span className="text-lg">✅</span>
+                    <span>Report submitted! Admin will review it shortly.</span>
                   </div>
                 )}
 
-                {/* Upload Button */}
-                {formData.images.length < 3 && (
-                  <label className="flex flex-col items-center justify-center gap-2 px-6 py-6 border-3 border-dashed border-gray-300 rounded-2xl cursor-pointer hover:border-orange-500 hover:bg-orange-50 transition-all group">
-                    <div className="bg-orange-100 p-3 rounded-full group-hover:bg-orange-200 transition-colors">
-                      <Camera className="h-6 w-6 text-orange-600" />
-                    </div>
-                    <span className="text-sm font-semibold text-gray-700 group-hover:text-orange-600 transition-colors">
-                      {formData.images.length === 0 ? 'Add Photos' : `Add More (${3 - formData.images.length} left)`}
-                    </span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={handleImageChange}
-                      className="hidden"
-                    />
-                  </label>
-                )}
-                <p className="text-xs text-gray-500 mt-2 text-center">
-                  Upload clear photos of the issue. Max 3 images, 5MB each.
-                </p>
-              </div>
-
-              {/* Error/Success Messages */}
-              {error && (
-                <div className="bg-gradient-to-r from-red-50 to-red-100 border-2 border-red-300 text-red-800 px-4 py-3 rounded-xl text-sm font-medium flex items-start gap-2">
-                  <span className="text-lg">❌</span>
-                  <span>{error}</span>
-                </div>
-              )}
-              {success && (
-                <div className="bg-gradient-to-r from-green-50 to-green-100 border-2 border-green-300 text-green-800 px-4 py-3 rounded-xl text-sm font-medium flex items-start gap-2">
-                  <span className="text-lg">✅</span>
-                  <span>Report submitted! Admin will review it shortly.</span>
-                </div>
-              )}
-
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={submitting || success}
-                className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:hover:translate-y-0"
-              >
-                {submitting ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-3 border-white border-t-transparent"></div>
-                    <span>Submitting...</span>
-                  </>
-                ) : success ? (
-                  <>
-                    <span className="text-xl">✓</span>
-                    <span>Report Submitted</span>
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-5 w-5" />
-                    <span>Submit Report</span>
-                  </>
-                )}
-              </button>
-            </form>
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={submitting || success}
+                  className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:hover:translate-y-0"
+                >
+                  {submitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-3 border-white border-t-transparent"></div>
+                      <span>Submitting...</span>
+                    </>
+                  ) : success ? (
+                    <>
+                      <span className="text-xl">✓</span>
+                      <span>Report Submitted</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-5 w-5" />
+                      <span>Submit Report</span>
+                    </>
+                  )}
+                </button>
+              </form>
             )}
           </div>
         </div>
