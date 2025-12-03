@@ -1,7 +1,7 @@
 /**
  * Author: Trương Dương Bảo Minh (minhe51805)
  * Create at: 18-11-2025
- * Update at: 18-11-2025
+ * Update at: 03-12-2025
  * Description: Professional blog page showcasing articles, updates, and news from UrbanReflex
  */
 
@@ -35,7 +35,8 @@ const blogPosts = [
     category: 'Impact Stories',
     readTime: '7 min read',
     gradient: 'from-green-500 via-emerald-600 to-teal-600',
-    icon[object Object]tags: ['Community', 'Impact', 'Advocacy']
+    icon: '🌱',
+    tags: ['Community', 'Impact', 'Advocacy']
   },
   {
     id: 3,
@@ -168,7 +169,7 @@ export default function BlogPage() {
   const filteredPosts = blogPosts.filter(post => {
     const matchesCategory = selectedCategory === 'All' || post.category === selectedCategory;
     const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         post.excerpt.toLowerCase().includes(searchQuery.toLowerCase());
+      post.excerpt.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
@@ -244,11 +245,10 @@ export default function BlogPage() {
                   <button
                     key={category}
                     onClick={() => setSelectedCategory(category)}
-                    className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-300 whitespace-nowrap ${
-                      selectedCategory === category
+                    className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-300 whitespace-nowrap ${selectedCategory === category
                         ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white shadow-lg shadow-primary-500/30 transform scale-105'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md'
-                    }`}
+                      }`}
                   >
                     {category}
                   </button>
@@ -258,4 +258,7 @@ export default function BlogPage() {
           </div>
         </div>
       </section>
+    </main>
+  );
+}
 
