@@ -1,7 +1,7 @@
 /**
  * Author: Trương Dương Bảo Minh (minhe51805)
  * Create at: 13-11-2025
- * Update at: 15-11-2025
+ * Update at: 01-12-2025
  * Description: Professional AQI Hub visualization showing air quality index standards across different countries
  */
 
@@ -12,18 +12,18 @@ import { Globe, Wind, AlertCircle, CheckCircle, AlertTriangle } from 'lucide-rea
 
 export default function AQIHubIllustration() {
   const aqiLevels = [
-    { label: 'Good', range: '0-50', color: 'from-green-400 to-green-500', icon: CheckCircle, textColor: 'text-green-600' },
-    { label: 'Moderate', range: '51-100', color: 'from-yellow-400 to-yellow-500', icon: AlertCircle, textColor: 'text-yellow-600' },
-    { label: 'Unhealthy', range: '101-150', color: 'from-orange-400 to-orange-500', icon: AlertTriangle, textColor: 'text-orange-600' },
-    { label: 'Very Unhealthy', range: '151-200', color: 'from-red-400 to-red-500', icon: AlertTriangle, textColor: 'text-red-600' },
-    { label: 'Hazardous', range: '201+', color: 'from-purple-500 to-purple-700', icon: AlertCircle, textColor: 'text-purple-600' },
+    { label: 'Good', range: '0-50', color: 'from-green-500 to-green-600', icon: CheckCircle, textColor: 'text-green-700' },
+    { label: 'Moderate', range: '51-100', color: 'from-yellow-500 to-yellow-600', icon: AlertCircle, textColor: 'text-yellow-700' },
+    { label: 'Unhealthy', range: '101-150', color: 'from-orange-500 to-orange-600', icon: AlertTriangle, textColor: 'text-orange-700' },
+    { label: 'Very Unhealthy', range: '151-200', color: 'from-red-500 to-red-600', icon: AlertTriangle, textColor: 'text-red-700' },
+    { label: 'Hazardous', range: '201+', color: 'from-purple-600 to-purple-800', icon: AlertCircle, textColor: 'text-purple-700' },
   ];
 
-  const countries = [
-    { code: 'US', name: 'USA', color: 'primary-500' },
-    { code: 'EU', name: 'Europe', color: 'accent-500' },
-    { code: 'CN', name: 'China', color: 'primary-600' },
-    { code: 'IN', name: 'India', color: 'accent-600' },
+  const roads = [
+    { code: 'UR', name: 'UrbanReflex', color: 'primary-500', isHighlight: true },
+    { code: 'NH', name: 'Nguyễn Huệ', color: 'accent-500' },
+    { code: 'LL', name: 'Lê Lợi', color: 'primary-600' },
+    { code: 'ĐBP', name: 'Điện Biên Phủ', color: 'accent-600' },
   ];
 
   return (
@@ -51,7 +51,7 @@ export default function AQIHubIllustration() {
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
             >
-              <div className={`relative bg-gradient-to-r ${level.color} rounded-xl p-3 shadow-medium hover:shadow-large transition-all duration-300 min-w-[180px] overflow-hidden`}>
+              <div className={`relative bg-gradient-to-r ${level.color} rounded-xl p-3 shadow-lg hover:shadow-xl transition-all duration-300 min-w-[180px] overflow-hidden border border-white/20`}>
                 {/* Background pattern */}
                 <div className="absolute inset-0 opacity-10">
                   <div className="w-full h-full" style={{
@@ -144,9 +144,9 @@ export default function AQIHubIllustration() {
 
             {/* AQI Hub label */}
             <div className="mt-4 text-center">
-              <div className="inline-flex items-center gap-2 bg-white rounded-full px-4 py-2 shadow-medium border border-neutral-soft-200">
-                <Wind className="w-4 h-4 text-primary-600" />
-                <span className="text-sm font-bold text-neutral-soft-900">AQI Hub</span>
+              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full px-4 py-2 shadow-medium border border-primary-400">
+                <Wind className="w-4 h-4 text-white" />
+                <span className="text-sm font-bold text-white">UrbanReflex AQI</span>
               </div>
             </div>
           </div>
@@ -161,11 +161,11 @@ export default function AQIHubIllustration() {
           transition={{ duration: 0.7 }}
         >
           <div className="text-center mb-2">
-            <h4 className="text-sm font-bold text-neutral-soft-900 mb-1">Standards</h4>
-            <p className="text-xs text-neutral-soft-600">By Country/Region</p>
+            <h4 className="text-sm font-bold text-neutral-soft-900 mb-1">Road Segments</h4>
+            <p className="text-xs text-neutral-soft-600">By Location</p>
           </div>
 
-          {countries.map((country, i) => (
+          {roads.map((road, i) => (
             <motion.div
               key={i}
               className="group"
@@ -174,14 +174,24 @@ export default function AQIHubIllustration() {
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.1 + 0.4 }}
             >
-              <div className="bg-white/90 backdrop-blur-sm rounded-xl p-3 shadow-soft border border-neutral-soft-200/50 hover:shadow-medium hover:border-primary-300 transition-all duration-300 min-w-[140px]">
+              <div className={`bg-white/90 backdrop-blur-sm rounded-xl p-3 shadow-soft border transition-all duration-300 min-w-[160px] ${road.isHighlight
+                  ? 'border-2 border-primary-400 shadow-medium bg-gradient-to-br from-primary-50/50 to-white'
+                  : 'border-neutral-soft-200/50 hover:shadow-medium hover:border-primary-300'
+                }`}>
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-lg bg-gradient-to-br from-${country.color}/20 to-${country.color}/30 flex items-center justify-center border border-${country.color}/20`}>
-                    <span className="text-sm font-bold text-neutral-soft-900">{country.code}</span>
+                  <div className={`w-10 h-10 rounded-lg ${road.isHighlight
+                      ? 'bg-gradient-to-br from-primary-500 to-primary-600'
+                      : `bg-gradient-to-br from-${road.color}/20 to-${road.color}/30 border border-${road.color}/20`
+                    } flex items-center justify-center`}>
+                    <span className={`text-sm font-bold ${road.isHighlight ? 'text-white' : 'text-neutral-soft-900'}`}>
+                      {road.code}
+                    </span>
                   </div>
                   <div className="flex-1">
-                    <div className="text-xs font-semibold text-neutral-soft-900">{country.name}</div>
-                    <div className="text-[10px] text-neutral-soft-500">Standard</div>
+                    <div className={`text-xs font-semibold ${road.isHighlight ? 'text-primary-700' : 'text-neutral-soft-900'}`}>
+                      {road.name}
+                    </div>
+                    <div className="text-[10px] text-neutral-soft-500">Road</div>
                   </div>
                 </div>
 
