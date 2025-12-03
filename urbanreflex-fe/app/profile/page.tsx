@@ -3,7 +3,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { User, Lock, Save, AlertTriangle, CheckCircle, Key, Copy, Plus, Trash2, Eye, EyeOff } from 'lucide-react';
+import { User, Lock, Save, AlertTriangle, CheckCircle, Key, Copy, Plus, Trash2, Eye, EyeOff, AlertCircle, X } from 'lucide-react';
 
 type ProfileSection = 'profile' | 'security' | 'api-keys';
 
@@ -26,6 +26,7 @@ export default function ProfilePage() {
 
   // API Keys state
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [apiKeysError, setApiKeysError] = useState<string | null>(null);
   const [showNewKeyModal, setShowNewKeyModal] = useState(false);
   const [newKeyName, setNewKeyName] = useState('');
   const [newlyCreatedKey, setNewlyCreatedKey] = useState<string | null>(null);
@@ -34,28 +35,91 @@ export default function ProfilePage() {
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       router.push('/login');
+      return;
     }
     if (user) {
       setProfileData({ full_name: user.full_name, username: user.username, phone: user.phone });
-      // Load API keys
-      loadApiKeys();
+      // Load API keys only if user is authenticated
+      if (isAuthenticated) {
+        loadApiKeys();
+      }
     }
   }, [loading, isAuthenticated, router, user]);
 
   const loadApiKeys = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:8000/api/keys', {
+      setApiKeysError(null); // Clear previous errors
+      const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+      if (!token) {
+        console.warn('No auth token found, skipping API keys load');
+        setApiKeysError('Bạn cần đăng nhập để xem API keys');
+        return;
+      }
+      
+      const response = await fetch('/api/keys', {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
         }
       });
+      
       if (response.ok) {
         const data = await response.json();
-        setApiKeys(data);
+        // Handle both array and object responses
+        let keysArray: ApiKey[] = [];
+        if (Array.isArray(data)) {
+          keysArray = data;
+        } else if (data && Array.isArray(data.keys)) {
+          keysArray = data.keys;
+        } else if (data && Array.isArray(data.data)) {
+          keysArray = data.data;
+        } else {
+          // Empty response or unexpected format
+          keysArray = [];
+        }
+        
+        // Log API keys to check if they're complete
+        console.log('✅ API Keys loaded in frontend:', keysArray.length, 'keys');
+        keysArray.forEach((key, idx) => {
+          console.log(`  Key ${idx + 1} (${key.name}):`, {
+            id: key.id,
+            name: key.name,
+            keyLength: key.key?.length || 0,
+            keyFull: key.key, // Log full key to verify
+            keyPreview: key.key ? `${key.key.substring(0, 15)}...${key.key.substring(key.key.length - 10)}` : 'N/A'
+          });
+        });
+        
+        setApiKeys(keysArray);
+        setApiKeysError(null);
+      } else {
+        // Handle different error statuses
+        if (response.status === 401) {
+          // Unauthorized - token might be invalid or expired
+          setApiKeysError('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+          setApiKeys([]);
+        } else if (response.status === 403) {
+          // Forbidden - user doesn't have permission
+          setApiKeysError('Bạn không có quyền truy cập API keys. Chỉ admin mới có thể quản lý API keys.');
+          setApiKeys([]);
+        } else {
+          // Other errors
+          try {
+            const errorData = await response.json();
+            const errorMsg = errorData.detail || errorData.error || errorData.message || 'Không thể tải API keys';
+            setApiKeysError(errorMsg);
+            console.error('Failed to load API keys:', errorData);
+          } catch (e) {
+            setApiKeysError(`Lỗi HTTP ${response.status}: Không thể tải API keys`);
+            console.error('Failed to load API keys: HTTP', response.status);
+          }
+          setApiKeys([]);
+        }
       }
     } catch (error) {
       console.error('Failed to load API keys:', error);
+      setApiKeysError('Đã xảy ra lỗi khi tải API keys. Vui lòng thử lại sau.');
+      setApiKeys([]);
     }
   };
 
@@ -88,8 +152,8 @@ export default function ProfilePage() {
     e.preventDefault();
     setMessage(null);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:8000/api/keys', {
+      const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+      const response = await fetch('/api/keys', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -106,7 +170,7 @@ export default function ProfilePage() {
         setMessage({ type: 'success', text: 'API key created successfully!' });
       } else {
         const error = await response.json();
-        setMessage({ type: 'error', text: error.detail || 'Failed to create API key' });
+        setMessage({ type: 'error', text: error.detail || error.error || 'Failed to create API key' });
       }
     } catch (error) {
       setMessage({ type: 'error', text: 'Failed to create API key' });
@@ -114,15 +178,25 @@ export default function ProfilePage() {
   };
 
   const handleDeleteApiKey = async (keyId: string) => {
+    if (!keyId || keyId === 'undefined') {
+      console.error('Cannot delete: API key ID is missing or undefined');
+      setMessage({ type: 'error', text: 'Không thể xóa: ID của API key không hợp lệ' });
+      return;
+    }
+    
     if (!confirm('Are you sure you want to delete this API key? This action cannot be undone.')) {
       return;
     }
+    
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:8000/api/keys/${keyId}`, {
+      const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+      console.log('Deleting API key:', keyId);
+      
+      const response = await fetch(`/api/keys/${encodeURIComponent(keyId)}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
         }
       });
 
@@ -130,7 +204,8 @@ export default function ProfilePage() {
         await loadApiKeys();
         setMessage({ type: 'success', text: 'API key deleted successfully!' });
       } else {
-        setMessage({ type: 'error', text: 'Failed to delete API key' });
+        const error = await response.json();
+        setMessage({ type: 'error', text: error.error || 'Failed to delete API key' });
       }
     } catch (error) {
       setMessage({ type: 'error', text: 'Failed to delete API key' });
@@ -153,6 +228,12 @@ export default function ProfilePage() {
   };
 
   const maskApiKey = (key: string) => {
+    if (!key || key.length === 0) return '••••••••';
+    // Show first 8 chars and last 4 chars, mask the middle
+    if (key.length <= 12) {
+      // If key is too short, don't mask
+      return key;
+    }
     return key.substring(0, 8) + '•'.repeat(24) + key.substring(key.length - 4);
   };
 
@@ -295,9 +376,28 @@ export default function ProfilePage() {
                   </div>
                 )}
 
+                {/* Error Message */}
+                {apiKeysError && (
+                  <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="flex items-start space-x-3">
+                      <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <h3 className="text-sm font-semibold text-red-800 mb-1">Lỗi khi tải API Keys</h3>
+                        <p className="text-sm text-red-700">{apiKeysError}</p>
+                      </div>
+                      <button
+                        onClick={() => setApiKeysError(null)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* API Keys List */}
                 <div className="space-y-4">
-                  {apiKeys.length === 0 ? (
+                  {apiKeys.length === 0 && !apiKeysError ? (
                     <div className="text-center py-12">
                       <Key className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                       <h3 className="text-lg font-medium text-gray-900 mb-2">No API Keys</h3>
@@ -309,25 +409,40 @@ export default function ProfilePage() {
                         <Plus className="w-4 h-4 mr-2" /> Create Your First Key
                       </button>
                     </div>
-                  ) : (
-                    apiKeys.map((apiKey) => (
-                      <div key={apiKey.id} className="border border-gray-200 rounded-lg p-4">
+                  ) : apiKeys.length > 0 ? (
+                    apiKeys.map((apiKey, index) => (
+                      <div key={apiKey.id || `api-key-${index}`} className="border border-gray-200 rounded-lg p-4">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <h3 className="text-lg font-semibold text-gray-900 mb-2">{apiKey.name}</h3>
-                            <div className="flex items-center space-x-2 mb-2">
-                              <code className="px-3 py-1 bg-gray-100 rounded text-sm font-mono text-gray-700">
-                                {visibleKeys.has(apiKey.id) ? apiKey.key : maskApiKey(apiKey.key)}
+                            <div className="flex items-center space-x-2 mb-2 flex-wrap">
+                              <code className="px-3 py-1.5 bg-gray-100 rounded text-sm font-mono text-gray-700 break-all min-w-0 flex-1 overflow-x-auto">
+                                {visibleKeys.has(apiKey.id || `api-key-${index}`) ? (
+                                  <span className="select-all whitespace-pre-wrap block" style={{ wordBreak: 'break-all' }}>
+                                    {apiKey.key || 'N/A'}
+                                  </span>
+                                ) : (
+                                  <span>{maskApiKey(apiKey.key || '')}</span>
+                                )}
                               </code>
                               <button
-                                onClick={() => toggleKeyVisibility(apiKey.id)}
+                                onClick={() => {
+                                  const keyId = apiKey.id || `api-key-${index}`;
+                                  console.log('Toggling visibility for key:', keyId);
+                                  console.log('API Key full value:', apiKey.key);
+                                  console.log('API Key length:', apiKey.key?.length);
+                                  toggleKeyVisibility(keyId);
+                                }}
                                 className="p-1 text-gray-500 hover:text-gray-700"
-                                title={visibleKeys.has(apiKey.id) ? 'Hide key' : 'Show key'}
+                                title={visibleKeys.has(apiKey.id || `api-key-${index}`) ? 'Hide key' : 'Show key'}
                               >
-                                {visibleKeys.has(apiKey.id) ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                {visibleKeys.has(apiKey.id || `api-key-${index}`) ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                               </button>
                               <button
-                                onClick={() => copyToClipboard(apiKey.key)}
+                                onClick={() => {
+                                  console.log('Copying key:', apiKey.key?.substring(0, 20) + '...', 'Full length:', apiKey.key?.length);
+                                  copyToClipboard(apiKey.key);
+                                }}
                                 className="p-1 text-gray-500 hover:text-gray-700"
                                 title="Copy to clipboard"
                               >
@@ -340,7 +455,14 @@ export default function ProfilePage() {
                             </div>
                           </div>
                           <button
-                            onClick={() => handleDeleteApiKey(apiKey.id)}
+                            onClick={() => {
+                              if (!apiKey.id) {
+                                console.error('API key ID is missing:', apiKey);
+                                setMessage({ type: 'error', text: 'Không thể xóa: ID của API key không hợp lệ' });
+                                return;
+                              }
+                              handleDeleteApiKey(apiKey.id);
+                            }}
                             className="ml-4 p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
                             title="Delete API key"
                           >
@@ -349,7 +471,7 @@ export default function ProfilePage() {
                         </div>
                       </div>
                     ))
-                  )}
+                  ) : null}
                 </div>
               </div>
             )}
