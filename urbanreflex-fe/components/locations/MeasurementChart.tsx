@@ -1,7 +1,7 @@
 /**
  * Author: Trương Dương Bảo Minh (minhe51805)
  * Create at: 13-11-2025
- * Update at: 15-11-2025
+ * Update at: 01-12-2025
  * Description: Measurement chart component using Chart.js to visualize air quality measurement trends over time
  */
 
@@ -142,18 +142,17 @@ export default function MeasurementChart({
     <div className="bg-white rounded-lg shadow-md p-6">
       <div className="mb-6">
         <h2 className="text-xl font-bold text-gray-900 mb-4">Historical Measurements</h2>
-        
+
         {/* Parameter Selector */}
         <div className="flex flex-wrap gap-2">
           {parameters.map((param) => (
             <button
               key={param}
               onClick={() => onParameterChange(param)}
-              className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                selectedParameter === param
+              className={`px-4 py-2 rounded-lg font-semibold transition-colors ${selectedParameter === param
                   ? 'bg-[#33a3a1] text-white'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
+                }`}
             >
               {getParameterDisplayName(param)}
             </button>
