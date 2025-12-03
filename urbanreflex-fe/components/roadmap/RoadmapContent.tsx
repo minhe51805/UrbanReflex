@@ -1,7 +1,7 @@
 /**
  * Author: Trương Dương Bảo Minh (minhe51805)
  * Create at: 13-11-2025
- * Update at: 15-11-2025
+ * Update at: 01-12-2025
  * Description: Roadmap content component displaying project development timeline and milestones with interactive features
  */
 
@@ -202,7 +202,7 @@ export default function RoadmapContent() {
                   className="flex items-center gap-2 px-6 py-2 bg-[#e6f8f8] border border-[#b0e8e6] text-[#33a3a1] rounded-full font-bold hover:bg-[#b0e8e6] transition-colors whitespace-nowrap ml-4"
                 >
                   <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"/>
+                    <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z" />
                   </svg>
                   Follow
                 </a>
