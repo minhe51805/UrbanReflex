@@ -11,6 +11,7 @@
   "dependencies": {
     "@headlessui/react": "^2.2.9",
     "@types/bcryptjs": "^2.4.6",
+    "@vietmap/vietmap-gl-js": "^6.0.1",
     "bcryptjs": "^3.0.3",
     "chart.js": "^4.5.1",
     "date-fns": "^4.1.0",
@@ -37,3 +38,6 @@
     "typescript": "^5"
   }
 }
+ 
+ 
+ 
