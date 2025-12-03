@@ -1,7 +1,7 @@
 /**
  * Author: Trương Dương Bảo Minh (minhe51805)
  * Create at: 16-11-2025
- * Update at: 19-11-2025
+ * Update at: 01-12-2025
  * Description: Why Open Data content component matching professional style
  */
 
@@ -162,19 +162,19 @@ export default function WhyOpenDataContent() {
                   className="inline-flex items-center gap-2 px-6 py-2 bg-accent-50 border border-accent-200 rounded-full text-accent-600 font-semibold hover:bg-accent-100 transition-colors"
                 >
                   <svg height="20" viewBox="0 -960 960 960" width="20" fill="currentColor">
-                    <path d="M360-240q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Zm0-80h360v-480H360v480ZM200-80q-33 0-56.5-23.5T120-160v-560h80v560h440v80H200Zm160-240v-480 480Z"/>
+                    <path d="M360-240q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Zm0-80h360v-480H360v480ZM200-80q-33 0-56.5-23.5T120-160v-560h80v560h440v80H200Zm160-240v-480 480Z" />
                   </svg>
                   {copyText}
                 </button>
                 <span className="text-neutral-soft-600">Share</span>
                 <a href={`https://www.facebook.com/sharer/sharer.php?u=${typeof window !== 'undefined' ? window.location.href : ''}`} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white border border-neutral-soft-200 flex items-center justify-center hover:bg-neutral-soft-50 transition-colors">
                   <svg fill="none" viewBox="0 0 18 18" width="20" height="20">
-                    <path fill="#4267b2" d="M17 0H1a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h8.6v-7H7.3V8.3h2.3v-2c0-2.3 1.4-3.6 3.5-3.6l2.1.1v2.5h-1.4c-1.2 0-1.4.5-1.4 1.3v1.7h2.7l-.3 2.7h-2.4v7H17a1 1 0 0 0 1-1V1a1 1 0 0 0-1-1Z"/>
+                    <path fill="#4267b2" d="M17 0H1a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h8.6v-7H7.3V8.3h2.3v-2c0-2.3 1.4-3.6 3.5-3.6l2.1.1v2.5h-1.4c-1.2 0-1.4.5-1.4 1.3v1.7h2.7l-.3 2.7h-2.4v7H17a1 1 0 0 0 1-1V1a1 1 0 0 0-1-1Z" />
                   </svg>
                 </a>
                 <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${typeof window !== 'undefined' ? window.location.href : ''}`} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white border border-neutral-soft-200 flex items-center justify-center hover:bg-neutral-soft-50 transition-colors">
                   <svg fill="none" viewBox="0 0 18 18" width="20" height="20">
-                    <path fill="#0a66c2" d="M16.6 0H1.3C.6 0 0 .6 0 1.3v15.3c0 .7.6 1.3 1.4 1.3h15.3c.7 0 1.3-.6 1.3-1.3V1.3c0-.7-.6-1.3-1.4-1.3ZM5.3 15.3H2.7V6.7h2.6v8.6ZM4 5.5C3.3 5.6 2.5 5 2.5 4S3 2.4 4 2.4s1.6.7 1.6 1.6c0 .9-.7 1.5-1.5 1.5Zm11.4 9.7h-2.7V11c0-1 0-2.3-1.4-2.3s-1.6 1.1-1.6 2.2v4.3H7.2V6.8h2.5v1a3 3 0 0 1 2.6-1.3c2.7 0 3.3 1.8 3.3 4v4.7h-.1Z"/>
+                    <path fill="#0a66c2" d="M16.6 0H1.3C.6 0 0 .6 0 1.3v15.3c0 .7.6 1.3 1.4 1.3h15.3c.7 0 1.3-.6 1.3-1.3V1.3c0-.7-.6-1.3-1.4-1.3ZM5.3 15.3H2.7V6.7h2.6v8.6ZM4 5.5C3.3 5.6 2.5 5 2.5 4S3 2.4 4 2.4s1.6.7 1.6 1.6c0 .9-.7 1.5-1.5 1.5Zm11.4 9.7h-2.7V11c0-1 0-2.3-1.4-2.3s-1.6 1.1-1.6 2.2v4.3H7.2V6.8h2.5v1a3 3 0 0 1 2.6-1.3c2.7 0 3.3 1.8 3.3 4v4.7h-.1Z" />
                   </svg>
                 </a>
               </div>
