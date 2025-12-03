@@ -1,0 +1,36 @@
+# Project History 
+- chore: initialize project with Next.js 16 and TypeScript 
+- feat: setup Tailwind CSS 3.4 with custom color palette 
+- feat: configure project structure and path aliases 
+- feat: add Lucide React icons and Framer Motion 
+- ui: create reusable Button and Card components 
+- feat: implement responsive Navbar with mobile menu 
+- feat: create Footer component with social links 
+- feat: design Homepage Hero section with animated elements 
+- feat: add Features section to Homepage 
+- feat: integrate MapLibre GL for interactive maps 
+- feat: create Map component with zoom and pitch controls 
+- feat: setup OpenAQ API client and type definitions 
+- feat: implement air quality data fetching service 
+- feat: visualize air quality stations on the map 
+- ui: create Map Popup component for station details 
+- feat: implement Location Details page with dynamic routing 
+- ui: build Air Quality Dashboard with AQI metrics 
+- feat: add Chart.js for historical air quality trends 
+- feat: setup NGSI-LD Context Broker integration 
+- feat: implement Road Segment visualization layer 
+- feat: add Streetlight infrastructure monitoring 
+- ui: create Admin Dashboard layout and sidebar 
+- feat: implement Admin Overview with real-time stats 
+- feat: add User Management table with role assignment 
+- feat: create Citizen Report Issue form 
+- docs: add comprehensive README with project overview 
+- docs: document System Architecture and data flow 
+- docs: add API Endpoints reference documentation 
+- docs: create Deployment Guide for Docker and Vercel 
+- fix: resolve hydration mismatch on theme toggle 
+- style: optimize mobile responsiveness for map view 
+- perf: improve image loading with Next.js Image component 
+- refactor: clean up unused code and optimize imports 
+- chore: update dependencies and run security audit 
+- docs: finalize documentation and add contribution guide 
