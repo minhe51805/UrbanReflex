@@ -1,7 +1,5 @@
 /**
- * Author: Trương Dương Bảo Minh (minhe51805)
- * Create at: 03-12-2025
- * Description: Floating chatbot button for quick access to AI assistant
+ * Floating chatbot button for quick access to AI assistant
  */
 
 'use client';
@@ -21,6 +19,7 @@ export default function FloatingChatButton() {
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -48,26 +47,47 @@ export default function FloatingChatButton() {
 
     setIsTyping(true);
 
-    // Simulate AI response (có thể thay bằng API call thật)
-    setTimeout(() => {
-      const responses = [
-        'Cảm ơn bạn đã liên hệ! Tôi đang xử lý câu hỏi của bạn...',
-        'Đây là một câu hỏi thú vị. Để tôi tìm hiểu thêm thông tin cho bạn.',
-        'Tôi hiểu vấn đề của bạn. Hãy để tôi hỗ trợ bạn giải quyết điều này.',
-        'Dựa trên thông tin bạn cung cấp, tôi có thể đưa ra một số gợi ý hữu ích.',
-      ];
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_AI_BACKEND_URL || 'http://163.61.183.90:8001'}/ai-service/chatbot/chat`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: userMessage,
+          session_id: sessionId,
+          context_limit: 5,
+        }),
+      });
 
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
       setMessages((prev) => [
         ...prev,
         {
           role: 'assistant',
-          content: `${randomResponse}\n\nHiện tại tính năng chatbot đang được phát triển. Vui lòng liên hệ với đội ngũ hỗ trợ qua email hoặc hotline để được hỗ trợ tốt nhất.`,
+          content: data.response || 'Xin lỗi, tôi không thể trả lời câu hỏi này. Vui lòng thử lại sau.',
           timestamp: new Date(),
         },
       ]);
+    } catch (error) {
+      console.error('Chatbot API error:', error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: 'Xin lỗi, đã có lỗi xảy ra khi kết nối với trợ lý AI. Vui lòng thử lại sau hoặc liên hệ với đội ngũ hỗ trợ.',
+          timestamp: new Date(),
+        },
+      ]);
+    } finally {
       setIsTyping(false);
-    }, 1000);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
