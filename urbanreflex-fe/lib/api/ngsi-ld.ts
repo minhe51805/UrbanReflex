@@ -15,7 +15,7 @@ const CONTEXT_URLS = {
   CitizenReport: 'https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld',
 };
 
-const BASE_URL = 'http://103.178.233.233:1026/ngsi-ld/v1';
+const BASE_URL = process.env.NEXT_PUBLIC_ORION_LD_URL || 'http://103.178.233.233:1026/ngsi-ld/v1';
 
 export type EntityType = keyof typeof CONTEXT_URLS;
 

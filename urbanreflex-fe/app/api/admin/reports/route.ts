@@ -48,6 +48,19 @@ function parseDateTime(value: any): string {
   return new Date().toISOString();
 }
 
+// Map NGSI-LD entity type to display category
+function mapEntityTypeToCategory(entityType: string): string {
+  const typeMap: Record<string, string> = {
+    'RoadReport': 'road_damage',
+    'PotholeReport': 'pothole',
+    'TrafficSignReport': 'traffic_sign',
+    'StreetlightReport': 'streetlight',
+    'DrainageReport': 'drainage',
+    'CitizenReport': 'other'
+  };
+  return typeMap[entityType] || 'other';
+}
+
 // Map NGSI-LD category to report type
 function mapCategoryToType(category: string): string {
   const categoryMap: Record<string, string> = {
@@ -71,8 +84,15 @@ export async function GET(request: NextRequest) {
     const priority = searchParams.get('priority');
     const search = searchParams.get('search');
 
-    // Fetch all reports from NGSI-LD (both CitizenReport and RoadReport)
-    const reportTypes = ['CitizenReport', 'RoadReport'];
+    // Fetch all reports from NGSI-LD (all entity types)
+    const reportTypes = [
+      'CitizenReport',
+      'RoadReport',
+      'PotholeReport',
+      'TrafficSignReport',
+      'StreetlightReport',
+      'DrainageReport'
+    ];
     let allReports: any[] = [];
 
     for (const reportType of reportTypes) {
@@ -119,7 +139,8 @@ export async function GET(request: NextRequest) {
 
     // Map NGSI-LD format to component format
     let reports = data.map((report: any) => {
-      const category = getValue(report.category) || 'other';
+      // Use entity type to determine category if category field is missing
+      const category = getValue(report.category) || mapEntityTypeToCategory(report.type);
       const reportType = mapCategoryToType(category);
       
       // Extract location info
@@ -145,46 +166,49 @@ export async function GET(request: NextRequest) {
       return {
         id: report.id,
         type: reportType,
+        entityType: report.type, // NGSI-LD entity type (RoadReport, PotholeReport, etc.)
         title: getValue(report.title) || 'Untitled Report',
         description: getValue(report.description) || '',
         status: getValue(report.status) || 'pending',
-        priority: getValue(report.priority) || 'medium',
+        priority: getValue(report.priority) || 'unassigned',
         locationId: locationId,
         locationName: locationName,
-        reportedBy: getValue(report.reporterName) || getValue(report.reporterContact) || 'Unknown',
+        reportedBy: getValue(report.reporterName) || getValue(report.reporterEmail) || getValue(report.reporterContact) || 'Unknown',
         reportedAt: parseDateTime(report.dateCreated),
         assignedTo: null,
         resolvedAt: report.resolvedAt ? parseDateTime(report.resolvedAt) : null,
         notes: [],
         metadata: {
           category: category,
+          categoryConfidence: getValue(report.categoryConfidence) || '',
+          severity: getValue(report.severity) || '',
           coordinates: report.location?.coordinates || null,
           reportId: report.id,
-          images: report.images ? (Array.isArray(report.images) ? report.images : [report.images]) : [],
-          imageCount: report.images ? (Array.isArray(report.images) ? report.images.length : 1) : 0,
+          images: getValue(report.images) || [],
+          imageCount: getValue(report.imageCount) || 0,
         }
       };
     });
 
     // Filter by status
     if (status && status !== 'all') {
-      reports = reports.filter(r => r.status === status);
+      reports = reports.filter((r: any) => r.status === status);
     }
 
     // Filter by type
     if (type && type !== 'all') {
-      reports = reports.filter(r => r.type === type);
+      reports = reports.filter((r: any) => r.type === type);
     }
 
     // Filter by priority
     if (priority && priority !== 'all') {
-      reports = reports.filter(r => r.priority === priority);
+      reports = reports.filter((r: any) => r.priority === priority);
     }
 
     // Search
     if (search) {
       const searchLower = search.toLowerCase();
-      reports = reports.filter(r => 
+      reports = reports.filter((r: any) => 
         r.title.toLowerCase().includes(searchLower) ||
         r.description.toLowerCase().includes(searchLower) ||
         r.reportedBy.toLowerCase().includes(searchLower)
@@ -192,7 +216,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Sort by date (newest first)
-    reports.sort((a, b) => 
+    reports.sort((a: any, b: any) => 
       new Date(b.reportedAt).getTime() - new Date(a.reportedAt).getTime()
     );
 

@@ -1,19 +1,20 @@
 /**
  * Author: Trương Dương Bảo Minh (minhe51805)
  * Create at: 20-11-2025
- * Update at: 01-12-2025
+ * Update at: 04-12-2025
  * Description: Admin component for managing community reports with priority assignment and image previews
  */
 
 'use client';
 
 import { useState, useEffect } from 'react';
-import { AlertTriangle, Clock, CheckCircle, XCircle, Filter, Search, Camera } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import Image from 'next/image';
 
 interface Report {
   id: string;
   type: string;
+  entityType?: string; // NGSI-LD entity type
   title: string;
   description: string;
   status: string;
@@ -24,7 +25,7 @@ interface Report {
   reportedAt: string;
   assignedTo: string | null;
   resolvedAt: string | null;
-  notes: any[];
+  notes: unknown[];
   metadata?: {
     category?: string;
     coordinates?: number[];
@@ -34,11 +35,21 @@ interface Report {
   };
 }
 
+const CATEGORY_LABELS: Record<string, { emoji: string; label: string }> = {
+  'road_damage': { emoji: '🛣️', label: 'Road Damage' },
+  'pothole': { emoji: '🕳️', label: 'Pothole' },
+  'traffic_sign': { emoji: '🚦', label: 'Traffic Sign' },
+  'streetlight': { emoji: '💡', label: 'Streetlight' },
+  'drainage': { emoji: '💧', label: 'Drainage' },
+  'other': { emoji: '❓', label: 'Other' }
+};
+
 const PRIORITY_OPTIONS = [
   { value: 'urgent', label: '🔴 Urgent - Need Immediate Action', color: 'bg-red-100 text-red-800 border-red-300' },
   { value: 'high', label: '🟠 High - Important', color: 'bg-orange-100 text-orange-800 border-orange-300' },
   { value: 'medium', label: '🟡 Medium - Review Needed', color: 'bg-yellow-100 text-yellow-800 border-yellow-300' },
   { value: 'low', label: '🔵 Low - Not Critical', color: 'bg-blue-100 text-blue-800 border-blue-300' },
+  { value: 'unassigned', label: '⚪ Unassigned', color: 'bg-gray-100 text-gray-800 border-gray-300' }
 ];
 
 export default function ReportsManagement() {
@@ -50,22 +61,17 @@ export default function ReportsManagement() {
 
   useEffect(() => {
     fetchReports();
-  }, [filter]);
+  }, []);
 
   const fetchReports = async () => {
     try {
       setLoading(true);
-      const url = filter === 'all'
-        ? '/api/admin/reports'
-        : filter === 'road_report'
-          ? '/api/admin/reports?type=road_report'
-          : '/api/admin/reports?status=pending';
-
-      const response = await fetch(url);
-      const data = await response.json();
-
-      if (data.success) {
-        setReports(data.data);
+      const response = await fetch('/api/admin/reports');
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.reports) {
+          setReports(result.reports);
+        }
       }
     } catch (error) {
       console.error('Error fetching reports:', error);
@@ -73,6 +79,13 @@ export default function ReportsManagement() {
       setLoading(false);
     }
   };
+
+  const filteredReports = reports.filter((r) => {
+    if (filter === 'all') return true;
+    if (filter === 'pending') return r.status === 'pending' || r.status === 'submitted';
+    if (filter === 'road_report') return r.type === 'road_report';
+    return true;
+  });
 
   const updatePriority = async (reportId: string, priority: string) => {
     try {
@@ -87,11 +100,9 @@ export default function ReportsManagement() {
       if (response.ok) {
         const result = await response.json();
         if (result.success) {
-          // Update local state
           setReports(reports.map(r =>
             r.id === reportId ? { ...r, priority } : r
           ));
-          setSelectedReport(null);
           // Refresh reports list
           fetchReports();
         }
@@ -119,14 +130,9 @@ export default function ReportsManagement() {
       if (response.ok) {
         const result = await response.json();
         if (result.success) {
-          // Update local state
           setReports(reports.map(r =>
             r.id === reportId ? { ...r, type } : r
           ));
-          // Update viewReport if it's the same report
-          if (viewReport && viewReport.id === reportId) {
-            setViewReport({ ...viewReport, type });
-          }
           // Refresh reports list
           fetchReports();
         }
@@ -204,11 +210,12 @@ export default function ReportsManagement() {
         {['all', 'pending', 'road_report'].map((f) => (
           <button
             key={f}
-            onClick={() => setFilter(f as any)}
-            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${filter === f
+            onClick={() => setFilter(f as 'all' | 'pending' | 'road_report')}
+            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+              filter === f
                 ? 'bg-orange-500 text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+            }`}
           >
             {f === 'road_report' ? 'Road Reports' : f.charAt(0).toUpperCase() + f.slice(1)}
           </button>
@@ -220,7 +227,7 @@ export default function ReportsManagement() {
         <div className="flex justify-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-500 border-t-transparent"></div>
         </div>
-      ) : reports.length === 0 ? (
+      ) : filteredReports.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-lg border border-gray-200">
           <AlertTriangle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-900 mb-2">Chưa có báo cáo nào</h3>
@@ -234,59 +241,46 @@ export default function ReportsManagement() {
         </div>
       ) : (
         <div className="grid gap-4">
-          {reports.map((report) => (
+          {filteredReports.map((report) => (
             <div
               key={report.id}
-              className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-lg transition-shadow"
+              className="bg-white p-4 rounded-lg border border-gray-200 hover:shadow-md transition-shadow"
             >
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex justify-between items-start gap-4">
                 {/* Report Info */}
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <AlertTriangle className="h-5 w-5 text-orange-500" />
-                    <h3 className="font-bold text-gray-900">{report.title}</h3>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-3">{report.description}</p>
-
-                  {/* Images */}
-                  {report.metadata?.images && report.metadata.images.length > 0 && (
-                    <div className="flex gap-2 mb-3">
-                      {report.metadata.images.slice(0, 4).map((img, idx) => (
-                        <div key={idx} className="relative w-20 h-20 rounded-lg overflow-hidden border-2 border-gray-200">
-                          <Image
-                            src={img}
-                            alt={`Report image ${idx + 1}`}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                      ))}
-                      {report.metadata.imageCount && report.metadata.imageCount > 4 && (
-                        <div className="w-20 h-20 rounded-lg border-2 border-gray-200 bg-gray-100 flex items-center justify-center">
-                          <div className="text-center">
-                            <Camera className="h-5 w-5 mx-auto text-gray-400 mb-1" />
-                            <span className="text-xs font-semibold text-gray-600">
-                              +{report.metadata.imageCount - 4}
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="flex flex-wrap gap-2 text-xs">
-                    <span className={`px-2 py-1 rounded-full font-semibold ${getStatusColor(report.status)}`}>
+                    <h3 className="text-lg font-semibold text-gray-900">{report.title}</h3>
+                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusColor(report.status)}`}>
                       {report.status}
                     </span>
-                    <span className={`px-2 py-1 rounded-full font-semibold border ${getPriorityColor(report.priority)}`}>
+                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getPriorityColor(report.priority)}`}>
                       {report.priority}
                     </span>
-                    <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full">
-                      {report.type.replace('_', ' ')}
-                    </span>
+                  </div>
+
+                  <p className="text-gray-600 text-sm mb-3">{report.description}</p>
+
+                  {/* Metadata Badges */}
+                  <div className="flex flex-wrap gap-2">
+                    {report.entityType && (
+                      <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">
+                        {report.entityType}
+                      </span>
+                    )}
+                    {report.metadata?.category && CATEGORY_LABELS[report.metadata.category] && (
+                      <span className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs">
+                        {CATEGORY_LABELS[report.metadata.category].emoji} {CATEGORY_LABELS[report.metadata.category].label}
+                      </span>
+                    )}
                     {report.locationName && (
-                      <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded-full">
-                        {report.locationName}
+                      <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs">
+                        📍 {report.locationName}
+                      </span>
+                    )}
+                    {report.metadata?.imageCount !== undefined && report.metadata.imageCount > 0 && (
+                      <span className="px-2 py-1 bg-green-50 text-green-700 rounded-full text-xs">
+                        📷 {report.metadata.imageCount} images
                       </span>
                     )}
                   </div>
@@ -387,37 +381,51 @@ export default function ReportsManagement() {
                     onChange={(e) => updatePriority(viewReport.id, e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
                   >
+                    <option value="unassigned">Unassigned</option>
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
                     <option value="high">High</option>
                     <option value="urgent">Urgent</option>
                   </select>
                 </div>
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-2">Type</h4>
-                  <select
-                    value={viewReport.type}
-                    onChange={(e) => updateType(viewReport.id, e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
-                  >
-                    <option value="road_report">Road Report</option>
-                    <option value="data_issue">Data Issue</option>
-                    <option value="missing_data">Missing Data</option>
-                    <option value="bug">Bug</option>
-                    <option value="feature_request">Feature Request</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-1">Reported By</h4>
-                  <p className="text-gray-700">{viewReport.reportedBy}</p>
-                </div>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-2">Type</h4>
+                <select
+                  value={viewReport.type}
+                  onChange={(e) => updateType(viewReport.id, e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                >
+                  <option value="road_report">Road Report</option>
+                  <option value="data_issue">Data Issue</option>
+                  <option value="missing_data">Missing Data</option>
+                  <option value="bug">Bug</option>
+                  <option value="feature_request">Feature Request</option>
+                  <option value="other">Other</option>
+                </select>
               </div>
 
               {viewReport.locationName && (
                 <div>
                   <h4 className="font-semibold text-gray-900 mb-1">Location</h4>
                   <p className="text-gray-700">{viewReport.locationName}</p>
+                </div>
+              )}
+
+              {viewReport.metadata?.category && (
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-1">Category</h4>
+                  <p className="text-gray-700">
+                    {CATEGORY_LABELS[viewReport.metadata.category]?.emoji} {CATEGORY_LABELS[viewReport.metadata.category]?.label || viewReport.metadata.category}
+                  </p>
+                </div>
+              )}
+
+              {viewReport.entityType && (
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-1">Entity Type</h4>
+                  <p className="text-gray-700">{viewReport.entityType}</p>
                 </div>
               )}
 

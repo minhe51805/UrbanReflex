@@ -6,7 +6,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_BASE_URL = process.env.API_BASE_URL || 'http://163.61.183.90:8001';
+const API_BASE_URL = process.env.NEXT_PUBLIC_AI_BACKEND_URL || 'http://163.61.183.90:8001';
 
 // GET - Get user's API keys
 export async function GET(request: NextRequest) {

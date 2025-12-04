@@ -10,6 +10,8 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { STATUS_CONFIG, formatStatus, getStatusBadgeClasses, getAllowedTransitions, type ReportStatus } from '@/lib/utils/reportStatus';
+import { retrieveImages } from '@/lib/utils/imageProcessor';
 import {
   Shield,
   User,
@@ -49,6 +51,14 @@ interface UserForAdmin {
   created_at?: string;
 }
 
+// Helper function to normalize images to array
+const normalizeImages = (images: string | string[] | undefined): string[] => {
+  if (!images) return [];
+  if (typeof images === 'string') return [images];
+  if (Array.isArray(images)) return images;
+  return [];
+};
+
 interface Report {
   id: string;
   category: string;
@@ -67,7 +77,7 @@ interface Report {
 }
 
 type TabType = 'overview' | 'reports' | 'users' | 'settings';
-type ReportStatus = 'all' | 'pending' | 'in_progress' | 'resolved' | 'rejected';
+type ReportStatusFilter = 'all' | ReportStatus;
 type ReportPriority = 'all' | 'low' | 'medium' | 'high' | 'urgent';
 type ReportCategory = 'all' | 'pothole' | 'traffic' | 'lighting' | 'safety' | 'other';
 type DateRange = 'all' | 'today' | 'week' | 'month' | 'custom';
@@ -85,7 +95,7 @@ export default function AdminPage() {
   
   // Filter states
   const [reportSearch, setReportSearch] = useState('');
-  const [reportStatus, setReportStatus] = useState<ReportStatus>('all');
+  const [reportStatus, setReportStatus] = useState<ReportStatusFilter>('all');
   const [reportPriority, setReportPriority] = useState<ReportPriority>('all');
   const [reportCategory, setReportCategory] = useState<ReportCategory>('all');
   const [dateRange, setDateRange] = useState<DateRange>('all');
@@ -130,6 +140,7 @@ export default function AdminPage() {
   const [updateError, setUpdateError] = useState('');
   const [updateSuccess, setUpdateSuccess] = useState('');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [loadedImages, setLoadedImages] = useState<(string | null)[]>([]);
 
   // Stats
   const stats = useMemo(() => {
@@ -275,6 +286,32 @@ export default function AdminPage() {
       loadData();
     }
   }, [isAdmin]);
+
+  // Load images from hashes when modal opens
+  useEffect(() => {
+    if (selectedReport && showReportModal) {
+      const imageHashes = normalizeImages(selectedReport.metadata?.images);
+      
+      // Check if images are hashes (64 char hex) or data URLs
+      const areHashes = imageHashes.every(img => 
+        typeof img === 'string' && /^[a-f0-9]{64}$/i.test(img)
+      );
+      
+      if (areHashes && imageHashes.length > 0) {
+        console.log(`📸 Loading ${imageHashes.length} images from hashes...`);
+        retrieveImages(imageHashes).then(images => {
+          setLoadedImages(images);
+          console.log(`✅ Loaded ${images.filter(img => img !== null).length}/${images.length} images`);
+        });
+      } else {
+        // Already data URLs or old format
+        setLoadedImages(imageHashes);
+      }
+    } else {
+      setLoadedImages([]);
+      setCurrentImageIndex(0);
+    }
+  }, [selectedReport, showReportModal]);
 
   const loadData = async () => {
         setLoading(true);
@@ -588,15 +625,16 @@ export default function AdminPage() {
 
       setUpdateSuccess('Cập nhật báo cáo thành công!');
       
-      // Reload reports list
-      await loadData();
-      
-      // Update selected report
-      setSelectedReport({
+      // Update selected report immediately with new values
+      const updatedReport = {
         ...selectedReport,
         status: editingStatus,
         priority: editingPriority,
-      });
+      };
+      setSelectedReport(updatedReport);
+      
+      // Reload reports list in background
+      loadData();
 
       setTimeout(() => {
         setUpdateSuccess('');
@@ -809,14 +847,17 @@ export default function AdminPage() {
                       <label className="block text-sm font-medium text-gray-700 mb-2">Trạng thái</label>
                       <select
                         value={reportStatus}
-                        onChange={(e) => setReportStatus(e.target.value as ReportStatus)}
+                        onChange={(e) => setReportStatus(e.target.value as ReportStatusFilter)}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
                         <option value="all">Tất cả</option>
-                        <option value="pending">Đang chờ</option>
-                        <option value="in_progress">Đang xử lý</option>
-                        <option value="resolved">Đã giải quyết</option>
-                        <option value="rejected">Từ chối</option>
+                        <option value="submitted">{formatStatus('submitted')}</option>
+                        <option value="ai_processing">{formatStatus('ai_processing')}</option>
+                        <option value="auto_approved">{formatStatus('auto_approved')}</option>
+                        <option value="pending_review">{formatStatus('pending_review')}</option>
+                        <option value="approved">{formatStatus('approved')}</option>
+                        <option value="rejected">{formatStatus('rejected')}</option>
+                        <option value="resolved">{formatStatus('resolved')}</option>
                       </select>
                     </div>
 
@@ -951,19 +992,9 @@ export default function AdminPage() {
                             </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                               <span
-                                className={`px-2 py-1 text-xs font-medium rounded-full ${
-                                  report.status === 'resolved'
-                                    ? 'bg-green-100 text-green-800'
-                                    : report.status === 'pending'
-                                    ? 'bg-orange-100 text-orange-800'
-                                    : report.status === 'in_progress'
-                                    ? 'bg-yellow-100 text-yellow-800'
-                                    : 'bg-red-100 text-red-800'
-                                }`}
+                                className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadgeClasses(report.status as ReportStatus)}`}
                               >
-                                {report.status === 'resolved' ? 'Đã giải quyết' :
-                                 report.status === 'pending' ? 'Đang chờ' :
-                                 report.status === 'in_progress' ? 'Đang xử lý' : 'Từ chối'}
+                                {formatStatus(report.status as ReportStatus)}
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
@@ -1474,28 +1505,51 @@ export default function AdminPage() {
                 {/* Status and Priority Row - Editable */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="bg-gradient-to-br from-gray-50 to-white p-3 rounded-lg border border-gray-200">
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-                      Trạng thái
-                    </label>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        Trạng thái
+                      </label>
+                      {editingStatus !== selectedReport.status && (
+                        <span className="text-xs text-orange-600 font-medium">● Đã thay đổi</span>
+                      )}
+                    </div>
                     <select
                       value={editingStatus}
                       onChange={(e) => setEditingStatus(e.target.value)}
-                      className="w-full px-3 py-2 text-sm border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white font-medium"
+                      className={`w-full px-3 py-2 text-sm border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white font-medium ${
+                        editingStatus !== selectedReport.status ? 'border-orange-400' : 'border-gray-300'
+                      }`}
                     >
-                      <option value="pending">⏳ Đang chờ</option>
-                      <option value="in_progress">🔄 Đang xử lý</option>
-                      <option value="resolved">✓ Đã giải quyết</option>
-                      <option value="rejected">✗ Từ chối</option>
+                      <option value="submitted">{formatStatus('submitted')}</option>
+                      <option value="ai_processing">{formatStatus('ai_processing')}</option>
+                      <option value="auto_approved">{formatStatus('auto_approved')}</option>
+                      <option value="pending_review">{formatStatus('pending_review')}</option>
+                      <option value="approved">{formatStatus('approved')}</option>
+                      <option value="rejected">{formatStatus('rejected')}</option>
+                      <option value="resolved">{formatStatus('resolved')}</option>
                     </select>
+                    {/* Status Description */}
+                    {editingStatus && STATUS_CONFIG[editingStatus as ReportStatus] && (
+                      <p className="mt-1.5 text-xs text-gray-500">
+                        {STATUS_CONFIG[editingStatus as ReportStatus].description}
+                      </p>
+                    )}
                   </div>
                   <div className="bg-gradient-to-br from-gray-50 to-white p-3 rounded-lg border border-gray-200">
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-                      Độ ưu tiên
-                    </label>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        Độ ưu tiên
+                      </label>
+                      {editingPriority !== selectedReport.priority && (
+                        <span className="text-xs text-orange-600 font-medium">● Đã thay đổi</span>
+                      )}
+                    </div>
                     <select
                       value={editingPriority}
                       onChange={(e) => setEditingPriority(e.target.value)}
-                      className="w-full px-3 py-2 text-sm border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white font-medium"
+                      className={`w-full px-3 py-2 text-sm border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white font-medium ${
+                        editingPriority !== selectedReport.priority ? 'border-orange-400' : 'border-gray-300'
+                      }`}
                     >
                       <option value="low">⚪ Thấp</option>
                       <option value="medium">🟡 Trung bình</option>
@@ -1532,29 +1586,46 @@ export default function AdminPage() {
                 </div>
 
                 {/* Images Gallery - Carousel Style */}
-                {selectedReport.metadata?.images && selectedReport.metadata.images.length > 0 && (
+                {(() => {
+                  // Use loadedImages if available, otherwise fall back to raw images
+                  const displayImages = loadedImages.length > 0 
+                    ? loadedImages.filter(img => img !== null) as string[]
+                    : normalizeImages(selectedReport.metadata?.images);
+                    
+                  if (displayImages.length === 0) return null;
+                  
+                  return (
                   <div className="bg-gradient-to-br from-gray-50 to-white p-3 rounded-lg border border-gray-200">
                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-2">
                       <Camera className="w-3 h-3" />
-                      <span>Hình ảnh ({selectedReport.metadata.images.length})</span>
+                      <span>Hình ảnh ({displayImages.length})</span>
                     </label>
                     
                     {/* Main Image Display */}
                     <div className="relative w-full rounded-lg overflow-hidden border-2 border-gray-300 bg-gray-100 mb-2" style={{ aspectRatio: '16/9' }}>
-                      <img
-                        src={selectedReport.metadata.images[currentImageIndex]}
-                        alt={`Report image ${currentImageIndex + 1}`}
-                        className="w-full h-full object-contain bg-gray-50"
-                      />
+                      {loadedImages.length === 0 ? (
+                        <div className="w-full h-full flex items-center justify-center text-gray-400">
+                          <div className="text-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400 mx-auto mb-2"></div>
+                            <p className="text-xs">Loading images...</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <img
+                          src={displayImages[currentImageIndex]}
+                          alt={`Report image ${currentImageIndex + 1}`}
+                          className="w-full h-full object-contain bg-gray-50"
+                        />
+                      )}
                       
                       {/* Navigation Arrows */}
-                      {selectedReport.metadata.images.length > 1 && (
+                      {displayImages.length > 1 && loadedImages.length > 0 && (
                         <>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               setCurrentImageIndex((prev) => 
-                                prev === 0 ? selectedReport.metadata.images.length - 1 : prev - 1
+                                prev === 0 ? displayImages.length - 1 : prev - 1
                               );
                             }}
                             className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-all backdrop-blur-sm"
@@ -1565,7 +1636,7 @@ export default function AdminPage() {
                             onClick={(e) => {
                               e.stopPropagation();
                               setCurrentImageIndex((prev) => 
-                                prev === selectedReport.metadata.images.length - 1 ? 0 : prev + 1
+                                prev === displayImages.length - 1 ? 0 : prev + 1
                               );
                             }}
                             className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-all backdrop-blur-sm"
@@ -1577,14 +1648,14 @@ export default function AdminPage() {
                       
                       {/* Image Counter */}
                       <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded backdrop-blur-sm">
-                        {currentImageIndex + 1} / {selectedReport.metadata.images.length}
+                        {currentImageIndex + 1} / {displayImages.length}
                       </div>
                     </div>
                     
                     {/* Thumbnail Strip */}
-                    {selectedReport.metadata.images.length > 1 && (
+                    {displayImages.length > 1 && loadedImages.length > 0 && (
                       <div className="flex gap-2 overflow-x-auto pb-1">
-                        {selectedReport.metadata.images.map((img: string, idx: number) => (
+                        {displayImages.map((img: string, idx: number) => (
                           <button
                             key={idx}
                             onClick={() => setCurrentImageIndex(idx)}
@@ -1604,7 +1675,234 @@ export default function AdminPage() {
                       </div>
                     )}
                   </div>
+                  );
+                })()}
+
+                {/* AI Classification Metrics */}
+                {(selectedReport.category || selectedReport.metadata?.categoryConfidence || selectedReport.metadata?.severity) && (
+                  <div className="bg-gradient-to-br from-purple-50 to-white p-3 rounded-lg border border-purple-200">
+                    <label className="block text-xs font-semibold text-purple-700 uppercase tracking-wide mb-2 flex items-center gap-2">
+                      <span className="text-lg">🤖</span>
+                      <span>Phân loại AI</span>
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {/* Category */}
+                      <div className="bg-white p-2.5 rounded-lg border border-purple-100">
+                        <p className="text-xs text-gray-500 mb-1">Danh mục</p>
+                        <p className="text-sm font-bold text-gray-900">
+                          {selectedReport.category === 'pothole' && '🕳️ Ổ gà'}
+                          {selectedReport.category === 'road_damage' && '🛣️ Hư hỏng đường'}
+                          {selectedReport.category === 'traffic_sign' && '🚦 Biển báo'}
+                          {selectedReport.category === 'streetlight' && '💡 Đèn đường'}
+                          {selectedReport.category === 'drainage' && '💧 Thoát nước'}
+                          {(!selectedReport.category || selectedReport.category === 'unknown') && '❓ Chưa xác định'}
+                        </p>
+                      </div>
+                      
+                      {/* Confidence */}
+                      {selectedReport.metadata?.categoryConfidence && (
+                        <div className="bg-white p-2.5 rounded-lg border border-purple-100">
+                          <p className="text-xs text-gray-500 mb-1">Độ tin cậy</p>
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 bg-gray-200 rounded-full h-2">
+                              <div 
+                                className={`h-2 rounded-full ${
+                                  parseFloat(selectedReport.metadata.categoryConfidence) >= 0.7 
+                                    ? 'bg-green-500' 
+                                    : parseFloat(selectedReport.metadata.categoryConfidence) >= 0.5
+                                    ? 'bg-yellow-500'
+                                    : 'bg-red-500'
+                                }`}
+                                style={{ width: `${parseFloat(selectedReport.metadata.categoryConfidence) * 100}%` }}
+                              />
+                            </div>
+                            <span className="text-sm font-bold text-gray-900">
+                              {(parseFloat(selectedReport.metadata.categoryConfidence) * 100).toFixed(0)}%
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Priority */}
+                      <div className="bg-white p-2.5 rounded-lg border border-purple-100">
+                        <p className="text-xs text-gray-500 mb-1">Mức độ ưu tiên AI</p>
+                        <p className="text-sm font-bold text-gray-900">
+                          {selectedReport.priority === 'low' && '⚪ Thấp'}
+                          {selectedReport.priority === 'medium' && '🟡 Trung bình'}
+                          {selectedReport.priority === 'high' && '🟠 Cao'}
+                          {selectedReport.priority === 'urgent' && '🔴 Khẩn cấp'}
+                        </p>
+                      </div>
+                      
+                      {/* Severity */}
+                      {selectedReport.metadata?.severity && (
+                        <div className="bg-white p-2.5 rounded-lg border border-purple-100">
+                          <p className="text-xs text-gray-500 mb-1">Mức độ nghiêm trọng</p>
+                          <p className="text-sm font-bold text-gray-900 capitalize">
+                            {selectedReport.metadata.severity === 'low' && '⚪ Nhẹ'}
+                            {selectedReport.metadata.severity === 'medium' && '🟡 Vừa'}
+                            {selectedReport.metadata.severity === 'high' && '🟠 Nặng'}
+                            {selectedReport.metadata.severity === 'critical' && '🔴 Nghiêm trọng'}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Auto-approval conditions check */}
+                    {selectedReport.metadata?.categoryConfidence && (
+                      <div className="mt-3 p-2.5 bg-white rounded-lg border border-purple-100">
+                        <p className="text-xs font-semibold text-gray-700 mb-2">Điều kiện tự động duyệt:</p>
+                        <div className="space-y-1.5">
+                          <div className="flex items-center gap-2 text-xs">
+                            {parseFloat(selectedReport.metadata.categoryConfidence) >= 0.7 ? (
+                              <span className="text-green-600">✅</span>
+                            ) : (
+                              <span className="text-red-600">❌</span>
+                            )}
+                            <span className="text-gray-700">
+                              Độ tin cậy ≥ 70% ({(parseFloat(selectedReport.metadata.categoryConfidence) * 100).toFixed(0)}%)
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs">
+                            {['low', 'medium'].includes(selectedReport.priority) ? (
+                              <span className="text-green-600">✅</span>
+                            ) : (
+                              <span className="text-red-600">❌</span>
+                            )}
+                            <span className="text-gray-700">
+                              Ưu tiên thấp/trung bình ({selectedReport.priority})
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs">
+                            {selectedReport.metadata?.severity && ['low', 'medium'].includes(selectedReport.metadata.severity) ? (
+                              <span className="text-green-600">✅</span>
+                            ) : (
+                              <span className="text-red-600">❌</span>
+                            )}
+                            <span className="text-gray-700">
+                              Mức độ nhẹ/vừa ({selectedReport.metadata?.severity || 'N/A'})
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs">
+                            {normalizeImages(selectedReport.metadata?.images).length > 0 ? (
+                              <span className="text-green-600">✅</span>
+                            ) : (
+                              <span className="text-red-600">❌</span>
+                            )}
+                            <span className="text-gray-700">
+                              Có hình ảnh ({normalizeImages(selectedReport.metadata?.images).length} ảnh)
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
+
+                {/* Workflow Timeline */}
+                <div className="bg-gradient-to-br from-blue-50 to-white p-3 rounded-lg border border-blue-200">
+                  <label className="block text-xs font-semibold text-blue-700 uppercase tracking-wide mb-3 flex items-center gap-2">
+                    <span className="text-lg">📋</span>
+                    <span>Quy trình xử lý</span>
+                  </label>
+                  
+                  <div className="relative">
+                    {/* Timeline vertical line */}
+                    <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-blue-200" />
+                    
+                    <div className="space-y-4">
+                      {/* Step 1: Submitted */}
+                      <div className="relative flex items-start gap-3">
+                        <div className={`relative z-10 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                          selectedReport.status ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-500'
+                        }`}>
+                          {selectedReport.status ? '✓' : '1'}
+                        </div>
+                        <div className="flex-1 pb-2">
+                          <p className="text-sm font-bold text-gray-900">Đã gửi báo cáo</p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {selectedReport.dateCreated 
+                              ? new Date(selectedReport.dateCreated).toLocaleString('vi-VN')
+                              : 'N/A'
+                            }
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {/* Step 2: AI Processing */}
+                      <div className="relative flex items-start gap-3">
+                        <div className={`relative z-10 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                          selectedReport.metadata?.categoryConfidence !== undefined && selectedReport.metadata?.categoryConfidence !== ''
+                            ? 'bg-green-500 text-white' 
+                            : selectedReport.status === 'ai_processing'
+                            ? 'bg-yellow-500 text-white animate-pulse'
+                            : 'bg-gray-300 text-gray-500'
+                        }`}>
+                          {selectedReport.metadata?.categoryConfidence !== undefined && selectedReport.metadata?.categoryConfidence !== '' ? '✓' : '2'}
+                        </div>
+                        <div className="flex-1 pb-2">
+                          <p className="text-sm font-bold text-gray-900">Phân loại AI</p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {selectedReport.metadata?.categoryConfidence !== undefined && selectedReport.metadata?.categoryConfidence !== ''
+                              ? `Hoàn thành - ${selectedReport.category || 'unknown'} (${(parseFloat(selectedReport.metadata.categoryConfidence) * 100).toFixed(0)}%)`
+                              : selectedReport.status === 'ai_processing'
+                              ? 'Đang xử lý...'
+                              : 'Chờ xử lý'
+                            }
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {/* Step 3: Auto Approval or Review */}
+                      <div className="relative flex items-start gap-3">
+                        <div className={`relative z-10 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                          ['auto_approved', 'approved', 'rejected', 'resolved'].includes(selectedReport.status)
+                            ? 'bg-green-500 text-white'
+                            : selectedReport.status === 'pending_review'
+                            ? 'bg-yellow-500 text-white'
+                            : 'bg-gray-300 text-gray-500'
+                        }`}>
+                          {['auto_approved', 'approved', 'rejected', 'resolved'].includes(selectedReport.status) ? '✓' : '3'}
+                        </div>
+                        <div className="flex-1 pb-2">
+                          <p className="text-sm font-bold text-gray-900">
+                            {selectedReport.status === 'auto_approved' && 'Tự động duyệt'}
+                            {selectedReport.status === 'pending_review' && 'Chờ kiểm duyệt'}
+                            {selectedReport.status === 'approved' && 'Đã duyệt'}
+                            {selectedReport.status === 'rejected' && 'Đã từ chối'}
+                            {!['auto_approved', 'pending_review', 'approved', 'rejected', 'resolved'].includes(selectedReport.status) && 'Chờ kiểm duyệt'}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {selectedReport.status === 'auto_approved' && '✨ Đáp ứng điều kiện tự động duyệt'}
+                            {selectedReport.status === 'pending_review' && '⏳ Cần kiểm tra thủ công'}
+                            {selectedReport.status === 'approved' && '✅ Quản trị viên đã duyệt'}
+                            {selectedReport.status === 'rejected' && '❌ Quản trị viên đã từ chối'}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {/* Step 4: Resolved (if applicable) */}
+                      <div className="relative flex items-start gap-3">
+                        <div className={`relative z-10 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                          selectedReport.status === 'resolved'
+                            ? 'bg-green-500 text-white'
+                            : 'bg-gray-300 text-gray-500'
+                        }`}>
+                          {selectedReport.status === 'resolved' ? '✓' : '4'}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-bold text-gray-900">Đã giải quyết</p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {selectedReport.status === 'resolved'
+                              ? '🎉 Vấn đề đã được xử lý'
+                              : 'Chờ xử lý'
+                            }
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
                 {/* Location */}
                 {selectedReport.locationName && (

@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-const BASE_URL = 'http://103.178.233.233:1026/ngsi-ld/v1';
+const BASE_URL = process.env.NEXT_PUBLIC_ORION_LD_URL || 'http://103.178.233.233:1026/ngsi-ld/v1';
 
 // Context configurations matching FE_INTEGRATION_GUIDE
 // IMPORTANT: RoadSegment, WeatherObserved, AirQualityObserved need 3 contexts (core + sosa + domain)
@@ -109,18 +109,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if @context is in body - determine Content-Type accordingly
+    const hasContextInBody = '@context' in body;
+    
+    // If @context in body, use application/ld+json and remove Link header
+    // If no @context in body, use application/json with Link header
+    const headers: HeadersInit = hasContextInBody 
+      ? {
+          'Content-Type': 'application/ld+json',
+        }
+      : {
+          'Content-Type': 'application/json',
+          'Link': buildLinkHeader(type),
+        };
+
     // Stringify body for forwarding
     const bodyString = JSON.stringify(body);
     console.log('📤 Forwarding body to NGSI-LD:', {
       bodyLength: bodyString.length,
+      hasContextInBody,
+      contentType: headers['Content-Type'],
       firstChars: bodyString.substring(0, 200)
     });
-
-    // Build headers for NGSI-LD
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-      'Link': buildLinkHeader(type),
-    };
 
     console.log('📤 Sending to NGSI-LD:', {
       url,

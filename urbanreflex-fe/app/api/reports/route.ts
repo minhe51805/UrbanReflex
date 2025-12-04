@@ -12,7 +12,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-const ORION_URL = 'http://103.178.233.233:1026/ngsi-ld/v1';
+const ORION_URL = process.env.NEXT_PUBLIC_ORION_LD_URL || 'http://103.178.233.233:1026/ngsi-ld/v1';
 
 // Context for CitizenReport
 const REPORT_CONTEXT = '<https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json"';
@@ -43,39 +43,52 @@ export async function GET(request: NextRequest) {
   const limit = searchParams.get('limit') || '50';
 
   try {
-    let url = `${ORION_URL}/entities?type=CitizenReport&options=keyValues&limit=${limit}`;
+    // Fetch all report types
+    const reportTypes = [
+      'CitizenReport',
+      'RoadReport',
+      'PotholeReport',
+      'TrafficSignReport',
+      'StreetlightReport',
+      'DrainageReport'
+    ];
     
-    // Add spatial query if coordinates provided
-    if (lat && lon) {
-      const coordinates = `[${lon},${lat}]`;
-      url += `&georel=near;maxDistance==${maxDistance}&geometry=Point&coordinates=${coordinates}`;
+    let allReports: any[] = [];
+    
+    for (const reportType of reportTypes) {
+      let url = `${ORION_URL}/entities?type=${reportType}&options=keyValues&limit=${limit}`;
+      
+      // Add spatial query if coordinates provided
+      if (lat && lon) {
+        const coordinates = `[${lon},${lat}]`;
+        url += `&georel=near;maxDistance==${maxDistance}&geometry=Point&coordinates=${coordinates}`;
+      }
+      
+      try {
+        const response = await fetch(url, {
+          headers: {
+            'Link': REPORT_CONTEXT,
+          },
+          cache: 'no-store',
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (Array.isArray(data)) {
+            allReports.push(...data);
+          }
+        }
+      } catch (error) {
+        console.error(`Error fetching ${reportType}:`, error);
+      }
     }
     
-    const response = await fetch(url, {
-      headers: {
-        'Link': REPORT_CONTEXT,
-      },
-      cache: 'no-store',
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({
-        type: 'error',
-        title: 'Request Failed',
-        detail: `HTTP ${response.status}: ${response.statusText}`
-      }));
-
-      return NextResponse.json(error, { status: response.status });
-    }
-
-    const data = await response.json();
-    
-    if (!Array.isArray(data)) {
-      return NextResponse.json({ reports: [] });
+    if (allReports.length === 0) {
+      return NextResponse.json({ reports: [], count: 0 });
     }
 
     // Format reports
-    const reports = data.map((report: any) => ({
+    const reports = allReports.map((report: any) => ({
       id: report.id,
       title: getValue(report.title),
       description: getValue(report.description),
