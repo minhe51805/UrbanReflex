@@ -46,7 +46,7 @@ export default function ReportIssuePage() {
       } else {
         setError('Failed to submit report. Please try again.');
       }
-    } catch (err) {
+    } catch {
       setError('An error occurred. Please try again.');
     } finally {
       setSubmitting(false);
@@ -226,7 +226,7 @@ export default function ReportIssuePage() {
                 required
               />
               <p className="mt-2 text-sm text-slate-500">
-                We'll use this to contact you about your report
+                We&apos;ll use this to contact you about your report
               </p>
             </div>
 

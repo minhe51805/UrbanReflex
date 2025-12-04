@@ -11,7 +11,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-const ORION_URL = 'http://103.178.233.233:1026/ngsi-ld/v1';
+const ORION_URL = process.env.NEXT_PUBLIC_ORION_LD_URL || 'http://103.178.233.233:1026/ngsi-ld/v1';
 
 // Context for Streetlight (domain only, no core)
 const STREETLIGHT_CONTEXT = '<https://smart-data-models.github.io/dataModel.Streetlighting/context.jsonld>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json"';

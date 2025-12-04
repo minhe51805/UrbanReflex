@@ -11,6 +11,8 @@ import { useState } from 'react';
 import { AlertTriangle, X, Send, MapPin, Camera, Trash2, Minus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Image from 'next/image';
+import { processReportWithAIAsync } from '@/lib/services/reportApproval';
+import { processImages } from '@/lib/utils/imageProcessor';
 
 interface ReportButtonProps {
   roadId: string;
@@ -38,6 +40,19 @@ export default function ReportButton({ roadId, roadName, location }: ReportButto
 
   // Only show button for logged-in users
   if (!user) return null;
+
+  // Map category to NGSI-LD entity type
+  const getCategoryEntityType = (category: string): string => {
+    const typeMap: Record<string, string> = {
+      'road_damage': 'RoadReport',
+      'pothole': 'PotholeReport',
+      'traffic_sign': 'TrafficSignReport',
+      'streetlight': 'StreetlightReport',
+      'drainage': 'DrainageReport',
+      'other': 'CitizenReport'
+    };
+    return typeMap[category] || 'CitizenReport';
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -71,22 +86,23 @@ export default function ReportButton({ roadId, roadName, location }: ReportButto
       const [lng, lat] = location.coordinates[centerIndex];
 
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-      const reportId = `urn:ngsi-ld:RoadReport:${roadId.split(':').pop()}-${timestamp}`;
+      const entityType = getCategoryEntityType(formData.category);
+      const reportId = `urn:ngsi-ld:${entityType}:${roadId.split(':').pop()}-${timestamp}`;
 
-      // Convert images to base64 (in production, upload to S3/cloud storage)
-      const imageDataUrls: string[] = [];
-      for (const file of formData.images) {
-        const reader = new FileReader();
-        const dataUrl = await new Promise<string>((resolve) => {
-          reader.onload = () => resolve(reader.result as string);
-          reader.readAsDataURL(file);
-        });
-        imageDataUrls.push(dataUrl);
-      }
+      // Process images: compress and hash
+      console.log(`📸 Processing ${formData.images.length} images...`);
+      const imageHashes = formData.images.length > 0 
+        ? await processImages(formData.images)
+        : [];
+      
+      console.log(`✅ Images processed: ${imageHashes.join(', ')}`);
 
       const report = {
         id: reportId,
-        type: 'RoadReport',
+        type: entityType,
+        '@context': [
+          'https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld'
+        ],
         relatedRoad: {
           type: 'Relationship',
           object: roadId
@@ -106,18 +122,6 @@ export default function ReportButton({ roadId, roadName, location }: ReportButto
           type: 'Property',
           value: formData.description
         },
-        category: {
-          type: 'Property',
-          value: formData.category
-        },
-        status: {
-          type: 'Property',
-          value: 'pending' // Admin will review
-        },
-        priority: {
-          type: 'Property',
-          value: 'unassigned' // Admin will assign
-        },
         reporterEmail: {
           type: 'Property',
           value: user.email
@@ -128,11 +132,11 @@ export default function ReportButton({ roadId, roadName, location }: ReportButto
         },
         images: {
           type: 'Property',
-          value: imageDataUrls
+          value: imageHashes
         },
         imageCount: {
           type: 'Property',
-          value: imageDataUrls.length
+          value: imageHashes.length
         },
         dateCreated: {
           type: 'Property',
@@ -140,13 +144,45 @@ export default function ReportButton({ roadId, roadName, location }: ReportButto
             '@type': 'DateTime',
             '@value': new Date().toISOString()
           }
+        },
+        dateModified: {
+          type: 'Property',
+          value: {
+            '@type': 'DateTime',
+            '@value': new Date().toISOString()
+          }
+        },
+        // AI classification fields (empty initially)
+        verified: {
+          type: 'Property',
+          value: false
+        },
+        category: {
+          type: 'Property',
+          value: 'unknown'
+        },
+        categoryConfidence: {
+          type: 'Property',
+          value: ''
+        },
+        priority: {
+          type: 'Property',
+          value: 'low'
+        },
+        severity: {
+          type: 'Property',
+          value: ''
+        },
+        status: {
+          type: 'Property',
+          value: 'submitted'
         }
       };
 
       // Submit to NGSI-LD
       console.log('📤 Submitting report to NGSI-LD:', report);
 
-      const response = await fetch('/api/ngsi-ld?type=RoadReport', {
+      const response = await fetch(`/api/ngsi-ld?type=${entityType}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -166,30 +202,10 @@ export default function ReportButton({ roadId, roadName, location }: ReportButto
 
       console.log('✅ Report submitted to NGSI-LD successfully');
 
-      // Notify admin via admin API
-      await fetch('/api/admin/reports', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: 'road_report',
-          title: formData.title,
-          description: formData.description,
-          priority: 'unassigned', // Admin will assign priority
-          locationId: roadId,
-          locationName: roadName,
-          reportedBy: user.email,
-          metadata: {
-            category: formData.category,
-            coordinates: [lng, lat],
-            reportId: reportId,
-            images: imageDataUrls,
-            imageCount: imageDataUrls.length
-          }
-        }),
-      });
+      // Step 2: Process with AI and auto-approval (async - fire and forget)
+      processReportWithAIAsync(reportId);
 
+      // Show success message
       setSuccess(true);
       setTimeout(() => {
         setShowModal(false);
@@ -379,7 +395,7 @@ export default function ReportButton({ roadId, roadName, location }: ReportButto
                 {success && (
                   <div className="bg-gradient-to-r from-green-50 to-green-100 border-2 border-green-300 text-green-800 px-4 py-3 rounded-xl text-sm font-medium flex items-start gap-2">
                     <span className="text-lg">✅</span>
-                    <span>Report submitted! Admin will review it shortly.</span>
+                    <span>Báo cáo đã được gửi thành công! Admin sẽ xem xét trong thời gian sớm nhất.</span>
                   </div>
                 )}
 

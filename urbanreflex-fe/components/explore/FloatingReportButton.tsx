@@ -9,6 +9,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertTriangle, X, Send, MapPin, Camera, Trash2 } from 'lucide-react';
+import { processReportWithAIAsync } from '@/lib/services/reportApproval';
+import { processImages } from '@/lib/utils/imageProcessor';
 import { useAuth } from '@/contexts/AuthContext';
 import Image from 'next/image';
 
@@ -39,6 +41,19 @@ export default function FloatingReportButton({ selectedRoad }: FloatingReportBut
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
   // Button always visible, but modal only works for logged-in users
+
+  // Map category to NGSI-LD entity type
+  const getCategoryEntityType = (category: string): string => {
+    const typeMap: Record<string, string> = {
+      'road_damage': 'RoadReport',
+      'pothole': 'PotholeReport',
+      'traffic_sign': 'TrafficSignReport',
+      'streetlight': 'StreetlightReport',
+      'drainage': 'DrainageReport',
+      'other': 'CitizenReport'
+    };
+    return typeMap[category] || 'CitizenReport';
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -76,21 +91,23 @@ export default function FloatingReportButton({ selectedRoad }: FloatingReportBut
       const [lng, lat] = selectedRoad.location.coordinates[centerIndex];
 
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-      const reportId = `urn:ngsi-ld:RoadReport:${selectedRoad.id.split(':').pop()}-${timestamp}`;
+      const entityType = getCategoryEntityType(formData.category);
+      const reportId = `urn:ngsi-ld:${entityType}:${selectedRoad.id.split(':').pop()}-${timestamp}`;
 
-      const imageDataUrls: string[] = [];
-      for (const file of formData.images) {
-        const reader = new FileReader();
-        const dataUrl = await new Promise<string>((resolve) => {
-          reader.onload = () => resolve(reader.result as string);
-          reader.readAsDataURL(file);
-        });
-        imageDataUrls.push(dataUrl);
-      }
+      // Process images: compress and hash
+      console.log(`📸 Processing ${formData.images.length} images...`);
+      const imageHashes = formData.images.length > 0 
+        ? await processImages(formData.images)
+        : [];
+      
+      console.log(`✅ Images processed: ${imageHashes.join(', ')}`);
 
       const report = {
         id: reportId,
-        type: 'RoadReport',
+        type: entityType,
+        '@context': [
+          'https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld'
+        ],
         refRoadSegment: {
           type: 'Relationship',
           object: selectedRoad.id
@@ -112,33 +129,21 @@ export default function FloatingReportButton({ selectedRoad }: FloatingReportBut
           type: 'Property',
           value: formData.description
         },
-        category: {
-          type: 'Property',
-          value: formData.category
-        },
-        status: {
-          type: 'Property',
-          value: 'pending'
-        },
-        priority: {
-          type: 'Property',
-          value: 'unassigned'
-        },
         reporterEmail: {
           type: 'Property',
-          value: user.email
+          value: user?.email || 'anonymous'
         },
         reporterName: {
           type: 'Property',
-          value: user.email
+          value: user?.email || 'anonymous'
         },
         images: {
           type: 'Property',
-          value: imageDataUrls
+          value: imageHashes
         },
         imageCount: {
           type: 'Property',
-          value: imageDataUrls.length
+          value: imageHashes.length
         },
         dateCreated: {
           type: 'Property',
@@ -146,12 +151,45 @@ export default function FloatingReportButton({ selectedRoad }: FloatingReportBut
             '@type': 'DateTime',
             '@value': new Date().toISOString()
           }
+        },
+        dateModified: {
+          type: 'Property',
+          value: {
+            '@type': 'DateTime',
+            '@value': new Date().toISOString()
+          }
+        },
+        // AI classification fields (empty initially)
+        verified: {
+          type: 'Property',
+          value: false
+        },
+        category: {
+          type: 'Property',
+          value: 'unknown'
+        },
+        categoryConfidence: {
+          type: 'Property',
+          value: ''
+        },
+        priority: {
+          type: 'Property',
+          value: 'low'
+        },
+        severity: {
+          type: 'Property',
+          value: ''
+        },
+        status: {
+          type: 'Property',
+          value: 'submitted'
         }
       };
 
       console.log('📤 Submitting report:', JSON.stringify(report, null, 2));
 
-      const response = await fetch('/api/ngsi-ld?type=RoadReport', {
+      // Step 1: Submit to NGSI-LD Context Broker
+      const response = await fetch(`/api/ngsi-ld?type=${entityType}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -184,29 +222,12 @@ export default function FloatingReportButton({ selectedRoad }: FloatingReportBut
         throw new Error(errorMessage);
       }
 
-      await fetch('/api/admin/reports', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: 'road_report',
-          title: formData.title,
-          description: formData.description,
-          priority: 'unassigned',
-          locationId: selectedRoad.id,
-          locationName: selectedRoad.name,
-          reportedBy: user.email,
-          metadata: {
-            category: formData.category,
-            coordinates: [lng, lat],
-            reportId: reportId,
-            images: imageDataUrls,
-            imageCount: imageDataUrls.length
-          }
-        }),
-      });
+      console.log('✅ Report submitted to NGSI-LD successfully');
 
+      // Step 2: Process with AI and auto-approval (async - fire and forget)
+      processReportWithAIAsync(reportId);
+
+      // Report submitted successfully - Admin can view in dashboard
       setSuccess(true);
       setTimeout(() => {
         setShowModal(false);
@@ -392,7 +413,7 @@ export default function FloatingReportButton({ selectedRoad }: FloatingReportBut
               {success && (
                 <div className="bg-gradient-to-r from-green-50 to-green-100 border-2 border-green-300 text-green-800 px-4 py-3 rounded-xl text-sm font-medium flex items-start gap-2">
                   <span className="text-lg">✅</span>
-                  <span>Report submitted! Admin will review it shortly.</span>
+                  <span>Báo cáo đã được gửi thành công! Admin sẽ xem xét trong thời gian sớm nhất.</span>
                 </div>
               )}
 

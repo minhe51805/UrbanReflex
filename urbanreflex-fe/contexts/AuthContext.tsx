@@ -74,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const token = localStorage.getItem('auth_token');
       if (token) {
         try {
-          const response = await fetch('http://163.61.183.90:8001/auth/me', {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_AI_BACKEND_URL || 'http://163.61.183.90:8001'}/auth/me`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -137,7 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           console.log(`Trying login with format:`, Object.keys(attempt)[0]);
 
-          response = await fetch('http://163.61.183.90:8001/auth/login', {
+          response = await fetch(`${process.env.NEXT_PUBLIC_AI_BACKEND_URL || 'http://163.61.183.90:8001'}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(attempt)
@@ -210,7 +210,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           formData.append('password', password);
           formData.append('grant_type', 'password');
 
-          response = await fetch('http://163.61.183.90:8001/auth/login', {
+          response = await fetch(`${process.env.NEXT_PUBLIC_AI_BACKEND_URL || 'http://163.61.183.90:8001'}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: formData.toString()
@@ -281,7 +281,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Tạm thời lưu token để /auth/me có thể dùng được nếu server yêu cầu
           localStorage.setItem('auth_token', token);
 
-          const meResponse = await fetch('http://163.61.183.90:8001/auth/me', {
+          const meResponse = await fetch(`${process.env.NEXT_PUBLIC_AI_BACKEND_URL || 'http://163.61.183.90:8001'}/auth/me`, {
             method: 'GET',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -361,7 +361,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       let response: Response;
       try {
-        response = await fetch('http://163.61.183.90:8001/auth/register', {
+        response = await fetch(`${process.env.NEXT_PUBLIC_AI_BACKEND_URL || 'http://163.61.183.90:8001'}/auth/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ...registerData, is_admin: false })

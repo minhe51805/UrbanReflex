@@ -111,9 +111,18 @@ const normalizeStatusKey = (status: string) =>
     .replace(/^_|_$/g, '');
 
 const APPROVED_STATUS_KEYS = new Set([
+  // Auto-approved by AI
+  'auto_approved',
+  'tu_dong_duyet',
+  // Approved by admin
+  'approved',
+  'da_duyet',
+  'duyet',
+  // In progress
   'in_progress',
   'dang_xu_ly',
   'processing',
+  // Resolved
   'resolved',
   'da_giai_quyet',
   'da_xu_ly',
