@@ -14,7 +14,9 @@ _Empowering citizens and city officials with real-time environmental data and in
 
 <img src="https://lh3.googleusercontent.com/d/13S8-5iyJ0gnvT_wIFRnAVPxeNz8_7E5Q" alt="UrbanReflex Banner" width="100%">
 
-[🚀 Live Demo](#-quick-start) • [✨ Features](#-key-features) • [📸 Screenshots](#-screenshots) • [🛠️ Tech Stack](#️-technology-stack) • [📖 Docs](./docs/) • [🤝 Contributing](./CONTRIBUTING.md)
+**[📖 Explore the Docs »](https://urbanreflex-882wzswzf-ttas-projects-6148b983.vercel.app/)**
+
+[🚀 Live Demo](#-quick-start) • [✨ Features](#-key-features) • [📸 Screenshots](#-screenshots) • [🛠️ Tech Stack](#️-technology-stack) • [🤝 Contributing](./CONTRIBUTING.md)
 
 </div>
 
