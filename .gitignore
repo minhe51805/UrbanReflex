@@ -147,7 +147,7 @@ uv.lock
 # NEXT.JS / NODE.JS / JAVASCRIPT / TYPESCRIPT
 # ============================================================================
 # Dependencies
-urbanreflex-fe/node_modules/
+website/node_modules/
 node_modules/
 jspm_packages/
 package-lock.json
@@ -155,28 +155,28 @@ yarn.lock
 pnpm-lock.yaml
 
 # Testing
-urbanreflex-fe/coverage/
-urbanreflex-fe/.nyc_output
+website/coverage/
+website/.nyc_output
 
 # Next.js
-urbanreflex-fe/.next/
-urbanreflex-fe/out/
-urbanreflex-fe/build/
+website/.next/
+website/out/
+website/build/
 
 # Production
-urbanreflex-fe/dist/
+website/dist/
 
 # Misc
 .DS_Store
 *.pem
 
 # Debug
-urbanreflex-fe/npm-debug.log*
-urbanreflex-fe/yarn-debug.log*
-urbanreflex-fe/yarn-error.log*
+website/npm-debug.log*
+website/yarn-debug.log*
+website/yarn-error.log*
 
 # Local env files
-urbanreflex-fe/.env*.local
+website/.env*.local
 
 # Vercel
 .vercel
