@@ -6,7 +6,7 @@
 
 [![Documentation](https://img.shields.io/badge/docs-latest-blue.svg)](./README.md)
 [![API Version](https://img.shields.io/badge/API-v1.0-green.svg)](./API-Endpoints.md)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](../LICENSE)
+[![License](https://img.shields.io/badge/license-Apache_2.0-blue.svg)](../LICENSE)
 
 [Quick Start](#-quick-start-guide) • [API Reference](./API-Endpoints.md) • [Code Examples](./Code-Examples.md) • [Index](./INDEX.md)
 
@@ -18,8 +18,7 @@
 
 Welcome to the complete documentation for the UrbanReflex API System. This documentation provides comprehensive guides, API references, code examples, and best practices for integrating with the UrbanReflex platform.
 
-> [!NOTE]
-> **New to UrbanReflex?** Start with our [Quick Start Guide](#-quick-start-guide) or browse the [Documentation Index](./INDEX.md) to find specific topics.
+> [!NOTE] > **New to UrbanReflex?** Start with our [Quick Start Guide](#-quick-start-guide) or browse the [Documentation Index](./INDEX.md) to find specific topics.
 
 ---
 
@@ -31,21 +30,21 @@ graph TD
     A --> C[💻 Development]
     A --> D[🚀 Deployment]
     A --> E[🔒 Security]
-    
+
     B --> B1[API Key Management]
     B --> B2[Authentication]
     B --> B3[Endpoints Reference]
-    
+
     C --> C1[Code Examples]
     C --> C2[Testing Guide]
     C --> C3[Architecture]
-    
+
     D --> D1[Deployment Guide]
     D --> D2[Database Setup]
-    
+
     E --> E1[Security Best Practices]
     E --> E2[Compliance]
-    
+
     style A fill:#33a3a1,stroke:#2a8280,color:#fff
     style B fill:#4a90e2,stroke:#3a7bc2,color:#fff
     style C fill:#50c878,stroke:#40a868,color:#fff
@@ -57,32 +56,31 @@ graph TD
 
 ## 📑 Core Documentation
 
-| Document | Description | Audience | Est. Reading Time |
-|----------|-------------|----------|-------------------|
-| **[API Key Management](./API-Key-Management.md)** | Complete guide to creating and managing API keys | All users | 10 min |
-| **[API Authentication](./API-Authentication.md)** | Authentication system and security implementation | Developers | 15 min |
-| **[API Endpoints](./API-Endpoints.md)** | Complete API reference with all endpoints | Developers | 20 min |
-| **[Code Examples](./Code-Examples.md)** | Ready-to-use code in multiple languages | Developers | 15 min |
-| **[System Architecture](./ARCHITECTURE.md)** | System design and architecture diagrams | Tech Leads | 25 min |
+| Document                                          | Description                                       | Audience   | Est. Reading Time |
+| ------------------------------------------------- | ------------------------------------------------- | ---------- | ----------------- |
+| **[API Key Management](./API-Key-Management.md)** | Complete guide to creating and managing API keys  | All users  | 10 min            |
+| **[API Authentication](./API-Authentication.md)** | Authentication system and security implementation | Developers | 15 min            |
+| **[API Endpoints](./API-Endpoints.md)**           | Complete API reference with all endpoints         | Developers | 20 min            |
+| **[Code Examples](./Code-Examples.md)**           | Ready-to-use code in multiple languages           | Developers | 15 min            |
+| **[System Architecture](./ARCHITECTURE.md)**      | System design and architecture diagrams           | Tech Leads | 25 min            |
 
 ---
 
 ## 🔧 Development Guides
 
-| Document | Description | Audience | Est. Reading Time |
-|----------|-------------|----------|-------------------|
-| **[Testing Guide](./Testing-Guide.md)** | Comprehensive testing strategies and examples | QA/Developers | 20 min |
-| **[Deployment Guide](./Deployment-Guide.md)** | Step-by-step deployment instructions | DevOps | 30 min |
-| **[Security Best Practices](./Security-Best-Practices.md)** | Security guidelines and compliance | Security Team | 25 min |
-| **[Admin Dashboard](./ADMIN-DASHBOARD.md)** | Admin panel features and usage | Administrators | 15 min |
-| **[Development Checklist](./CHECKLIST.md)** | Complete development and deployment checklists | All | 10 min |
+| Document                                                    | Description                                    | Audience       | Est. Reading Time |
+| ----------------------------------------------------------- | ---------------------------------------------- | -------------- | ----------------- |
+| **[Testing Guide](./Testing-Guide.md)**                     | Comprehensive testing strategies and examples  | QA/Developers  | 20 min            |
+| **[Deployment Guide](./Deployment-Guide.md)**               | Step-by-step deployment instructions           | DevOps         | 30 min            |
+| **[Security Best Practices](./Security-Best-Practices.md)** | Security guidelines and compliance             | Security Team  | 25 min            |
+| **[Admin Dashboard](./ADMIN-DASHBOARD.md)**                 | Admin panel features and usage                 | Administrators | 15 min            |
+| **[Development Checklist](./CHECKLIST.md)**                 | Complete development and deployment checklists | All            | 10 min            |
 
 ---
 
 ## 🚀 Quick Start Guide
 
-> [!TIP]
-> **Choose your path based on your role:**
+> [!TIP] > **Choose your path based on your role:**
 
 ### 👨‍💻 For Developers
 
@@ -90,17 +88,20 @@ graph TD
 <summary><b>Getting Started (5 minutes)</b></summary>
 
 1. **Create an API Key**
+
    - Visit `/api-keys` page
    - Click "Create New Key"
    - Copy and save your key securely
 
 2. **Make Your First Request**
+
    ```bash
    curl -X GET "http://localhost:3000/api/v1/locations?limit=5" \
      -H "X-API-Key: your_api_key_here"
    ```
 
 3. **Explore Code Examples**
+
    - Check [Code Examples](./Code-Examples.md) for your language
    - Review [API Endpoints](./API-Endpoints.md) for available routes
 
@@ -108,8 +109,8 @@ graph TD
    ```javascript
    // Example: JavaScript/TypeScript
    const apiKey = process.env.URBANREFLEX_API_KEY;
-   const response = await fetch('/api/v1/measurements', {
-     headers: { 'X-API-Key': apiKey }
+   const response = await fetch("/api/v1/measurements", {
+     headers: { "X-API-Key": apiKey },
    });
    ```
 
@@ -123,16 +124,19 @@ graph TD
 <summary><b>Deployment Setup (30 minutes)</b></summary>
 
 1. **Pre-Deployment**
+
    - Review [Pre-Deployment Checklist](./Deployment-Guide.md#-pre-deployment-checklist)
    - Set up environment variables
    - Configure database
 
 2. **Database Setup**
+
    - Install PostgreSQL
    - Run migration scripts
    - Set up backups
 
 3. **Deploy**
+
    - Choose platform: [Vercel](./Deployment-Guide.md#vercel-deployment) or [Docker](./Deployment-Guide.md#docker-deployment)
    - Configure SSL/TLS
    - Set up monitoring
@@ -152,11 +156,13 @@ graph TD
 <summary><b>Security Review (20 minutes)</b></summary>
 
 1. **Review Security Practices**
+
    - [API Key Security](./Security-Best-Practices.md#-api-key-security)
    - [Authentication Security](./Security-Best-Practices.md#-authentication-security)
    - [Input Validation](./Security-Best-Practices.md#️-input-validation)
 
 2. **Audit Checklist**
+
    - HTTPS enforcement
    - Rate limiting configuration
    - Security headers
@@ -184,7 +190,7 @@ Build a real-time air quality dashboard:
 async function getAirQuality(city) {
   const response = await fetch(
     `/api/v1/measurements?city=${city}&parameter=pm25&limit=100`,
-    { headers: { 'X-API-Key': process.env.API_KEY } }
+    { headers: { "X-API-Key": process.env.API_KEY } }
   );
   return await response.json();
 }
@@ -236,24 +242,24 @@ df = pd.DataFrame(data['results'])
 
 ### Current Implementation
 
-| Layer | Technology | Purpose |
-|-------|------------|---------|
-| **Frontend** | Next.js 16 + TypeScript | Modern React framework with App Router |
-| **Styling** | Tailwind CSS | Utility-first CSS framework |
-| **Animation** | Framer Motion | React animation library |
-| **API** | Next.js API Routes | Serverless API endpoints |
-| **Storage** | localStorage | Development data persistence |
-| **Icons** | Lucide React | Modern icon library |
+| Layer         | Technology              | Purpose                                |
+| ------------- | ----------------------- | -------------------------------------- |
+| **Frontend**  | Next.js 16 + TypeScript | Modern React framework with App Router |
+| **Styling**   | Tailwind CSS            | Utility-first CSS framework            |
+| **Animation** | Framer Motion           | React animation library                |
+| **API**       | Next.js API Routes      | Serverless API endpoints               |
+| **Storage**   | localStorage            | Development data persistence           |
+| **Icons**     | Lucide React            | Modern icon library                    |
 
 ### Production Stack
 
-| Layer | Technology | Purpose |
-|-------|------------|---------|
-| **Database** | PostgreSQL | Relational database |
-| **Cache** | Redis | In-memory data store |
-| **Auth** | API Key + JWT | Authentication system |
+| Layer          | Technology       | Purpose                    |
+| -------------- | ---------------- | -------------------------- |
+| **Database**   | PostgreSQL       | Relational database        |
+| **Cache**      | Redis            | In-memory data store       |
+| **Auth**       | API Key + JWT    | Authentication system      |
 | **Monitoring** | Sentry + Winston | Error tracking and logging |
-| **Deployment** | Vercel / Docker | Platform deployment |
+| **Deployment** | Vercel / Docker  | Platform deployment        |
 
 **Learn more:** [System Architecture](./ARCHITECTURE.md)
 
@@ -296,6 +302,7 @@ All API endpoints return responses in a standardized format:
 **Cause:** Missing or invalid API key
 
 **Solution:**
+
 - Verify API key is included in `X-API-Key` header
 - Check key format: `urx_xxxxx_xxxxx`
 - Ensure key is active and not expired
@@ -310,6 +317,7 @@ All API endpoints return responses in a standardized format:
 **Cause:** Frontend domain not whitelisted
 
 **Solution:**
+
 - Configure CORS in production environment
 - Use proxy for development
 - Check `next.config.ts` CORS settings
@@ -324,6 +332,7 @@ All API endpoints return responses in a standardized format:
 **Cause:** Too many requests in short timeframe
 
 **Solution:**
+
 - Implement client-side caching
 - Add request throttling
 - Consider upgrading API tier
@@ -344,15 +353,14 @@ All API endpoints return responses in a standardized format:
 
 ### Support Channels
 
-| Issue Type | Contact | Response Time |
-|------------|---------|---------------|
-| 🐛 **Bug Reports** | [GitHub Issues](https://github.com/minhe51805/UrbanReflex/issues) | 1-2 business days |
-| 💡 **Feature Requests** | [GitHub Discussions](https://github.com/minhe51805/UrbanReflex/discussions) | 3-5 business days |
-| 📧 **General Questions** | docs@urbanreflex.org | 1-3 business days |
-| 🔒 **Security Issues** | security@urbanreflex.org | 24 hours |
+| Issue Type               | Contact                                                                     | Response Time     |
+| ------------------------ | --------------------------------------------------------------------------- | ----------------- |
+| 🐛 **Bug Reports**       | [GitHub Issues](https://github.com/minhe51805/UrbanReflex/issues)           | 1-2 business days |
+| 💡 **Feature Requests**  | [GitHub Discussions](https://github.com/minhe51805/UrbanReflex/discussions) | 3-5 business days |
+| 📧 **General Questions** | docs@urbanreflex.org                                                        | 1-3 business days |
+| 🔒 **Security Issues**   | security@urbanreflex.org                                                    | 24 hours          |
 
-> [!WARNING]
-> **Security Vulnerabilities:** Do NOT create public issues for security vulnerabilities. Email security@urbanreflex.org directly.
+> [!WARNING] > **Security Vulnerabilities:** Do NOT create public issues for security vulnerabilities. Email security@urbanreflex.org directly.
 
 ---
 
@@ -385,6 +393,7 @@ We welcome contributions to improve our documentation!
 ### Current Version: v1.1.0 (2025-11-21)
 
 **Major Updates:**
+
 - ✅ Enhanced documentation structure
 - ✅ Added mermaid diagrams
 - ✅ Improved navigation and cross-linking
@@ -436,7 +445,7 @@ We welcome contributions to improve our documentation!
 ### Licensing
 
 - **API Data**: CC BY 4.0
-- **Source Code**: MIT License
+- **Source Code**: Apache License 2.0
 - **Documentation**: CC BY 4.0
 
 ### Attribution
@@ -444,6 +453,7 @@ We welcome contributions to improve our documentation!
 Built with ❤️ by the UrbanReflex Team
 
 **Special Thanks:**
+
 - OpenAQ for inspiration and data standards
 - Next.js team for the excellent framework
 - Open source community for amazing tools
@@ -452,16 +462,16 @@ Built with ❤️ by the UrbanReflex Team
 
 ## 📞 Quick Links
 
-| Resource | Link |
-|----------|------|
-| 📑 **Documentation Index** | [INDEX.md](./INDEX.md) |
-| 🏗️ **System Architecture** | [ARCHITECTURE.md](./ARCHITECTURE.md) |
-| 🔐 **API Authentication** | [API-Authentication.md](./API-Authentication.md) |
-| 📍 **API Endpoints** | [API-Endpoints.md](./API-Endpoints.md) |
-| 💻 **Code Examples** | [Code-Examples.md](./Code-Examples.md) |
-| 🧪 **Testing Guide** | [Testing-Guide.md](./Testing-Guide.md) |
-| 🚀 **Deployment** | [Deployment-Guide.md](./Deployment-Guide.md) |
-| 🔒 **Security** | [Security-Best-Practices.md](./Security-Best-Practices.md) |
+| Resource                   | Link                                                       |
+| -------------------------- | ---------------------------------------------------------- |
+| 📑 **Documentation Index** | [INDEX.md](./INDEX.md)                                     |
+| 🏗️ **System Architecture** | [ARCHITECTURE.md](./ARCHITECTURE.md)                       |
+| 🔐 **API Authentication**  | [API-Authentication.md](./API-Authentication.md)           |
+| 📍 **API Endpoints**       | [API-Endpoints.md](./API-Endpoints.md)                     |
+| 💻 **Code Examples**       | [Code-Examples.md](./Code-Examples.md)                     |
+| 🧪 **Testing Guide**       | [Testing-Guide.md](./Testing-Guide.md)                     |
+| 🚀 **Deployment**          | [Deployment-Guide.md](./Deployment-Guide.md)               |
+| 🔒 **Security**            | [Security-Best-Practices.md](./Security-Best-Practices.md) |
 
 ---
 
