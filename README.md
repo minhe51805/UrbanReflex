@@ -47,24 +47,28 @@
 ## Features
 
 ### Air Quality Monitoring
+
 - **Real-time Data** - Live AQI measurements from 10,000+ global stations
 - **Interactive Maps** - MapLibre GL with clustering and heatmaps
 - **Location Details** - Historical charts, health recommendations, data export
 - **Advanced Search** - Filter by location, parameters, and time range
 
 ### Smart City Infrastructure
+
 - **Road Networks** - Real-time road segment data visualization
 - **Streetlights** - Infrastructure monitoring and management
 - **Weather Integration** - Live weather data correlated with air quality
 - **Citizen Reports** - Community-driven issue reporting system
 
 ### Developer Tools
+
 - **API Keys Management** - Generate, revoke, and monitor API usage
 - **Comprehensive Documentation** - Interactive examples in 4 languages
 - **OpenAPI Specification** - Auto-generated API docs
 - **Testing Tools** - Built-in endpoint testing utilities
 
 ### Admin Dashboard
+
 - **Report Management** - Track and resolve citizen-submitted issues
 - **Analytics** - Real-time statistics and trends
 - **User Management** - Role-based access control
@@ -138,6 +142,7 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:3000
 ### Tech Stack
 
 **Frontend**
+
 - Next.js 16 (App Router)
 - React 19
 - TypeScript 5
@@ -145,16 +150,19 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:3000
 - Framer Motion
 
 **Data Visualization**
+
 - MapLibre GL (maps)
 - Chart.js (charts)
 - Supercluster (clustering)
 
 **Smart City Integration**
+
 - NGSI-LD (ETSI standard)
 - Orion Context Broker
 - Smart Data Models
 
 **APIs**
+
 - OpenAQ (air quality)
 - Custom RESTful endpoints
 - API key authentication
@@ -168,18 +176,21 @@ For detailed architecture, see [ARCHITECTURE.md](./urbanreflex-fe/docs/ARCHITECT
 Comprehensive documentation is available in the `/urbanreflex-fe/docs` folder:
 
 ### Core Documentation
+
 - **[System Architecture](./urbanreflex-fe/docs/ARCHITECTURE.md)** - Technical architecture and data flows
 - **[API Endpoints](./urbanreflex-fe/docs/API-Endpoints.md)** - Complete API reference
 - **[Admin Dashboard](./urbanreflex-fe/docs/ADMIN-DASHBOARD.md)** - Admin panel usage guide
 - **[NGSI-LD Integration](./urbanreflex-fe/docs/NGSI-LD-Integration.md)** - Smart city data integration
 
 ### Developer Guides
+
 - **[Code Examples](./urbanreflex-fe/docs/Code-Examples.md)** - Copy-paste ready examples
 - **[Testing Guide](./urbanreflex-fe/docs/Testing-Guide.md)** - Testing strategies and tools
 - **[Security Best Practices](./urbanreflex-fe/docs/Security-Best-Practices.md)** - Security guidelines
 - **[Deployment Guide](./urbanreflex-fe/docs/Deployment-Guide.md)** - Production deployment steps
 
 ### Quick References
+
 - **[Documentation Index](./urbanreflex-fe/docs/INDEX.md)** - Complete docs table of contents
 - **[API Endpoints](./urbanreflex-fe/docs/API_ENDPOINTS.md)** - Quick API reference
 - **[Migration Guide](./urbanreflex-fe/docs/MIGRATION_GUIDE.md)** - Version migration instructions
@@ -304,4 +315,3 @@ If you have any issues or feature requests, please create an [issue](https://git
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
- 
