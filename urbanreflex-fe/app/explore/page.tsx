@@ -156,6 +156,7 @@ function ExplorePageContent() {
   const [highlightLocation, setHighlightLocation] = useState<[number, number] | null>(null);
   const [highlightLabel, setHighlightLabel] = useState<string>('');
   const [areaReports, setAreaReports] = useState<ReportMarker[]>([]);
+  const [streetlightMarkers, setStreetlightMarkers] = useState<Array<{id: string; coordinates: [number, number]; powerState?: string; status?: string}>>([]);
   const totalRoadCount = filteredRoadSegments.length;
 
   const displayedRoadSegments = useMemo(
@@ -174,6 +175,13 @@ function ExplorePageContent() {
       setAreaReports([]);
     }
   }, [showReportsSidebar]);
+
+  // Clear streetlight markers when road is deselected
+  useEffect(() => {
+    if (!selectedRoad) {
+      setStreetlightMarkers([]);
+    }
+  }, [selectedRoad]);
 
   // Handle query params to auto-select and zoom to road
   useEffect(() => {
@@ -221,8 +229,11 @@ function ExplorePageContent() {
     }
   }, [loading, roadSegments, searchParams, initialRoadLoaded]);
 
-  const handleRoadSelection = useCallback((road: RoadSegment) => {
+  const handleRoadSelection = useCallback(async (road: RoadSegment) => {
     setSelectedRoad(road);
+
+    // Clear previous streetlights immediately when selecting new road
+    setStreetlightMarkers([]);
 
     // Zoom to the road on map
     if (mapRef.current) {
@@ -238,6 +249,72 @@ function ExplorePageContent() {
     setHighlightLocation(centerLocation);
     setHighlightLabel(road.name);
     setShowReportsSidebar(true);
+
+    // Fetch streetlights for this road - chỉ hiện khi road được chọn
+    try {
+      const response = await fetch(`/api/roads/${encodeURIComponent(road.id)}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.streetlights && data.streetlights.list && data.streetlights.list.length > 0) {
+          // Map streetlights to markers
+          const markers = data.streetlights.list
+            .filter((sl: any) => {
+              // Kiểm tra nhiều format của location
+              if (!sl.location) return false;
+              // Format 1: location.coordinates (keyValues)
+              if (sl.location.coordinates && Array.isArray(sl.location.coordinates)) return true;
+              // Format 2: location.value.coordinates (GeoProperty)
+              if (sl.location.value && sl.location.value.coordinates && Array.isArray(sl.location.value.coordinates)) return true;
+              return false;
+            })
+            .map((sl: any) => {
+              // Parse coordinates từ nhiều format
+              let coords: number[] = [];
+              
+              // Format 1: location.coordinates (keyValues)
+              if (sl.location.coordinates && Array.isArray(sl.location.coordinates)) {
+                coords = sl.location.coordinates;
+              }
+              // Format 2: location.value.coordinates (GeoProperty)
+              else if (sl.location.value && sl.location.value.coordinates && Array.isArray(sl.location.value.coordinates)) {
+                coords = sl.location.value.coordinates;
+              }
+              
+              if (coords.length < 2) {
+                console.warn(`⚠️ Invalid coordinates for streetlight ${sl.id}:`, coords);
+                return null;
+              }
+              
+              const [slLng, slLat] = normalizeLngLat(coords);
+              
+              // Validate coordinates
+              if (!isFinite(slLng) || !isFinite(slLat)) {
+                console.warn(`⚠️ Invalid normalized coordinates for streetlight ${sl.id}:`, [slLng, slLat]);
+                return null;
+              }
+              
+              return {
+                id: sl.id,
+                coordinates: [slLng, slLat] as [number, number],
+                powerState: sl.powerState,
+                status: sl.status,
+              };
+            })
+            .filter((m: any) => m !== null); // Loại bỏ các marker không hợp lệ
+          
+          setStreetlightMarkers(markers);
+          console.log(`✅ Loaded ${markers.length} streetlights for road: ${road.name}`, markers.map((m: any) => ({ id: m.id, coords: m.coordinates })));
+        } else {
+          setStreetlightMarkers([]);
+          console.log(`ℹ️ No streetlights found for road: ${road.name}`);
+        }
+      } else {
+        setStreetlightMarkers([]);
+      }
+    } catch (error) {
+      console.error('Error fetching streetlights:', error);
+      setStreetlightMarkers([]);
+    }
   }, []);
 
   const loadRoadSegments = async () => {
@@ -396,6 +473,7 @@ function ExplorePageContent() {
           highlightLocation={highlightLocation}
           highlightLabel={highlightLabel}
           reportMarkers={areaReports}
+          streetlightMarkers={streetlightMarkers}
         />
       </div>
 
