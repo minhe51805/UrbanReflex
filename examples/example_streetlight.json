@@ -1,0 +1,64 @@
+{
+  "id": "urn:ngsi-ld:Streetlight:HCMC-nguyen-hue-sl-001",
+  "type": "Streetlight",
+  "@context": [
+    "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "https://raw.githubusercontent.com/smart-data-models/dataModel.Streetlighting/master/context.jsonld"
+  ],
+  "location": {
+    "type": "GeoProperty",
+    "value": {
+      "type": "Point",
+      "coordinates": [106.7008, 10.7747]
+    }
+  },
+  "status": {
+    "type": "Property",
+    "value": "ok",
+    "observedAt": "2025-11-15T08:00:00Z"
+  },
+  "powerState": {
+    "type": "Property",
+    "value": "off",
+    "observedAt": "2025-11-15T08:00:00Z"
+  },
+  "lampType": {
+    "type": "Property",
+    "value": "LED"
+  },
+  "powerRating": {
+    "type": "Property",
+    "value": 80,
+    "unitCode": "WTT"
+  },
+  "lanternHeight": {
+    "type": "Property",
+    "value": 8,
+    "unitCode": "MTR"
+  },
+  "illuminanceLevel": {
+    "type": "Property",
+    "value": 0,
+    "unitCode": "LX",
+    "observedAt": "2025-11-15T08:00:00Z"
+  },
+  "refRoadSegment": {
+    "type": "Relationship",
+    "object": "urn:ngsi-ld:RoadSegment:HCMC-nguyen-hue-001"
+  },
+  "dateLastSwitchingOn": {
+    "type": "Property",
+    "value": {
+      "@type": "DateTime",
+      "@value": "2025-11-14T18:30:00Z"
+    }
+  },
+  "dateLastSwitchingOff": {
+    "type": "Property",
+    "value": {
+      "@type": "DateTime",
+      "@value": "2025-11-15T06:00:00Z"
+    }
+  }
+}
+
