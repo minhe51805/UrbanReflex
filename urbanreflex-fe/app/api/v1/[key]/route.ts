@@ -3,6 +3,13 @@
  * Create at: 12-02-2025
  * Update at: 03-12-2025
  * Description: API endpoint to fetch NGSI-LD data using API key from URL
+ * 
+ * Features:
+ * - timeframe: latest | alltime | custom
+ * - startDate/endDate: For custom timeframe
+ * - entities: Comma-separated list of entity types to fetch
+ * - Static data: RoadSegment (5k), Streetlight (17.5k)
+ * - Dynamic data: AirQualityObserved (10), WeatherObserved (1), CitizenReport, RoadReport
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -39,9 +46,108 @@ const TYPE_TO_CONTEXT: Record<string, string> = {
   PointOfInterest: 'poi',
 };
 
+// Date field mapping for each entity type
+const TYPE_TO_DATE_FIELD: Record<string, string> = {
+  RoadSegment: 'dateCreated',
+  WeatherObserved: 'dateObserved',
+  AirQualityObserved: 'dateObserved',
+  Streetlight: 'dateCreated',
+  CitizenReport: 'dateCreated',
+  RoadReport: 'dateCreated',
+  PointOfInterest: 'dateCreated',
+};
+
 function buildLinkHeader(type: string): string {
   const contextKey = TYPE_TO_CONTEXT[type] || 'report';
   return CONTEXTS[contextKey] || CONTEXTS.report;
+}
+
+// Helper to extract date from entity (handles both full format and keyValues)
+function extractDate(entity: any, dateField: string): Date | null {
+  try {
+    const field = entity[dateField];
+    if (!field) return null;
+
+    // Handle full NGSI-LD format: { type: 'Property', value: { '@type': 'DateTime', '@value': '...' } }
+    if (typeof field === 'object' && field.value) {
+      const value = field.value;
+      if (value['@value']) {
+        return new Date(value['@value']);
+      }
+      if (typeof value === 'string') {
+        return new Date(value);
+      }
+    }
+
+    // Handle keyValues format: direct value
+    if (typeof field === 'string') {
+      return new Date(field);
+    }
+
+    // Handle object with @value
+    if (typeof field === 'object' && field['@value']) {
+      return new Date(field['@value']);
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+// Filter entities by date range
+function filterByDateRange(entities: any[], dateField: string, startDate?: Date, endDate?: Date): any[] {
+  if (!startDate && !endDate) return entities;
+
+  return entities.filter((entity) => {
+    const entityDate = extractDate(entity, dateField);
+    if (!entityDate) return false;
+
+    if (startDate && entityDate < startDate) return false;
+    if (endDate && entityDate > endDate) return false;
+
+    return true;
+  });
+}
+
+// Get latest entity for each type (grouped by station/identifier if applicable)
+function getLatestEntities(entities: any[], entityType: string, dateField: string): any[] {
+  if (entities.length === 0) return [];
+
+  // For WeatherObserved and AirQualityObserved, get latest per station
+  if (entityType === 'WeatherObserved' || entityType === 'AirQualityObserved') {
+    const grouped: Record<string, any> = {};
+    
+    entities.forEach((entity) => {
+      const identifier = entity.stationId || entity.name || entity.id;
+      const entityDate = extractDate(entity, dateField);
+      
+      if (!entityDate) return;
+      
+      const existing = grouped[identifier];
+      if (!existing) {
+        grouped[identifier] = entity;
+      } else {
+        const existingDate = extractDate(existing, dateField);
+        if (existingDate && entityDate > existingDate) {
+          grouped[identifier] = entity;
+        }
+      }
+    });
+    
+    return Object.values(grouped);
+  }
+
+  // For other types, just get the single latest entity
+  const sorted = entities
+    .map((entity) => ({
+      entity,
+      date: extractDate(entity, dateField),
+    }))
+    .filter((item) => item.date !== null)
+    .sort((a, b) => b.date!.getTime() - a.date!.getTime());
+
+  return sorted.length > 0 ? [sorted[0].entity] : [];
 }
 
 export async function GET(
@@ -67,20 +173,73 @@ export async function GET(
     const searchParams = request.nextUrl.searchParams;
     const endpoint = searchParams.get('endpoint') || '/entities';
     const type = searchParams.get('type') || searchParams.get('entity-type') || '';
-    const fetchAll = searchParams.get('all') === 'true' || !type; // Fetch all types if no type specified
+    
+    // New features: timeframe and entity selection
+    const timeframe = searchParams.get('timeframe') || 'alltime'; // latest | alltime | custom
+    const startDateStr = searchParams.get('startDate');
+    const endDateStr = searchParams.get('endDate');
+    const entitiesParam = searchParams.get('entities') || searchParams.get('types'); // Comma-separated list
+    
+    // Parse date range for custom timeframe
+    let startDate: Date | undefined;
+    let endDate: Date | undefined;
+    if (timeframe === 'custom' || startDateStr || endDateStr) {
+      if (startDateStr) {
+        startDate = new Date(startDateStr);
+        if (isNaN(startDate.getTime())) {
+          return NextResponse.json(
+            { error: 'Invalid startDate format. Use ISO 8601 format (e.g., 2025-01-01T00:00:00Z)' },
+            { status: 400 }
+          );
+        }
+      }
+      if (endDateStr) {
+        endDate = new Date(endDateStr);
+        if (isNaN(endDate.getTime())) {
+          return NextResponse.json(
+            { error: 'Invalid endDate format. Use ISO 8601 format (e.g., 2025-12-31T23:59:59Z)' },
+            { status: 400 }
+          );
+        }
+      }
+    }
 
-    // All entity types to fetch when fetchAll is true
+    // All available entity types
     const ALL_ENTITY_TYPES = [
-      'RoadSegment',
-      'WeatherObserved',
-      'AirQualityObserved',
-      'Streetlight',
-      'CitizenReport',
-      'PointOfInterest',
+      'RoadSegment',        // Static: ~5k
+      'Streetlight',        // Static: ~17.5k
+      'WeatherObserved',    // Dynamic: 1 (OWM)
+      'AirQualityObserved', // Dynamic: 10 (OpenAQ)
+      'CitizenReport',      // Dynamic
+      'RoadReport',         // Dynamic
+      'PointOfInterest',    // Static
     ];
 
-    // If no type specified, fetch all entity types
-    const typesToFetch = fetchAll ? ALL_ENTITY_TYPES : [type];
+    // Determine which entity types to fetch
+    let typesToFetch: string[] = [];
+    
+    if (entitiesParam) {
+      // User specified specific entities (comma-separated)
+      typesToFetch = entitiesParam.split(',').map((t) => t.trim()).filter(Boolean);
+      
+      // Validate entity types
+      const invalidTypes = typesToFetch.filter((t) => !ALL_ENTITY_TYPES.includes(t));
+      if (invalidTypes.length > 0) {
+        return NextResponse.json(
+          {
+            error: 'Invalid entity types',
+            message: `Invalid types: ${invalidTypes.join(', ')}. Valid types: ${ALL_ENTITY_TYPES.join(', ')}`,
+          },
+          { status: 400 }
+        );
+      }
+    } else if (type) {
+      // Single type specified
+      typesToFetch = [type];
+    } else {
+      // Fetch all types (default behavior)
+      typesToFetch = ALL_ENTITY_TYPES;
+    }
 
     // Fetch data for each entity type
     let allData: any[] = [];
@@ -90,7 +249,9 @@ export async function GET(
 
     console.log('📤 Fetching NGSI-LD data:', {
       types: typesToFetch,
-      fetchAll,
+      timeframe,
+      startDate: startDate?.toISOString(),
+      endDate: endDate?.toISOString(),
       apiKey: apiKey.substring(0, 15) + '...',
       limit: fetchLimit,
     });
@@ -191,17 +352,53 @@ export async function GET(
         }
       }
 
-      console.log(`✅ ${entityType}: fetched ${typeData.length} items`);
-      allData = allData.concat(typeData);
+      // Apply timeframe filtering
+      const dateField = TYPE_TO_DATE_FIELD[entityType] || 'dateCreated';
+      
+      let filteredData = typeData;
+      
+      if (timeframe === 'latest') {
+        // Get latest entities only
+        filteredData = getLatestEntities(typeData, entityType, dateField);
+        console.log(`  🕐 Latest filter: ${typeData.length} → ${filteredData.length} items`);
+      } else if (timeframe === 'custom' || startDate || endDate) {
+        // Filter by date range
+        filteredData = filterByDateRange(typeData, dateField, startDate, endDate);
+        console.log(`  📅 Date range filter: ${typeData.length} → ${filteredData.length} items`);
+      }
+      // else: 'alltime' - no filtering needed
+
+      console.log(`✅ ${entityType}: ${filteredData.length} items (after ${timeframe} filter)`);
+      allData = allData.concat(filteredData);
     }
 
     console.log('✅ NGSI-LD data fetched successfully:', {
       totalItems: allData.length,
       types: typesToFetch,
+      timeframe,
     });
 
-    // Return all data directly (not wrapped)
-    return NextResponse.json(allData);
+    // Check if user wants unwrapped format (backward compatibility)
+    const unwrapped = searchParams.get('unwrapped') === 'true' || !searchParams.has('timeframe') && !searchParams.has('entities');
+    
+    if (unwrapped) {
+      // Return unwrapped array for backward compatibility
+      return NextResponse.json(allData);
+    }
+
+    // Return data with metadata (new format)
+    return NextResponse.json({
+      success: true,
+      data: allData,
+      meta: {
+        total: allData.length,
+        types: typesToFetch,
+        timeframe,
+        startDate: startDate?.toISOString() || null,
+        endDate: endDate?.toISOString() || null,
+        timestamp: new Date().toISOString(),
+      },
+    });
   } catch (error) {
     console.error('❌ NGSI-LD API Error:', error);
     return NextResponse.json(

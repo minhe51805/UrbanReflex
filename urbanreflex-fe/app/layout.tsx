@@ -13,6 +13,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import CanvasParticles from "@/components/ui/CanvasParticles";
+import FloatingChatButton from "@/components/ui/FloatingChatButton";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { usePathname } from "next/navigation";
 
@@ -51,6 +52,7 @@ export default function RootLayout({
             {children}
           </main>
           {!isExplorePage && !isAdminPage && <Footer />}
+          <FloatingChatButton />
         </AuthProvider>
       </body>
     </html>

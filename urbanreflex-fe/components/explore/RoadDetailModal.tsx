@@ -417,50 +417,6 @@ export default function RoadDetailModal({ road, onClose }: RoadDetailModalProps)
               </>
             )}
 
-            {/* Location & Coordinates Section */}
-            <div className="mb-4">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="bg-blue-100 p-2 rounded-lg">
-                  <MapPin className="h-5 w-5 text-blue-600" />
-                </div>
-                <h4 className="font-bold text-gray-900">Location & Coordinates</h4>
-              </div>
-
-              <div className="bg-blue-50 rounded-xl p-4 space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-white rounded-lg p-3">
-                    <p className="text-xs text-gray-500 font-semibold mb-1">START POINT</p>
-                    <p className="text-sm font-mono text-gray-900">
-                      {road.location.coordinates[0][1].toFixed(5)}°
-                    </p>
-                    <p className="text-sm font-mono text-gray-900">
-                      {road.location.coordinates[0][0].toFixed(5)}°
-                    </p>
-                  </div>
-                  <div className="bg-white rounded-lg p-3">
-                    <p className="text-xs text-gray-500 font-semibold mb-1">END POINT</p>
-                    <p className="text-sm font-mono text-gray-900">
-                      {road.location.coordinates[road.location.coordinates.length - 1][1].toFixed(5)}°
-                    </p>
-                    <p className="text-sm font-mono text-gray-900">
-                      {road.location.coordinates[road.location.coordinates.length - 1][0].toFixed(5)}°
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-blue-100 rounded-lg p-3">
-                    <p className="text-xs text-blue-700 font-semibold mb-1">TOTAL POINTS</p>
-                    <p className="text-xl font-bold text-blue-900">{road.location.coordinates.length}</p>
-                  </div>
-                  <div className="bg-white rounded-lg p-3">
-                    <p className="text-xs text-gray-500 font-semibold mb-1">TYPE</p>
-                    <p className="text-sm font-semibold text-gray-900">{road.location.type}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             {/* Road Statistics */}
             <div className="mb-4">
               <div className="grid grid-cols-2 gap-3">
@@ -510,45 +466,6 @@ export default function RoadDetailModal({ road, onClose }: RoadDetailModalProps)
               </div>
             )}
 
-            {/* Metadata & Information */}
-            <div className="mb-4">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="bg-purple-100 p-2 rounded-lg">
-                  <Database className="h-5 w-5 text-purple-600" />
-                </div>
-                <h4 className="font-bold text-gray-900">Metadata & Information</h4>
-              </div>
-
-              <div className="bg-purple-50 rounded-xl p-4 space-y-3">
-                <div className="bg-white rounded-lg p-3">
-                  <p className="text-xs text-gray-500 font-semibold mb-1">DATA PROVIDER</p>
-                  <p className="text-sm text-gray-900 font-semibold">{road.dataProvider}</p>
-                </div>
-
-                {road.source && (
-                  <div className="bg-white rounded-lg p-3">
-                    <p className="text-xs text-gray-500 font-semibold mb-1">SOURCE</p>
-                    <p className="text-sm text-gray-900 font-mono break-all">{road.source}</p>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-white rounded-lg p-3">
-                    <p className="text-xs text-gray-500 font-semibold mb-1">ENTITY TYPE</p>
-                    <p className="text-sm text-gray-900 font-semibold">{road.type}</p>
-                  </div>
-                  <div className="bg-white rounded-lg p-3">
-                    <p className="text-xs text-gray-500 font-semibold mb-1">CREATED</p>
-                    <p className="text-sm text-gray-900 font-semibold">{new Date(road.dateCreated).toLocaleDateString()}</p>
-                  </div>
-                </div>
-
-                <div className="bg-blue-100 rounded-lg p-3">
-                  <p className="text-xs text-blue-700 font-semibold mb-1">ROAD ID</p>
-                  <p className="text-xs text-blue-900 font-mono break-all">{road.id}</p>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
