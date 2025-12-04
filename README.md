@@ -12,6 +12,8 @@
 
 _Empowering citizens and city officials with real-time environmental data and intelligent urban management tools_
 
+<img src="https://lh3.googleusercontent.com/d/13S8-5iyJ0gnvT_wIFRnAVPxeNz8_7E5Q" alt="UrbanReflex Banner" width="100%">
+
 [🚀 Live Demo](#-quick-start) • [✨ Features](#-key-features) • [📸 Screenshots](#-screenshots) • [🛠️ Tech Stack](#️-technology-stack) • [📖 Docs](./docs/) • [🤝 Contributing](./CONTRIBUTING.md)
 
 </div>
