@@ -1,0 +1,52 @@
+{
+  "id": "urn:ngsi-ld:RoadSegment:HCMC-nguyen-hue-001",
+  "type": "RoadSegment",
+  "@type": ["RoadSegment", "sosa:FeatureOfInterest"],
+  "@context": [
+    "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "https://www.w3.org/ns/sosa/context.jsonld",
+    "https://smart-data-models.github.io/dataModel.Transportation/context.jsonld"
+  ],
+  "name": {
+    "type": "Property",
+    "value": "Đường Nguyễn Huệ"
+  },
+  "location": {
+    "type": "GeoProperty",
+    "value": {
+      "type": "LineString",
+      "coordinates": [
+        [106.7008, 10.7747],
+        [106.7015, 10.7755],
+        [106.7022, 10.7763]
+      ]
+    }
+  },
+  "roadType": {
+    "type": "Property",
+    "value": "primary"
+  },
+  "length": {
+    "type": "Property",
+    "value": 1200,
+    "unitCode": "MTR"
+  },
+  "width": {
+    "type": "Property",
+    "value": 24,
+    "unitCode": "MTR"
+  },
+  "laneCount": {
+    "type": "Property",
+    "value": 6
+  },
+  "hasStreetlight": {
+    "type": "Relationship",
+    "object": "urn:ngsi-ld:Streetlight:HCMC-nguyen-hue-sl-001"
+  },
+  "nearbyPOI": {
+    "type": "Relationship",
+    "object": "urn:ngsi-ld:PointOfInterest:HCMC-bitexco-tower"
+  }
+}
+

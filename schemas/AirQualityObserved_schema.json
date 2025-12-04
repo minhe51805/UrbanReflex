@@ -1,0 +1,258 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$schemaVersion": "0.1.4",
+  "modelTags": "",
+  "$id": "https://smart-data-models.github.io/dataModel.Environment/AirQualityObserved/schema.json",
+  "title": "Smart Data Models - Air quality observed schema",
+  "description": "An observation of air quality conditions at a certain place and time.",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "https://smart-data-models.github.io/data-models/common-schema.json#/definitions/GSMA-Commons"
+    },
+    {
+      "properties": {
+        "location": {
+          "$ref": "https://smart-data-models.github.io/data-models/common-schema.json#/definitions/Location-Commons/properties/location"
+        },
+        "address": {
+          "$ref": "https://smart-data-models.github.io/data-models/common-schema.json#/definitions/Location-Commons/properties/address"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "AirQualityObserved"
+          ],
+          "description": "Property. NGSI Entity type. It has to be AirQualityObserved"
+        },
+        "dateObserved": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Property. The date and time of this observation in ISO8601 UTCformat. Model:'https://schema.org/Text' "
+        },
+        "areaServed": {
+          "type": "string",
+          "description": "Property. Higher level area to which this air quality measurement belongs to. Model:'https://schema.org/Text' "
+        },
+        "airQualityIndex": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Property. Model:'https://schema.org/Number'. Air quality index is a number used to report the quality of the air on any given day"
+        },
+        "airQualityLevel": {
+          "$ref": "https://raw.githubusercontent.com/smart-data-models/dataModel.Environment/master/Environment-schema.json#/definitions/airQualityLevel"
+        },
+        "reliability": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1.0,
+          "description": "Property. Reliability (percentage, expressed in parts per one) corresponding to the air quality observed. Model:'https://schema.org/Number' "
+        },
+        "as": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Property. Model:'https://schema.org/Number'. Arsenic detected"
+        },
+        "c6h6": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Property. Benzene detected"
+        },
+        "cd": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Property. Cadmium detected"
+        },
+        "co": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Property. Carbon Monoxide detected"
+        },
+        "coLevel": {
+          "type": "string",
+          "description": "Property. Qualitative Carbon Monoxide presence"
+        },
+        "co2": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Property. Carbon Dioxide detected"
+        },
+        "ni": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Property. Nickel detected "
+        },
+        "no": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Property. Nitrogen monoxide detected"
+        },
+        "no2": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Property. Nitrogen dioxide detected"
+        },
+        "nox": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Property. Other Nitrogen oxides detected"
+        },
+        "o3": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Property. Ozone detected "
+        },
+        "pm10": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Property. Particulate matter 10 micrometers or less in diameter"
+        },
+        "pm25": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Property. Particulate matter 2.5 micrometers or less in diameter"
+        },
+        "pb": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Property. Lead detected   "
+        },
+        "precipitation": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Property. Model:'https://schema.org/Number'. Amount of water rain. Units:'Liters per square meter'"
+        },
+        "relativeHumidity": {
+          "type": "number",
+          "description": "Property. Relative Humidity of the air (a number between 0 and 1 representing the range of 0% to 100%)",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "sh2": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Property. Hydrogen sulfide detected"
+        },
+        "so2": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Property. Sulfur dioxide detected"
+        },
+        "typeofLocation": {
+          "type": "string",
+          "enum": [
+            "indoor",
+            "outdoor"
+          ],
+          "description": "Property. Model:'https://schema.org/Text'. Type of location of the sampled item"
+        },
+        "volatileOrganicCompoundsTotal": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Property. Alkanes <C10, ketones <C6, aldehydes <C10, carboxylic acids <C5, aspirits<C7, Alkenes <C8, Aromatics"
+        },
+        "refDevice": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "pattern": "^[\\w\\-\\.\\{\\}\\$\\+\\*\\[\\]`|~^@!,:\\\\]+$",
+              "description": "Property. Identifier format of any NGSI entity"
+            },
+            {
+              "type": "string",
+              "format": "uri",
+              "description": "Property. Identifier format of any NGSI entity"
+            }
+          ],
+          "description": "Relationship. A reference to the device(s) which captured this observation"
+        },
+        "refPointOfInterest": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "pattern": "^[\\w\\-\\.\\{\\}\\$\\+\\*\\[\\]`|~^@!,:\\\\]+$",
+              "description": "Property. Identifier format of any NGSI entity"
+            },
+            {
+              "type": "string",
+              "format": "uri",
+              "description": "Property. Identifier format of any NGSI entity"
+            }
+          ],
+          "description": "Relationship. A reference to a point of interest (usually an air quality station) associated to this observation"
+        },
+        "refWeatherObserved": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "pattern": "^[\\w\\-\\.\\{\\}\\$\\+\\*\\[\\]`|~^@!,:\\\\]+$",
+              "description": "Property. Identifier format of any NGSI entity"
+            },
+            {
+              "type": "string",
+              "format": "uri",
+              "description": "Property. Identifier format of any NGSI entity"
+            }
+          ],
+          "description": "Relationship.  Weather observed associated to the air quality conditions described by this entity"
+        },
+        "temperature": {
+          "type": "number",
+          "description": "Property. Temperature of the item"
+        },
+        "windDirection": {
+          "type": "number",
+          "description": "Property. Model:'http://schema.org/Number'. Direction of the weather vane",
+          "minimum": -180,
+          "maximum": 180
+        },
+        "windSpeed": {
+          "type": "number",
+          "description": "Property. Model:'http//schema.org/Number'. Intensity of the wind",
+          "minimum": 0
+        },
+        "pm1": {
+          "type": "number",
+          "description": "Property. Particulate matter 1 micrometers or less in diameter"
+        },
+        "pm4": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Property. Particulate matter 4 micrometers or less in diameter"
+        },
+        "tpc": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Property. Total Particulate Counter (Total concentration of particles suspended in the air.)"
+        },
+        "tsp": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Property. Total Suspended Particles (Concentration of all airborne particles regardless of their size or composition.)"
+        },
+        "pressure": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Property. Atmospheric pressure (hPa) observed."
+        },
+        "charge": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Property. Input charging voltage of the monitoring device."
+        }
+      }
+    }
+  ],
+  "required": [
+    "id",
+    "type",
+    "dateObserved",
+    "location"
+  ]
+}
