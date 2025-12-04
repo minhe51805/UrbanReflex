@@ -1,0 +1,69 @@
+{
+  "id": "urn:ngsi-ld:WeatherObserved:HCMC-district1-20251115T080000Z",
+  "type": "WeatherObserved",
+  "@type": ["WeatherObserved", "sosa:Observation"],
+  "@context": [
+    "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "https://www.w3.org/ns/sosa/context.jsonld",
+    "https://raw.githubusercontent.com/smart-data-models/dataModel.Weather/master/context.jsonld"
+  ],
+  "location": {
+    "type": "GeoProperty",
+    "value": {
+      "type": "Point",
+      "coordinates": [106.7008, 10.7747]
+    }
+  },
+  "dateObserved": {
+    "type": "Property",
+    "@type": "sosa:resultTime",
+    "value": {
+      "@type": "DateTime",
+      "@value": "2025-11-15T08:00:00Z"
+    }
+  },
+  "temperature": {
+    "type": "Property",
+    "value": 32.5,
+    "unitCode": "CEL",
+    "observedAt": "2025-11-15T08:00:00Z"
+  },
+  "relativeHumidity": {
+    "type": "Property",
+    "value": 0.78,
+    "observedAt": "2025-11-15T08:00:00Z"
+  },
+  "atmosphericPressure": {
+    "type": "Property",
+    "value": 1012,
+    "unitCode": "A97",
+    "observedAt": "2025-11-15T08:00:00Z"
+  },
+  "windSpeed": {
+    "type": "Property",
+    "value": 3.2,
+    "unitCode": "MTS",
+    "observedAt": "2025-11-15T08:00:00Z"
+  },
+  "windDirection": {
+    "type": "Property",
+    "value": 135,
+    "unitCode": "DD",
+    "observedAt": "2025-11-15T08:00:00Z"
+  },
+  "precipitation": {
+    "type": "Property",
+    "value": 0,
+    "unitCode": "MMT",
+    "observedAt": "2025-11-15T08:00:00Z"
+  },
+  "weatherType": {
+    "type": "Property",
+    "value": "sunny"
+  },
+  "source": {
+    "type": "Property",
+    "value": "OpenWeatherMap API"
+  }
+}
+

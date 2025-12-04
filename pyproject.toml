@@ -1,0 +1,25 @@
+[project]
+name = "urban-reflex"
+version = "0.1.0"
+description = "Add your description here"
+license = {text = "Apache-2.0"}
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi[standard]>=0.121.2",
+    "motor>=3.7.1",
+    "passlib[bcrypt]>=1.7.4",
+    "python-dotenv>=1.0.0",
+    "python-jose[cryptography]>=3.5.0",
+    "sqlalchemy>=2.0.44",
+    "uvicorn>=0.38.0",
+    "google-generativeai>=0.8.3",
+    "embed-anything>=0.3.0",
+    "beautifulsoup4>=4.12.3",
+    "requests>=2.32.3",
+    "aiohttp>=3.11.2",
+    "faiss-cpu>=1.8.0",
+    "numpy>=1.26.4",
+    "sentence-transformers>=3.3.1",
+    "pinecone>=5.0.0",
+]
