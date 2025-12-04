@@ -7,7 +7,7 @@
 'use client';
 
 import { useEffect, useRef, useState, memo, useImperativeHandle, forwardRef, useCallback } from 'react';
-import { Route as RouteIcon } from 'lucide-react';
+import { Route as RouteIcon, Lightbulb } from 'lucide-react';
 import maplibregl from 'maplibre-gl';
 
 interface RoadSegment {
@@ -37,12 +37,20 @@ export interface ReportMarker {
   priority?: string;
 }
 
+export interface StreetlightMarker {
+  id: string;
+  coordinates: [number, number];
+  powerState?: string;
+  status?: string;
+}
+
 interface EnhancedRoadMapViewProps {
   roadSegments: RoadSegment[];
   onRoadClick?: (road: RoadSegment) => void;
   highlightLocation?: [number, number] | null;
   highlightLabel?: string;
   reportMarkers?: ReportMarker[];
+  streetlightMarkers?: StreetlightMarker[];
 }
 
 export interface EnhancedRoadMapViewRef {
@@ -123,6 +131,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
   highlightLocation,
   highlightLabel,
   reportMarkers = [],
+  streetlightMarkers = [],
 }, ref) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
@@ -130,6 +139,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
   const [weatherData, setWeatherData] = useState<any>(null);
   const highlightMarkerRef = useRef<maplibregl.Marker | null>(null);
   const reportMarkerRefs = useRef<maplibregl.Marker[]>([]);
+  const streetlightMarkerRefs = useRef<maplibregl.Marker[]>([]);
   const geoJsonPopupRef = useRef<maplibregl.Popup | null>(null);
   const [isLegendCollapsed, setIsLegendCollapsed] = useState(false);
 
@@ -410,6 +420,106 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
       reportMarkerRefs.current = [];
     };
   }, [reportMarkers, mapLoaded]);
+
+  // Streetlight markers - chỉ hiện khi click vào road có streetlights
+  useEffect(() => {
+    // Remove existing streetlight markers
+    streetlightMarkerRefs.current.forEach(marker => marker.remove());
+    streetlightMarkerRefs.current = [];
+
+    if (!map.current || !mapLoaded || !streetlightMarkers.length) return;
+
+    streetlightMarkers.forEach((streetlight) => {
+      if (!Array.isArray(streetlight.coordinates) || streetlight.coordinates.length < 2) return;
+      const [rawLng, rawLat] = streetlight.coordinates;
+      const [lng, lat] = normalizeLngLat([rawLng, rawLat]);
+
+      if (!isFinite(lng) || !isFinite(lat)) return;
+
+      const powerState = streetlight.powerState || 'unknown';
+      const isOn = powerState.toLowerCase() === 'on';
+      const color = isOn ? '#fbbf24' : '#6b7280'; // Yellow for on, gray for off
+      const iconColor = isOn ? '#fbbf24' : '#9ca3af';
+
+      const markerEl = document.createElement('div');
+      markerEl.style.width = '32px';
+      markerEl.style.height = '32px';
+      markerEl.style.position = 'relative';
+      markerEl.style.cursor = 'pointer';
+      markerEl.style.zIndex = '1000';
+      markerEl.innerHTML = `
+        <div style="
+          position:absolute;
+          bottom:-4px;
+          left:50%;
+          transform:translateX(-50%);
+          width:20px;
+          height:6px;
+          background:rgba(0,0,0,0.2);
+          border-radius:50%;
+          filter:blur(2px);
+        "></div>
+        <div style="
+          position:absolute;
+          top:0;
+          left:50%;
+          transform:translateX(-50%);
+          width:32px;
+          height:32px;
+          background:${color};
+          border-radius:50%;
+          border:3px solid white;
+          box-shadow:0 4px 12px rgba(0,0,0,0.3);
+          display:flex;
+          align-items:center;
+          justify-content:center;
+        ">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 21h6M12 3a6 6 0 0 0-6 6c0 2.5 1.5 4.5 3 6M12 3a6 6 0 0 1 6 6c0 2.5-1.5 4.5-3 6" stroke="${iconColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="12" cy="9" r="1" fill="${iconColor}"/>
+          </svg>
+        </div>
+      `;
+
+      const popup = new maplibregl.Popup({
+        offset: [0, -10],
+        closeButton: true,
+        closeOnClick: true,
+        className: 'streetlight-popup'
+      }).setHTML(`
+        <div style="padding:8px; min-width:150px;">
+          <div style="font-weight:600; color:#111827; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9 21h6M12 3a6 6 0 0 0-6 6c0 2.5 1.5 4.5 3 6M12 3a6 6 0 0 1 6 6c0 2.5-1.5 4.5-3 6" stroke="${iconColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Streetlight
+          </div>
+          <div style="font-size:12px; color:#6b7280; margin-bottom:4px;">
+            <strong>Trạng thái:</strong> <span style="color:${color}; font-weight:600;">${isOn ? 'Bật' : 'Tắt'}</span>
+          </div>
+          <div style="font-size:11px; color:#9ca3af;">
+            ${lat.toFixed(5)}, ${lng.toFixed(5)}
+          </div>
+        </div>
+      `);
+
+      const marker = new maplibregl.Marker({
+        element: markerEl,
+        anchor: 'bottom',
+        draggable: false, // Không cho phép di chuyển marker
+      })
+        .setLngLat([lng, lat])
+        .setPopup(popup)
+        .addTo(map.current!);
+
+      streetlightMarkerRefs.current.push(marker);
+    });
+
+    return () => {
+      streetlightMarkerRefs.current.forEach(marker => marker.remove());
+      streetlightMarkerRefs.current = [];
+    };
+  }, [streetlightMarkers, mapLoaded]);
 
   // Zoom to road function
   useImperativeHandle(ref, () => ({
