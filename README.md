@@ -86,6 +86,7 @@ just dev   # Starts backend (8000), frontend (3000), and databases
 ### Environment Variables
 
 **Required:**
+
 ```bash
 # Database
 MONGODB_URL="mongodb://localhost:27017"
@@ -102,6 +103,7 @@ ORION_LD_PASSWORD="your-password"
 ```
 
 **Optional (features disabled without these):**
+
 ```bash
 # AI Services
 GEMINI_API_KEY="your-gemini-key"           # Required for chatbot
@@ -268,6 +270,7 @@ refactor/*  # Code refactoring
 ```
 
 **Naming Convention:**
+
 - `feature/description` (e.g., `feature/chatbot-session-management`)
 - `bugfix/issue-number` (e.g., `bugfix/123-auth-token-expiry`)
 - `refactor/module-name` (e.g., `refactor/ai-service-structure`)
@@ -330,15 +333,18 @@ just logs             # View all service logs
 ### Development Best Practices
 
 1. **Always run tests before committing**
+
    ```bash
    just test && just lint && just type-check
    ```
 
 2. **Use TypeScript/Pydantic types strictly**
+
    - No `any` types in TypeScript
    - Use Pydantic models for all API schemas
 
 3. **Write async code properly**
+
 ```python
 # ✓ Good
 async def get_user(user_id: str):
@@ -349,9 +355,10 @@ async def get_user(user_id: str):
 def get_user(user_id: str):
     user = db.users.find_one({"_id": ObjectId(user_id)})  # Blocking!
     return user
-   ```
+```
 
 4. **Handle errors gracefully**
+
    ```python
    # ✓ Good
    try:
@@ -359,7 +366,7 @@ def get_user(user_id: str):
    except SpecificError as e:
        logger.error(f"Operation failed: {e}")
        raise HTTPException(status_code=500, detail=str(e))
-   
+
    # ✗ Bad (silent failures)
    try:
        result = await some_async_operation()
@@ -368,10 +375,11 @@ def get_user(user_id: str):
    ```
 
 5. **Use environment variables, never hardcode**
+
    ```python
    # ✓ Good
    api_key = os.getenv("GEMINI_API_KEY")
-   
+
    # ✗ Bad
    api_key = "hardcoded-key-12345"
    ```
@@ -385,18 +393,21 @@ def get_user(user_id: str):
 #### Before Submitting PR
 
 - [ ] **Code Quality**
+
   - [ ] All tests pass (`just test`)
   - [ ] No linter errors (`just lint`)
   - [ ] Type checking passes (`just type-check`)
   - [ ] Code formatted (`just format`)
 
 - [ ] **Documentation**
+
   - [ ] Docstrings added for new functions/classes
   - [ ] README updated if needed
   - [ ] API documentation updated (if adding endpoints)
   - [ ] Comments explain "why", not "what"
 
 - [ ] **Testing**
+
   - [ ] Unit tests for new functions
   - [ ] Integration tests for new endpoints
   - [ ] Edge cases handled
@@ -412,20 +423,24 @@ def get_user(user_id: str):
 
 ```markdown
 ## Description
+
 Brief description of changes
 
 ## Type of Change
+
 - [ ] Bug fix
 - [ ] New feature
 - [ ] Breaking change
 - [ ] Documentation update
 
 ## Testing
+
 - [ ] Unit tests added/updated
 - [ ] Integration tests pass
 - [ ] Manual testing completed
 
 ## Checklist
+
 - [ ] Code follows style guidelines
 - [ ] Self-review completed
 - [ ] Comments added for complex logic
@@ -438,24 +453,28 @@ Brief description of changes
 #### Review Checklist
 
 1. **Functionality**
+
    - [ ] Code works as intended
    - [ ] Edge cases handled
    - [ ] Error handling appropriate
    - [ ] No security vulnerabilities
 
 2. **Code Quality**
+
    - [ ] Follows project conventions
    - [ ] No code duplication
    - [ ] Functions are focused and small
    - [ ] Variable names are descriptive
 
 3. **Performance**
+
    - [ ] No obvious performance issues
    - [ ] Database queries optimized
    - [ ] No N+1 queries
    - [ ] Async/await used correctly
 
 4. **Testing**
+
    - [ ] Adequate test coverage
    - [ ] Tests are meaningful
    - [ ] Edge cases tested
@@ -468,18 +487,22 @@ Brief description of changes
 #### Review Comments Guidelines
 
 **Be constructive:**
+
 - ✓ "Consider using async/await here for better performance"
 - ✗ "This is wrong"
 
 **Explain why:**
+
 - ✓ "Using `any` type defeats TypeScript's purpose. Let's add proper types."
 - ✗ "Don't use any"
 
 **Suggest alternatives:**
+
 - ✓ "This could be simplified using `Promise.all()` instead of sequential awaits"
 - ✗ "This is inefficient"
 
 **Approve when ready:**
+
 - ✓ "Looks good! Just one small suggestion about error handling."
 - ✗ "Needs work" (without specifics)
 
@@ -524,7 +547,7 @@ async def fetch_data():
 const fetchUser = async (id: string) => {
   const response = await fetch(`/api/users/${id}`);
   const user = await response.json();
-  return user;  // No error handling
+  return user; // No error handling
 };
 
 // ✓ Proper error handling
@@ -562,12 +585,14 @@ function processData(data: { value: number }): number {
 ### Python (Backend)
 
 #### Style Guide
+
 - Follow **PEP 8** (enforced by `black` formatter)
 - Use **type hints** for all function signatures
 - Maximum line length: **100 characters**
 - Use **async/await** for all I/O operations
 
 #### Naming Conventions
+
 ```python
 # Functions: snake_case
 async def get_user_by_id(user_id: str) -> Optional[User]:
@@ -586,6 +611,7 @@ def _validate_password(password: str) -> bool:
 ```
 
 #### Docstrings
+
 ```python
 async def classify_report(
     title: str,
@@ -593,19 +619,19 @@ async def classify_report(
 ) -> Dict[str, Any]:
     """
     Classify a citizen report using NLP classification.
-    
+
     Args:
         title: Report title (max 200 chars)
         description: Report description (max 2000 chars)
-        
+
     Returns:
         Dictionary with keys:
         - category: str (e.g., "streetlight_broken")
         - confidence: float (0.0 to 1.0)
-        
+
     Raises:
         ValueError: If title or description is empty
-        
+
     Example:
         >>> result = await classify_report(
         ...     "Broken streetlight",
@@ -620,12 +646,14 @@ async def classify_report(
 ### TypeScript (Frontend)
 
 #### Style Guide
+
 - Follow **ESLint** rules (Next.js recommended config)
 - Use **strict TypeScript** (no `any` types)
 - Use **functional components** with hooks
 - Maximum line length: **100 characters**
 
 #### Naming Conventions
+
 ```typescript
 // Components: PascalCase
 export function UserProfile() {
@@ -648,6 +676,7 @@ interface UserProfile {
 ```
 
 #### Component Structure
+
 ```typescript
 // ✓ Good component structure
 interface UserCardProps {
@@ -658,29 +687,26 @@ interface UserCardProps {
 export function UserCard({ user, onEdit }: UserCardProps) {
   // 1. Hooks
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // 2. Event handlers
   const handleEdit = useCallback(() => {
     onEdit?.(user);
   }, [user, onEdit]);
-  
+
   // 3. Effects
   useEffect(() => {
     // Side effects
   }, []);
-  
+
   // 4. Render
-  return (
-    <div className="user-card">
-      {/* JSX */}
-    </div>
-  );
+  return <div className="user-card">{/* JSX */}</div>;
 }
 ```
 
 ### File Organization
 
 #### Backend Structure
+
 ```
 app/
 ├── routers/
@@ -694,6 +720,7 @@ app/
 ```
 
 #### Frontend Structure
+
 ```
 website/
 ├── app/
@@ -714,6 +741,7 @@ website/
 ### Backend Testing (pytest)
 
 #### Test Structure
+
 ```python
 # tests/test_users.py
 import pytest
@@ -744,6 +772,7 @@ async def test_get_user_async():
 ```
 
 #### Running Tests
+
 ```bash
 # Run all tests
 pytest
@@ -761,28 +790,30 @@ pytest -v
 ### Frontend Testing (Jest + React Testing Library)
 
 #### Test Structure
+
 ```typescript
 // __tests__/UserCard.test.tsx
-import { render, screen } from '@testing-library/react';
-import { UserCard } from '@/components/users/UserCard';
+import { render, screen } from "@testing-library/react";
+import { UserCard } from "@/components/users/UserCard";
 
-describe('UserCard', () => {
-  it('renders user information correctly', () => {
+describe("UserCard", () => {
+  it("renders user information correctly", () => {
     const user = {
-      id: '1',
-      name: 'John Doe',
-      email: 'john@example.com'
+      id: "1",
+      name: "John Doe",
+      email: "john@example.com",
     };
-    
+
     render(<UserCard user={user} />);
-    
-    expect(screen.getByText('John Doe')).toBeInTheDocument();
-    expect(screen.getByText('john@example.com')).toBeInTheDocument();
+
+    expect(screen.getByText("John Doe")).toBeInTheDocument();
+    expect(screen.getByText("john@example.com")).toBeInTheDocument();
   });
 });
 ```
 
 #### Running Tests
+
 ```bash
 # Run all tests
 npm test
@@ -819,6 +850,7 @@ npm run test:e2e
 #### Backend Issues
 
 **Issue: MongoDB connection failed**
+
 ```bash
 # Check if MongoDB is running
 docker ps | grep mongo
@@ -831,6 +863,7 @@ docker-compose restart mongo
 ```
 
 **Issue: Import errors**
+
 ```bash
 # Ensure you're in the project root
 cd /path/to/UrbanReflex
@@ -843,6 +876,7 @@ uv sync
 ```
 
 **Issue: Async/await errors**
+
 ```python
 # ✗ Wrong: Using sync function in async context
 def get_data():
@@ -863,6 +897,7 @@ async def my_handler():
 #### Frontend Issues
 
 **Issue: Build errors**
+
 ```bash
 # Clear Next.js cache
 rm -rf website/.next
@@ -870,6 +905,7 @@ cd website && npm run build
 ```
 
 **Issue: Type errors**
+
 ```bash
 # Run type checker
 cd website && npx tsc --noEmit
@@ -878,6 +914,7 @@ cd website && npx tsc --noEmit
 ```
 
 **Issue: API connection errors**
+
 ```typescript
 // Check API URL in .env.local
 NEXT_PUBLIC_API_URL=http://localhost:8000
@@ -889,6 +926,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 ### Debugging Tools
 
 #### Backend Debugging
+
 ```python
 # Use Python debugger
 import pdb; pdb.set_trace()
@@ -902,6 +940,7 @@ logger.error("Error message", exc_info=True)
 ```
 
 #### Frontend Debugging
+
 ```typescript
 // Use browser DevTools
 console.log("Debug info", data);
@@ -929,11 +968,13 @@ npm run analyze  # If configured
 ### Contribution Process
 
 1. **Find or create an issue**
+
    - Check existing issues first
    - Create new issue if needed
    - Discuss approach before coding
 
 2. **Fork and clone**
+
    ```bash
    git clone https://github.com/YOUR_USERNAME/UrbanReflex.git
    cd UrbanReflex
@@ -941,6 +982,7 @@ npm run analyze  # If configured
    ```
 
 3. **Create feature branch**
+
    ```bash
    git checkout develop
    git pull upstream develop
@@ -948,11 +990,13 @@ npm run analyze  # If configured
    ```
 
 4. **Make changes**
+
    - Write code following standards
    - Add tests
    - Update documentation
 
 5. **Test your changes**
+
    ```bash
    just test
    just lint
@@ -960,6 +1004,7 @@ npm run analyze  # If configured
    ```
 
 6. **Commit with conventional commits**
+
    ```bash
    git commit -m "feat: add user profile endpoint"
    # Types: feat, fix, docs, style, refactor, test, chore
@@ -982,6 +1027,7 @@ npm run analyze  # If configured
 ```
 
 **Types:**
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation changes
@@ -991,6 +1037,7 @@ npm run analyze  # If configured
 - `chore`: Build process or auxiliary tool changes
 
 **Examples:**
+
 ```
 feat(auth): add JWT token refresh endpoint
 fix(chatbot): handle empty query gracefully
@@ -1012,17 +1059,20 @@ refactor(ai-service): simplify embedding manager
 ### Code Review Process
 
 1. **Author submits PR**
+
    - Fills out PR template
    - Requests review from team members
    - Adds relevant labels
 
 2. **Reviewer reviews code**
+
    - Checks functionality
    - Reviews code quality
    - Leaves constructive comments
    - Approves or requests changes
 
 3. **Author addresses feedback**
+
    - Responds to comments
    - Makes requested changes
    - Pushes updates
@@ -1050,12 +1100,14 @@ refactor(ai-service): simplify embedding manager
 ## Additional Resources
 
 ### Documentation
+
 - [API Reference](./docs/API_REFERENCE.md)
 - [Architecture Deep Dive](./docs/ARCHITECTURE.md)
 - [Development Setup Guide](./docs/DEVELOPMENT_SETUP.md)
 - [NGSI-LD Guide](./docs/NGSI_LD_GUIDE.md)
 
 ### External Resources
+
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)
 - [Next.js Documentation](https://nextjs.org/docs)
 - [MongoDB Driver Documentation](https://motor.readthedocs.io/)

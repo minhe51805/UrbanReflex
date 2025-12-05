@@ -8,6 +8,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, AlertTriangle, Clock, MapPin, User, Filter, Camera, CheckCircle2, Circle, Loader2, AlertCircle, Minus, Share2, Copy, ExternalLink } from 'lucide-react';
 import Image from 'next/image';
 import type { ReportMarker } from './EnhancedRoadMapView';
@@ -38,6 +39,8 @@ interface ReportsListSidebarProps {
   radius?: number; // km
   onClose: () => void;
   onApprovedReportsUpdate?: (reports: ReportMarker[]) => void;
+  attachToRoadDetail?: boolean;
+  onFocusLocation?: (coords: [number, number], label?: string) => void;
 }
 
 const PRIORITY_CONFIG = {
@@ -147,7 +150,108 @@ const extractCoordinates = (report: any, fallback: [number, number]): [number, n
   return fallback;
 };
 
-export default function ReportsListSidebar({ location, radius = 1, onClose, onApprovedReportsUpdate }: ReportsListSidebarProps) {
+// Helper: Check if string looks like base64 (long alphanumeric string)
+const looksLikeBase64 = (str: string): boolean => {
+  // Base64 thường dài và chỉ chứa A-Z, a-z, 0-9, +, /, =
+  if (str.length < 100) return false; // Base64 image thường rất dài
+  const base64Regex = /^[A-Za-z0-9+/=]+$/;
+  return base64Regex.test(str);
+};
+
+// Convert base64 string to data URL if needed
+const normalizeImageUrl = (value: string): string => {
+  const trimmed = value.trim();
+  
+  // Nếu đã là URL hợp lệ, trả về nguyên
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/') || trimmed.startsWith('data:image/')) {
+    return trimmed;
+  }
+  
+  // Nếu là base64 thuần, convert thành data URL
+  if (looksLikeBase64(trimmed)) {
+    // Thử detect image type từ đầu chuỗi hoặc mặc định là jpeg
+    // Base64 thường bắt đầu với một số pattern nhất định
+    return `data:image/jpeg;base64,${trimmed}`;
+  }
+  
+  return trimmed;
+};
+
+// Validate that a string looks like a usable image URL for next/image
+const isValidImageUrl = (value: any): value is string => {
+  if (typeof value !== 'string') return false;
+  const url = value.trim();
+  if (!url) return false;
+  // Chấp nhận http(s) tuyệt đối hoặc path tương đối bắt đầu bằng /
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) return true;
+  // Chấp nhận base64 data URLs (data:image/...)
+  if (url.startsWith('data:image/')) return true;
+  // Chấp nhận base64 thuần (sẽ được normalize thành data URL)
+  if (looksLikeBase64(url)) return true;
+  return false;
+};
+
+// Chuẩn hoá trường ảnh từ nhiều format backend khác nhau thành mảng string URL đơn giản
+const extractImages = (report: any): string[] => {
+  // Debug: log raw data để kiểm tra
+  console.log('[extractImages] Processing report:', report.id);
+  console.log('[extractImages] report.images:', report.images);
+  console.log('[extractImages] report.imageCount:', report.imageCount);
+  
+  // Một số kiểu thường gặp: NGSI-LD images.value, metadata.images, imageUrls, photos...
+  let raw =
+    report?.images?.value ||
+    report?.images ||
+    report?.metadata?.images ||
+    report?.imageUrls ||
+    report?.image_urls ||
+    report?.photos ||
+    report?.photo;
+
+  console.log('[extractImages] Extracted raw:', raw, 'type:', typeof raw, 'isArray:', Array.isArray(raw));
+
+  if (!raw) {
+    console.log('[extractImages] No images found');
+    return [];
+  }
+
+  let result: string[] = [];
+
+  // Nếu là mảng
+  if (Array.isArray(raw)) {
+    result = raw.filter(isValidImageUrl).map(normalizeImageUrl);
+    console.log('[extractImages] Array result:', result.length, 'images');
+    return result;
+  }
+
+  // Nếu là string đơn
+  if (typeof raw === 'string') {
+    if (isValidImageUrl(raw)) {
+      result = [normalizeImageUrl(raw)];
+    }
+    console.log('[extractImages] String result:', result.length, 'images');
+    return result;
+  }
+
+  // Kiểu NGSI-LD: { "@list": [ ... ] }
+  if (raw && typeof raw === 'object' && Array.isArray(raw['@list'])) {
+    result = raw['@list'].filter(isValidImageUrl).map(normalizeImageUrl);
+    console.log('[extractImages] @list result:', result.length, 'images');
+    return result;
+  }
+
+  // Kiểu object có value là array: { value: [...] }
+  if (raw && typeof raw === 'object' && Array.isArray(raw.value)) {
+    result = raw.value.filter(isValidImageUrl).map(normalizeImageUrl);
+    console.log('[extractImages] object.value result:', result.length, 'images');
+    return result;
+  }
+
+  console.log('[extractImages] No valid format found, returning empty');
+  return [];
+};
+
+export default function ReportsListSidebar({ location, radius = 1, onClose, onApprovedReportsUpdate, attachToRoadDetail = false, onFocusLocation }: ReportsListSidebarProps) {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'urgent'>('all');
@@ -169,37 +273,57 @@ export default function ReportsListSidebar({ location, radius = 1, onClose, onAp
         const data = await response.json();
         const reportsList = data.reports || [];
 
-        // Map ALL reports for sidebar (để người dùng thấy cả pending),
-        // nhưng chỉ đẩy những report đã được duyệt lên map (ở dưới)
-        const mappedReports = reportsList.map((report: any) => ({
-          id: report.id,
-          type: report.category?.value || report.category || 'other',
-          title: { value: report.title?.value || report.title || 'Untitled' },
-          description: { value: report.description?.value || report.description || '' },
-          category: { value: report.category?.value || report.category || 'other' },
-          status: { value: report.status?.value || report.status || 'pending' },
-          priority: { value: report.priority?.value || report.priority || 'medium' },
-          reporterName: { value: report.reporterName?.value || report.reporterName || 'Unknown' },
-          dateCreated: {
-            value: {
-              '@value': report.dateCreated?.value?.['@value'] || report.dateCreated?.['@value'] || report.dateCreated || new Date().toISOString()
-            }
-          },
-          location: {
-            value: {
-              type: 'Point',
-              coordinates: report.location?.coordinates || report.location?.value?.coordinates || [lng, lat]
-            }
-          },
-          relatedRoad: report.refRoadSegment ? { object: report.refRoadSegment } : undefined,
-          images: report.images ? { value: Array.isArray(report.images) ? report.images : [report.images] } : undefined,
-          imageCount: report.images ? { value: Array.isArray(report.images) ? report.images.length : 1 } : undefined,
-        }));
+        // Map ALL reports cho sidebar, đồng thời chuẩn hoá ảnh
+        const mappedReports: Report[] = reportsList.map((report: any) => {
+          const imageArray = extractImages(report);
+          
+          // Debug: log ra để kiểm tra dữ liệu ảnh từ API
+          if (imageArray.length > 0) {
+            console.log(`[ReportsListSidebar] Report ${report.id} has ${imageArray.length} images:`, imageArray);
+            console.log(`[ReportsListSidebar] Raw report.images:`, report.images);
+          }
 
-        setReports(mappedReports);
+          return {
+            id: report.id,
+            type: report.category?.value || report.category || 'other',
+            title: { value: report.title?.value || report.title || 'Untitled' },
+            description: { value: report.description?.value || report.description || '' },
+            category: { value: report.category?.value || report.category || 'other' },
+            status: { value: report.status?.value || report.status || 'pending' },
+            priority: { value: report.priority?.value || report.priority || 'medium' },
+            reporterName: { value: report.reporterName?.value || report.reporterName || 'Unknown' },
+            dateCreated: {
+              value: {
+                '@value':
+                  report.dateCreated?.value?.['@value'] ||
+                  report.dateCreated?.['@value'] ||
+                  report.dateCreated ||
+                  new Date().toISOString(),
+              },
+            },
+            location: {
+              value: {
+                type: 'Point',
+                coordinates: report.location?.coordinates || report.location?.value?.coordinates || [lng, lat],
+              },
+            },
+            relatedRoad: report.refRoadSegment ? { object: report.refRoadSegment } : undefined,
+            images: imageArray.length > 0 ? { value: imageArray } : undefined,
+            imageCount: imageArray.length > 0 ? { value: imageArray.length } : undefined,
+          };
+        });
+
+        // Filter thêm một lần phía client để chắc chắn chỉ lấy trong bán kính radius
+        const reportsWithinRadius = mappedReports.filter((report) => {
+          const coords = extractCoordinates(report, [lng, lat]);
+          const distanceKm = calculateDistance(lat, lng, coords[1], coords[0]);
+          return distanceKm <= radius;
+        });
+
+        setReports(reportsWithinRadius);
 
         if (onApprovedReportsUpdate) {
-          const markerPayload: ReportMarker[] = mappedReports
+          const markerPayload: ReportMarker[] = reportsWithinRadius
             .filter((report) => isApprovedStatus(report.status.value))
             .map((report) => ({
               id: report.id,
@@ -282,8 +406,295 @@ export default function ReportsListSidebar({ location, radius = 1, onClose, onAp
     );
   }
 
+  const rightClass = attachToRoadDetail ? 'right-[460px] top-[13rem] bottom-32 h-auto' : 'right-4 top-20 max-h-[calc(100vh-120px)]';
+
+  const modalPortal =
+    selectedReport && typeof window !== 'undefined'
+      ? createPortal(
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center z-[9999] p-6"
+            onClick={() => setSelectedReport(null)}
+          >
+            <div
+              className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[95vh] flex flex-col overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header - Fixed */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <AlertTriangle className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">Chi tiết báo cáo</h3>
+                    <p className="text-xs text-gray-500 mt-0.5">ID: {selectedReport.id.substring(0, 20)}...</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedReport(null)}
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Content - Scrollable */}
+              <div className="flex-1 overflow-y-auto px-6 py-6">
+                <div className="space-y-6">
+                  {/* Title */}
+                  <div className="bg-gradient-to-br from-gray-50 to-white p-5 rounded-lg border border-gray-200">
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      Tiêu đề
+                    </label>
+                    <h4 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                      <span className="text-2xl">{getCategoryIcon(selectedReport.category.value)}</span>
+                      {selectedReport.title.value}
+                    </h4>
+                  </div>
+
+                  {/* Status and Priority Row */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-lg border border-gray-200">
+                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        Trạng thái
+                      </label>
+                      {(() => {
+                        const status =
+                          STATUS_CONFIG[selectedReport.status.value as keyof typeof STATUS_CONFIG] ||
+                          STATUS_CONFIG.pending;
+                        const StatusIcon = status.icon;
+                        return (
+                          <span
+                            className={`inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg border ${status.color}`}
+                          >
+                            <StatusIcon className="w-4 h-4 mr-2" />
+                            {status.label}
+                          </span>
+                        );
+                      })()}
+                    </div>
+                    <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-lg border border-gray-200">
+                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        Độ ưu tiên
+                      </label>
+                      {(() => {
+                        const priority =
+                          PRIORITY_CONFIG[selectedReport.priority.value as keyof typeof PRIORITY_CONFIG] ||
+                          PRIORITY_CONFIG.unassigned;
+                        return (
+                          <span
+                            className={`inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg border ${priority.bg} ${priority.border} ${priority.color}`}
+                          >
+                            <span className={`w-2 h-2 rounded-full ${priority.dot} mr-2`}></span>
+                            {priority.label}
+                          </span>
+                        );
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <div className="bg-gradient-to-br from-gray-50 to-white p-5 rounded-lg border border-gray-200">
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                      Mô tả chi tiết
+                    </label>
+                    <div className="prose prose-sm max-w-none">
+                      <p className="text-sm text-gray-900 leading-relaxed whitespace-pre-wrap">
+                        {selectedReport.description.value || (
+                          <span className="text-gray-400 italic">Không có mô tả</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Images Gallery */}
+                  {(() => {
+                    // Debug: log ra để kiểm tra dữ liệu ảnh khi render modal
+                    console.log('[Modal] selectedReport.images:', selectedReport.images);
+                    console.log('[Modal] selectedReport.images?.value:', selectedReport.images?.value);
+                    
+                    const validImages = Array.isArray(selectedReport.images?.value)
+                      ? selectedReport.images.value.filter(isValidImageUrl)
+                      : [];
+                    
+                    console.log('[Modal] validImages count:', validImages.length);
+                    console.log('[Modal] validImages:', validImages);
+                    
+                    if (validImages.length === 0) return null;
+                    
+                    return (
+                      <div className="bg-gradient-to-br from-gray-50 to-white p-5 rounded-lg border border-gray-200">
+                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+                          <Camera className="w-4 h-4" />
+                          <span>Hình ảnh ({validImages.length})</span>
+                        </label>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                          {validImages.map((img, idx) => {
+                            const normalizedUrl = normalizeImageUrl(img);
+                            return (
+                              <div
+                                key={idx}
+                                className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-50 group cursor-pointer"
+                              >
+                                <Image
+                                  src={normalizedUrl}
+                                  alt={`Report image ${idx + 1}`}
+                                  fill
+                                  className="object-cover group-hover:scale-105 transition-transform"
+                                  unoptimized={normalizedUrl.startsWith('data:')} // Disable optimization for data URLs
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Location */}
+                  {selectedReport.location &&
+                    selectedReport.location.value &&
+                    selectedReport.location.value.coordinates && (
+                      <div className="bg-gradient-to-br from-green-50 to-white p-5 rounded-lg border border-green-100">
+                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center space-x-2">
+                          <MapPin className="w-4 h-4 text-green-600" />
+                          <span>Vị trí báo cáo</span>
+                        </label>
+                        <div className="space-y-2">
+                          <div className="bg-white p-3 rounded border border-gray-200">
+                            <p className="text-xs text-gray-500 mb-1">Tọa độ</p>
+                            <p className="text-sm font-mono text-gray-900">
+                              [{selectedReport.location.value.coordinates.join(', ')}]
+                            </p>
+                          </div>
+                          {selectedReport.location.value.coordinates.length >= 2 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const [lng, lat] = selectedReport.location.value.coordinates;
+                                if (onFocusLocation) {
+                                  onFocusLocation([lng, lat], selectedReport.title?.value || 'Citizen report');
+                                }
+                              }}
+                              className="inline-flex items-center space-x-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
+                            >
+                              <MapPin className="w-4 h-4" />
+                              <span>Xem trên bản đồ</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                  {/* Category and Dates Row */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-gradient-to-br from-blue-50 to-white p-4 rounded-lg border border-blue-100">
+                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        Danh mục
+                      </label>
+                      <p className="text-sm font-medium text-gray-900 capitalize">
+                        {getCategoryLabel(selectedReport.category.value)}
+                      </p>
+                    </div>
+                    <div className="bg-gradient-to-br from-purple-50 to-white p-4 rounded-lg border border-purple-100">
+                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center space-x-1">
+                        <Clock className="w-3 h-3" />
+                        <span>Ngày tạo</span>
+                      </label>
+                      <p className="text-sm font-medium text-gray-900">
+                        {new Date(selectedReport.dateCreated.value['@value']).toLocaleDateString('vi-VN', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                    </div>
+                    <div className="bg-gradient-to-br from-indigo-50 to-white p-4 rounded-lg border border-indigo-100">
+                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center space-x-1">
+                        <User className="w-3 h-3" />
+                        <span>Người báo cáo</span>
+                      </label>
+                      <p className="text-sm font-medium text-gray-900">
+                        {selectedReport.reporterName.value}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Full Report ID */}
+                  <div className="bg-gray-900 p-4 rounded-lg">
+                    <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                      ID đầy đủ
+                    </label>
+                    <p className="text-xs font-mono text-gray-300 break-all">{selectedReport.id}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer - Fixed */}
+              <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
+                <div className="flex items-center space-x-2">
+                  {selectedReport.location &&
+                    selectedReport.location.value &&
+                    selectedReport.location.value.coordinates &&
+                    selectedReport.location.value.coordinates.length >= 2 && (
+                      <a
+                        href={`https://www.google.com/maps?q=${selectedReport.location.value.coordinates[1]},${selectedReport.location.value.coordinates[0]}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        <MapPin className="w-4 h-4" />
+                        <span>Xem bản đồ</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(selectedReport.id);
+                    }}
+                    className="inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    title="Sao chép ID"
+                  >
+                    <Copy className="w-4 h-4" />
+                    <span>Sao chép ID</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (navigator.share) {
+                        navigator.share({
+                          title: selectedReport.title.value,
+                          text: selectedReport.description.value,
+                          url: window.location.href,
+                        }).catch(() => {});
+                      } else {
+                        navigator.clipboard.writeText(window.location.href);
+                      }
+                    }}
+                    className="inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    title="Chia sẻ"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    <span>Chia sẻ</span>
+                  </button>
+                </div>
+                <button
+                  onClick={() => setSelectedReport(null)}
+                  className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                >
+                  Đóng
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )
+      : null;
+
   return (
-    <div className="fixed top-20 right-4 z-40 w-[420px] max-h-[calc(100vh-120px)] bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 flex flex-col overflow-hidden pointer-events-auto">
+    <>
+      <div className={`fixed ${rightClass} z-40 w-[420px] bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 flex flex-col overflow-hidden pointer-events-auto transition-transform duration-300`}>
       {/* Header - Clean White/Transparent Design */}
       <div className="bg-white/80 backdrop-blur-md border-b border-gray-200/50">
         <div className="px-6 py-5">
@@ -410,19 +821,24 @@ export default function ReportsListSidebar({ location, radius = 1, onClose, onAp
                   {/* Images Gallery */}
                   {report.images?.value && report.images.value.length > 0 && (
                     <div className="flex gap-2 mb-3">
-                      {report.images.value.slice(0, 3).map((img, idx) => (
-                        <div
-                          key={idx}
-                          className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 bg-gray-50"
-                        >
-                          <Image
-                            src={img}
-                            alt={`Report image ${idx + 1}`}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                      ))}
+                      {report.images.value
+                        .filter(isValidImageUrl)
+                        .map(normalizeImageUrl)
+                        .slice(0, 3)
+                        .map((img, idx) => (
+                          <div
+                            key={idx}
+                            className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 bg-gray-50"
+                          >
+                            <Image
+                              src={img}
+                              alt={`Report image ${idx + 1}`}
+                              fill
+                              className="object-cover"
+                              unoptimized={img.startsWith('data:')} // Disable optimization for data URLs
+                            />
+                          </div>
+                        ))}
                       {report.imageCount && report.imageCount.value > 3 && (
                         <div className="w-20 h-20 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center text-xs font-bold text-gray-600">
                           +{report.imageCount.value - 3}
@@ -462,260 +878,18 @@ export default function ReportsListSidebar({ location, radius = 1, onClose, onAp
         )}
       </div>
 
-      {/* Footer - Info */}
-      {!loading && filteredReports.length > 0 && (
-        <div className="px-4 py-3 border-t border-gray-100 bg-gray-50/50">
-          <p className="text-xs text-center text-gray-600">
-            Showing <span className="font-bold text-gray-900">{filteredReports.length}</span> of <span className="font-bold text-gray-900">{reports.length}</span> reports within {radius}km radius
-          </p>
-        </div>
-      )}
-
-      {/* Report Detail Modal - Centered */}
-      {selectedReport && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-          onClick={() => setSelectedReport(null)}
-        >
-          <div
-            className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[95vh] flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header - Fixed */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <AlertTriangle className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900">Chi tiết báo cáo</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">ID: {selectedReport.id.substring(0, 20)}...</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setSelectedReport(null)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Content - Scrollable */}
-            <div className="flex-1 overflow-y-auto px-6 py-6">
-              <div className="space-y-6">
-                {/* Title */}
-                <div className="bg-gradient-to-br from-gray-50 to-white p-5 rounded-lg border border-gray-200">
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                    Tiêu đề
-                  </label>
-                  <h4 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                    <span className="text-2xl">{getCategoryIcon(selectedReport.category.value)}</span>
-                    {selectedReport.title.value}
-                  </h4>
-                </div>
-
-                {/* Status and Priority Row */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-lg border border-gray-200">
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                      Trạng thái
-                    </label>
-                    {(() => {
-                      const status = STATUS_CONFIG[selectedReport.status.value as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pending;
-                      const StatusIcon = status.icon;
-                      return (
-                        <span className={`inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg border ${status.color}`}>
-                          <StatusIcon className="w-4 h-4 mr-2" />
-                          {status.label}
-                        </span>
-                      );
-                    })()}
-                  </div>
-                  <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-lg border border-gray-200">
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                      Độ ưu tiên
-                    </label>
-                    {(() => {
-                      const priority = PRIORITY_CONFIG[selectedReport.priority.value as keyof typeof PRIORITY_CONFIG] || PRIORITY_CONFIG.unassigned;
-                      return (
-                        <span className={`inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg border ${priority.bg} ${priority.border} ${priority.color}`}>
-                          <span className={`w-2 h-2 rounded-full ${priority.dot} mr-2`}></span>
-                          {priority.label}
-                        </span>
-                      );
-                    })()}
-                  </div>
-                </div>
-
-                {/* Description */}
-                <div className="bg-gradient-to-br from-gray-50 to-white p-5 rounded-lg border border-gray-200">
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                    Mô tả chi tiết
-                  </label>
-                  <div className="prose prose-sm max-w-none">
-                    <p className="text-sm text-gray-900 leading-relaxed whitespace-pre-wrap">
-                      {selectedReport.description.value || (
-                        <span className="text-gray-400 italic">Không có mô tả</span>
-                      )}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Images Gallery */}
-                {selectedReport.images?.value && selectedReport.images.value.length > 0 && (
-                  <div className="bg-gradient-to-br from-gray-50 to-white p-5 rounded-lg border border-gray-200">
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
-                      <Camera className="w-4 h-4" />
-                      <span>Hình ảnh ({selectedReport.images.value.length})</span>
-                    </label>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {selectedReport.images.value.map((img, idx) => (
-                        <div
-                          key={idx}
-                          className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-50 group cursor-pointer"
-                        >
-                          <Image
-                            src={img}
-                            alt={`Report image ${idx + 1}`}
-                            fill
-                            className="object-cover group-hover:scale-105 transition-transform"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Location */}
-                {selectedReport.location && selectedReport.location.value && selectedReport.location.value.coordinates && (
-                  <div className="bg-gradient-to-br from-green-50 to-white p-5 rounded-lg border border-green-100">
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center space-x-2">
-                      <MapPin className="w-4 h-4 text-green-600" />
-                      <span>Vị trí báo cáo</span>
-                    </label>
-                    <div className="space-y-2">
-                      <div className="bg-white p-3 rounded border border-gray-200">
-                        <p className="text-xs text-gray-500 mb-1">Tọa độ</p>
-                        <p className="text-sm font-mono text-gray-900">
-                          [{selectedReport.location.value.coordinates.join(', ')}]
-                        </p>
-                      </div>
-                      {selectedReport.location.value.coordinates.length >= 2 && (
-                        <a
-                          href={`https://www.google.com/maps?q=${selectedReport.location.value.coordinates[1]},${selectedReport.location.value.coordinates[0]}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center space-x-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
-                        >
-                          <MapPin className="w-4 h-4" />
-                          <span>Xem trên Google Maps</span>
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Category and Dates Row */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-gradient-to-br from-blue-50 to-white p-4 rounded-lg border border-blue-100">
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                      Danh mục
-                    </label>
-                    <p className="text-sm font-medium text-gray-900 capitalize">
-                      {getCategoryLabel(selectedReport.category.value)}
-                    </p>
-                  </div>
-                  <div className="bg-gradient-to-br from-purple-50 to-white p-4 rounded-lg border border-purple-100">
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center space-x-1">
-                      <Clock className="w-3 h-3" />
-                      <span>Ngày tạo</span>
-                    </label>
-                    <p className="text-sm font-medium text-gray-900">
-                      {new Date(selectedReport.dateCreated.value['@value']).toLocaleDateString('vi-VN', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </p>
-                  </div>
-                  <div className="bg-gradient-to-br from-indigo-50 to-white p-4 rounded-lg border border-indigo-100">
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center space-x-1">
-                      <User className="w-3 h-3" />
-                      <span>Người báo cáo</span>
-                    </label>
-                    <p className="text-sm font-medium text-gray-900">
-                      {selectedReport.reporterName.value}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Full Report ID */}
-                <div className="bg-gray-900 p-4 rounded-lg">
-                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-                    ID đầy đủ
-                  </label>
-                  <p className="text-xs font-mono text-gray-300 break-all">{selectedReport.id}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer - Fixed */}
-            <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
-              <div className="flex items-center space-x-2">
-                {selectedReport.location && selectedReport.location.value && selectedReport.location.value.coordinates && selectedReport.location.value.coordinates.length >= 2 && (
-                  <a
-                    href={`https://www.google.com/maps?q=${selectedReport.location.value.coordinates[1]},${selectedReport.location.value.coordinates[0]}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    <MapPin className="w-4 h-4" />
-                    <span>Xem bản đồ</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                )}
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(selectedReport.id);
-                    // You can add a toast notification here
-                  }}
-                  className="inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                  title="Sao chép ID"
-                >
-                  <Copy className="w-4 h-4" />
-                  <span>Sao chép ID</span>
-                </button>
-                <button
-                  onClick={() => {
-                    if (navigator.share) {
-                      navigator.share({
-                        title: selectedReport.title.value,
-                        text: selectedReport.description.value,
-                        url: window.location.href,
-                      }).catch(() => { });
-                    } else {
-                      navigator.clipboard.writeText(window.location.href);
-                    }
-                  }}
-                  className="inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                  title="Chia sẻ"
-                >
-                  <Share2 className="w-4 h-4" />
-                  <span>Chia sẻ</span>
-                </button>
-              </div>
-              <button
-                onClick={() => setSelectedReport(null)}
-                className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
-              >
-                Đóng
-              </button>
-            </div>
+        {/* Footer - Info */}
+        {!loading && filteredReports.length > 0 && (
+          <div className="px-4 py-3 border-t border-gray-100 bg-gray-50/50">
+            <p className="text-xs text-center text-gray-600">
+              Showing <span className="font-bold text-gray-900">{filteredReports.length}</span> of <span className="font-bold text-gray-900">{reports.length}</span> reports within {radius}km radius
+            </p>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+
+      {/* Report Detail Modal - render bằng portal để không bị giới hạn width sidebar */}
+      {modalPortal}
+    </>
   );
 }

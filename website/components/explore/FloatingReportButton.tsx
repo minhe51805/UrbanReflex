@@ -8,7 +8,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertTriangle, X, Send, MapPin, Camera, Trash2 } from 'lucide-react';
+import { Flag, X, Send, MapPin, Camera, Trash2 } from 'lucide-react';
 import { processReportWithAIAsync } from '@/lib/services/reportApproval';
 import { processImages } from '@/lib/utils/imageProcessor';
 import { useAuth } from '@/contexts/AuthContext';
@@ -259,14 +259,17 @@ export default function FloatingReportButton({ selectedRoad }: FloatingReportBut
             return;
           }
           setShowModal(true);
-        }}
-        className="fixed bottom-8 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-6 py-4 bg-white border-2 border-orange-500 text-orange-600 hover:bg-orange-50 font-bold rounded-full shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all backdrop-blur-sm"
-        title={!user ? 'Login to report' : selectedRoad ? `Report issue for ${selectedRoad.name}` : 'Select a road first'}
-      >
-        <div className="bg-transparent p-2 rounded-full flex items-center justify-center">
-          <AlertTriangle className="h-5 w-5 text-orange-600 stroke-2" fill="currentColor" />
-        </div>
-        <span className="hidden sm:inline text-orange-600 font-bold">Báo cáo</span>
+         }}
+        className="fixed bottom-8 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-6 py-3 sm:px-7 sm:py-4 bg-white text-orange-700 font-semibold rounded-full shadow-[0_10px_24px_rgba(15,23,42,0.28)] hover:shadow-[0_14px_30px_rgba(15,23,42,0.38)] transform hover:-translate-y-0.5 transition-all border border-orange-400"
+         title={!user ? 'Login to report' : selectedRoad ? `Report issue for ${selectedRoad.name}` : 'Select a road first'}
+        >
+         <div className="bg-orange-50 px-2 py-2 rounded-full flex items-center justify-center shadow-inner shadow-orange-200">
+           <Flag className="h-5 w-5 sm:h-6 sm:w-6 text-orange-600 stroke-2" />
+         </div>
+         <div className="flex flex-col leading-tight text-left">
+           <span className="text-xs uppercase tracking-wider text-slate-500 hidden sm:block">Gửi cảnh báo</span>
+           <span className="text-base font-bold text-slate-900">Báo cáo</span>
+         </div>
       </button>
 
       {/* Error Toast */}
@@ -278,21 +281,23 @@ export default function FloatingReportButton({ selectedRoad }: FloatingReportBut
 
       {/* Modal */}
       {showModal && selectedRoad && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col">
             {/* Header */}
-            <div className="bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-5 flex items-center justify-between">
+            <div className="px-6 py-5 flex items-center justify-between border-b border-gray-200 bg-white">
               <div className="flex items-center gap-3">
-                <div className="bg-white/20 backdrop-blur-sm p-2 rounded-xl">
-                  <AlertTriangle className="h-6 w-6 text-white" />
+                <div className="bg-orange-100 p-2 rounded-xl">
+                  <Flag className="h-6 w-6 text-orange-600 stroke-2" />
                 </div>
-                <h3 className="text-xl font-bold text-white">Report Road Issue</h3>
+                <h3 className="text-xl font-extrabold text-slate-900">
+                  Báo cáo sự cố đường
+                </h3>
               </div>
               <button
                 onClick={() => setShowModal(false)}
-                className="p-2 hover:bg-white/20 rounded-xl transition-colors"
+                className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
               >
-                <X className="h-6 w-6 text-white" />
+                <X className="h-6 w-6 text-gray-500" />
               </button>
             </div>
 
@@ -421,7 +426,7 @@ export default function FloatingReportButton({ selectedRoad }: FloatingReportBut
               <button
                 type="submit"
                 disabled={submitting || success}
-                className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:hover:translate-y-0"
+                className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white text-orange-700 font-bold rounded-2xl border-2 border-orange-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg hover:bg-orange-50"
               >
                 {submitting ? (
                   <>

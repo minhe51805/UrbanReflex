@@ -18,6 +18,23 @@ export async function GET(
     return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
   }
 
+<<<<<<< HEAD
+=======
+  const zNum = parseInt(z, 10);
+  const MAX_ZOOM = 19;
+
+  // Nếu zoom level vượt quá mức hỗ trợ của OpenStreetMap, không gọi ra ngoài nữa
+  // mà trả về 204 (no content). Map sẽ chỉ dùng lại tile ở level cao hơn, không lỗi 400.
+  if (Number.isNaN(zNum) || zNum > MAX_ZOOM || zNum < 0) {
+    return new NextResponse(null, {
+      status: 204,
+      headers: {
+        'Cache-Control': 'public, max-age=86400',
+      },
+    });
+  }
+
+>>>>>>> frontend
   // OpenStreetMap tile servers (round-robin for load balancing)
   const tileServers = [
     'https://a.tile.openstreetmap.org',
@@ -27,7 +44,11 @@ export async function GET(
 
   // Select server based on tile coordinates for load balancing
   const serverIndex = (parseInt(x) + parseInt(y)) % tileServers.length;
+<<<<<<< HEAD
   const tileUrl = `${tileServers[serverIndex]}/${z}/${x}/${y}.png`;
+=======
+  const tileUrl = `${tileServers[serverIndex]}/${zNum}/${x}/${y}.png`;
+>>>>>>> frontend
 
   try {
     const response = await fetch(tileUrl, {

@@ -8,7 +8,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MapPin, Route, Ruler, Layers, Navigation, Database, X, Cloud, Wind, Droplets, Gauge, Eye, Lightbulb, AlertTriangle, Landmark, Loader2 } from 'lucide-react';
+import { MapPin, Route, Ruler, Layers, Navigation, Database, X, Cloud, Wind, Droplets, Gauge, Eye, Lightbulb, AlertTriangle, Landmark, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import ReportButton from './ReportButton';
 
 interface RoadSegment {
@@ -34,6 +34,7 @@ interface RoadSegment {
 interface RoadDetailModalProps {
   road: RoadSegment | null;
   onClose: () => void;
+  onOpenAreaReports?: () => void;
 }
 
 interface RoadDetailData {
@@ -66,33 +67,57 @@ interface RoadReport {
   reporterContact?: string;
 }
 
-export default function RoadDetailModal({ road, onClose }: RoadDetailModalProps) {
+// Simple in-memory cache cho dữ liệu chi tiết road trong phiên hiện tại
+// Key: roadId, Value: { data, timestamp }
+const ROAD_DETAIL_CACHE = new Map<string, { data: RoadDetailData; timestamp: number }>();
+const CACHE_TTL_MS = 15 * 60 * 1000; // 15 phút
+
+export default function RoadDetailModal({ road, onClose, onOpenAreaReports }: RoadDetailModalProps) {
   const [detailData, setDetailData] = useState<RoadDetailData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showAllAQIStations, setShowAllAQIStations] = useState(false);
 
   useEffect(() => {
     if (road) {
-      fetchRoadDetails();
+      fetchRoadDetails(road.id);
+      setShowAllAQIStations(false); // Reset về hiển thị 3 trạm đầu tiên khi mở modal mới
     } else {
       setDetailData(null);
+      setShowAllAQIStations(false);
     }
   }, [road]);
 
-  const fetchRoadDetails = async () => {
-    if (!road) return;
+  const fetchRoadDetails = async (roadId: string) => {
+    // Nếu không có roadId thì bỏ qua
+    if (!roadId) return;
 
     try {
-      setLoading(true);
       setError(null);
-      const response = await fetch(`/api/roads/${encodeURIComponent(road.id)}`);
+
+      const now = Date.now();
+      const cached = ROAD_DETAIL_CACHE.get(roadId);
+
+      // Nếu có cache còn hạn, dùng luôn để hiển thị nhanh, không cần spinner
+      if (cached && now - cached.timestamp < CACHE_TTL_MS) {
+        setDetailData(cached.data);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+
+      const response = await fetch(`/api/roads/${encodeURIComponent(roadId)}`);
       if (!response.ok) {
         throw new Error('Failed to fetch road details');
       }
+
       const data = await response.json();
       console.log('Road detail data received:', data);
       console.log('Streetlights data:', data.streetlights);
+
       setDetailData(data);
+      ROAD_DETAIL_CACHE.set(roadId, { data, timestamp: Date.now() });
     } catch (err) {
       console.error('Error fetching road details:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -273,17 +298,20 @@ export default function RoadDetailModal({ road, onClose }: RoadDetailModalProps)
                 {/* AQI Section */}
                 {detailData.aqi !== undefined && detailData.aqi !== null && Array.isArray(detailData.aqi) && detailData.aqi.length > 0 && (
                   <div className="mb-4">
-                    <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center gap-2 mb-2">
                       <div className="bg-green-100 p-2 rounded-lg">
                         <span className="text-xl">🌬️</span>
                       </div>
                       <h4 className="font-bold text-gray-900">2. Air Quality Observed</h4>
                       <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-semibold">
-                        {detailData.aqi.length} stations
+                        OpenAQ có {detailData.aqi.length} trạm
                       </span>
                     </div>
+                    <p className="text-xs text-gray-600 mb-3 ml-12">
+                      Tuyến đường sẽ visual data từ trạm OpenAQ ở gần nhất
+                    </p>
                     <div className="bg-green-50 rounded-xl p-4 space-y-3">
-                      {detailData.aqi.slice(0, 3).map((station: any, idx: number) => (
+                      {(showAllAQIStations ? detailData.aqi : detailData.aqi.slice(0, 3)).map((station: any, idx: number) => (
                         <div key={idx} className="bg-white rounded-lg p-3">
                           <div className="flex items-center justify-between mb-2">
                             <p className="font-semibold text-gray-900 text-sm">{station.name || station.stationId}</p>
@@ -311,6 +339,25 @@ export default function RoadDetailModal({ road, onClose }: RoadDetailModalProps)
                           )}
                         </div>
                       ))}
+                      {detailData.aqi.length > 3 && (
+                        <button
+                          type="button"
+                          onClick={() => setShowAllAQIStations(!showAllAQIStations)}
+                          className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-green-700 bg-white border border-green-200 rounded-lg hover:bg-green-50 transition-colors"
+                        >
+                          {showAllAQIStations ? (
+                            <>
+                              <ChevronUp className="w-4 h-4" />
+                              <span>Thu gọn</span>
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown className="w-4 h-4" />
+                              <span>Xem tất cả ({detailData.aqi.length} trạm)</span>
+                            </>
+                          )}
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}
@@ -320,15 +367,28 @@ export default function RoadDetailModal({ road, onClose }: RoadDetailModalProps)
                 {/* Reports Section - Always show */}
                 {detailData.reports !== undefined && detailData.reports !== null && (
                   <div className="mb-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="bg-rose-100 p-2 rounded-lg">
-                        <AlertTriangle className="h-5 w-5 text-rose-600" />
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="bg-rose-100 p-2 rounded-lg">
+                          <AlertTriangle className="h-5 w-5 text-rose-600" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-gray-900">4. Citizen Reports</h4>
+                          {Array.isArray(detailData.reports) && detailData.reports.length > 0 && (
+                            <span className="text-xs bg-rose-100 text-rose-700 px-2 py-1 rounded-full font-semibold">
+                              {detailData.reports.length}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <h4 className="font-bold text-gray-900">4. Citizen Reports</h4>
-                      {Array.isArray(detailData.reports) && detailData.reports.length > 0 && (
-                        <span className="text-xs bg-rose-100 text-rose-700 px-2 py-1 rounded-full font-semibold">
-                          {detailData.reports.length}
-                        </span>
+                      {onOpenAreaReports && (
+                        <button
+                          type="button"
+                          onClick={onOpenAreaReports}
+                          className="text-xs font-semibold px-3 py-1.5 rounded-full border border-rose-200 text-rose-700 hover:bg-rose-50 transition-colors"
+                        >
+                          View area reports
+                        </button>
                       )}
                     </div>
                     {Array.isArray(detailData.reports) && detailData.reports.length > 0 ? (
@@ -470,15 +530,6 @@ export default function RoadDetailModal({ road, onClose }: RoadDetailModalProps)
         </div>
       </div>
 
-      {/* Report Button - Separate from modal */}
-      <div className={`fixed bottom-6 right-6 z-[5] transition-all duration-300 w-[420px] ${road ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0 pointer-events-none'
-        }`}>
-        <ReportButton
-          roadId={road.id}
-          roadName={road.name}
-          location={road.location}
-        />
-      </div>
     </>
   );
 }
