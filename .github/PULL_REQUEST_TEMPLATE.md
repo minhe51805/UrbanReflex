@@ -1,14 +1,6 @@
----
-name: Pull Request
-about: Create a pull request to contribute to UrbanReflex
-title: ""
-labels: ""
-assignees: ""
----
-
 ## Description
 
-Brief description of the changes made in this pull request.
+<!-- Provide a clear and concise description of what this PR accomplishes -->
 
 ## Type of Change
 

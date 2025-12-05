@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Documentation
+    url: https://urbanreflex-882wzswzf-ttas-projects-6148b983.vercel.app/
+    about: Browse the full documentation for guides, tutorials, and API references
+  - name: 💬 Discussion Forum
+    url: https://github.com/minhe51805/UrbanReflex/discussions
+    about: Ask questions, share ideas, and engage with the community
+  - name: 🔐 Security Vulnerability
+    url: https://github.com/minhe51805/UrbanReflex/security/advisories/new
+    about: Report security vulnerabilities privately (DO NOT create public issues)
+  - name: ❓ Questions & Support
+    url: https://github.com/minhe51805/UrbanReflex/discussions/categories/q-a
+    about: Get help with setup, usage, and troubleshooting

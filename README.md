@@ -8,14 +8,13 @@
 	A smart city intelligence platform that bridges fragmented urban data sources into a unified NGSI-LD ecosystem, empowering communities and city managers with real-time infrastructure insights and open data access
 </p>
 
-
 <p align="center">
   <a href="https://urbanreflex-882wzswzf-ttas-projects-6148b983.vercel.app/" rel="dofollow" target="blank"><strong>Explore the docs »</strong></a>
 	<br/>
 	<br/>
-	<a href="https://github.com/minhe51805/UrbanReflex/issues/new?assignees=&labels=&projects=&template=bug_report.md&title=%F0%9F%90%9B+Bug+Report%3A+">🐛 Report Bug</a>
+	<a href="https://github.com/minhe51805/UrbanReflex/issues/new?template=bug_report.yml">🐛 Report Bug</a>
 	|
-	<a href="https://github.com/minhe51805/UrbanReflex/issues/new?assignees=&labels=&projects=&template=feature_request.md&title=%F0%9F%9A%80+Feature%3A+">✈️ Request Feature</a>
+	<a href="https://github.com/minhe51805/UrbanReflex/issues/new?template=feature_request.yml">✨ Request Feature</a>
 	|
 	<a href="https://github.com/minhe51805/UrbanReflex/discussions">💬 Join Discussion</a>
 	|
@@ -64,13 +63,13 @@
 - [What is UrbanReflex?](#what-is-urbanreflex)
 - [Key Features](#-key-features)
 - [Getting Started](#-getting-started)
-	- [Prerequisites](#️-prerequisites)
-		- [Infrastructure](#infrastructure)
-		- [Services & API Keys](#services--api-keys)
-	- [Setup](#-setup)
-	- [Running](#-running)
-	- [Testing](#-testing)
-	- [Demo Credentials](#-demo-credentials)
+  - [Prerequisites](#️-prerequisites)
+    - [Infrastructure](#infrastructure)
+    - [Services & API Keys](#services--api-keys)
+  - [Setup](#-setup)
+  - [Running](#-running)
+  - [Testing](#-testing)
+  - [Demo Credentials](#-demo-credentials)
 - [Technology Stack](#️-technology-stack)
 - [System Architecture](#-system-architecture)
 - [Project Structure](#-project-structure)
@@ -99,37 +98,41 @@ UrbanReflex is an open-source smart city platform that addresses modern urban ch
 ## ✨ Key Features
 
 ### **Air Quality Intelligence**
-- Real-time AQI from 10,000+ global monitoring stations  
-- Interactive map with heatmaps and clustering  
-- Health advisories based on pollution levels  
-- Historical trend analysis with charts  
-- Location-based search for any city or region  
+
+- Real-time AQI from 10,000+ global monitoring stations
+- Interactive map with heatmaps and clustering
+- Health advisories based on pollution levels
+- Historical trend analysis with charts
+- Location-based search for any city or region
 
 ### **Citizen Engagement**
-- Report urban issues (streetlights, potholes, waste, etc.)  
-- Photo uploads with automatic geolocation  
-- Real-time status tracking for issue resolution  
-- Community voting for prioritization  
-- Automated severity classification  
+
+- Report urban issues (streetlights, potholes, waste, etc.)
+- Photo uploads with automatic geolocation
+- Real-time status tracking for issue resolution
+- Community voting for prioritization
+- Automated severity classification
 
 ### **AI Intelligence**
-- Natural language chatbot powered by Gemini  
-- Semantic vector search using Pinecone  
-- Automatic report classification  
-- Predictive analytics and hotspot forecasting (planned v1.1)  
+
+- Natural language chatbot powered by Gemini
+- Semantic vector search using Pinecone
+- Automatic report classification
+- Predictive analytics and hotspot forecasting (planned v1.1)
 
 ### **Smart City Infrastructure**
-- NGSI-LD compliant data models (ETSI standard)  
-- Orion-LD for real-time context management  
-- IoT sensor integration for urban monitoring  
-- Open data export (GeoJSON, NDJSON)  
+
+- NGSI-LD compliant data models (ETSI standard)
+- Orion-LD for real-time context management
+- IoT sensor integration for urban monitoring
+- Open data export (GeoJSON, NDJSON)
 
 ### **Role-Based Access Control**
-- **Citizen**: submit reports, view air quality, access chatbot  
-- **City Official**: manage reports, assign tasks, analytics dashboard  
-- **Admin**: system and user management  
-- **Developer**: REST API with full OpenAPI documentation  
 
+- **Citizen**: submit reports, view air quality, access chatbot
+- **City Official**: manage reports, assign tasks, analytics dashboard
+- **Admin**: system and user management
+- **Developer**: REST API with full OpenAPI documentation
 
 ---
 
@@ -139,17 +142,17 @@ UrbanReflex is an open-source smart city platform that addresses modern urban ch
 
 ### Infrastructure Requirements
 
-- **Docker Desktop** (Windows/macOS) or **Docker Engine** (Linux) — container platform used to run UrbanReflex services in isolated, reproducible environments.  
-- **Docker Compose** — orchestrates backend, frontend, and supporting services.  
-- **Node.js (v18+)** — required for building and running the Next.js frontend.  
-- **Python (v3.10+)** — runtime for the FastAPI backend and AI service modules.  
-- **MongoDB** (optional) — document database for storing user data and report information.  
+- **Docker Desktop** (Windows/macOS) or **Docker Engine** (Linux) — container platform used to run UrbanReflex services in isolated, reproducible environments.
+- **Docker Compose** — orchestrates backend, frontend, and supporting services.
+- **Node.js (v18+)** — required for building and running the Next.js frontend.
+- **Python (v3.10+)** — runtime for the FastAPI backend and AI service modules.
+- **MongoDB** (optional) — document database for storing user data and report information.
 - **Redis** (optional) — in‑memory cache used for session handling and performance optimization.
 
 ### Services & API Keys
 
-- **Google Gemini API Key** — powers AI chatbot interactions and automated classification.  
-- **Pinecone API Key** — enables vector search and semantic similarity indexing.  
+- **Google Gemini API Key** — powers AI chatbot interactions and automated classification.
+- **Pinecone API Key** — enables vector search and semantic similarity indexing.
 - **OpenAQ API** — source of global air quality data (no key required).
 
 ---
@@ -159,25 +162,31 @@ UrbanReflex is an open-source smart city platform that addresses modern urban ch
 ### Prerequisites
 
 **Runtimes**
+
 - [Python 3.10+](https://www.python.org/downloads/)
 - [Node.js 18+](https://nodejs.org/en/download)
 
 **Containers**
+
 - [Docker](https://www.docker.com/)
 - [Docker Compose](https://docs.docker.com/compose/)
 
 **Developer Tooling**
+
 - [uv](https://docs.astral.sh/uv/getting-started/features/)
 - [Just](https://just.systems/)
 
 **Databases (Optional)**
+
 - [MongoDB](https://www.mongodb.com/try/download/community)
 - [Redis](https://redis.io/download)
 
 **API & External Services**
+
 - [Google Gemini API Key](https://makersuite.google.com/app/apikey)
 - [Pinecone API Key](https://www.pinecone.io/)
 - [OpenAQ API](https://openaq.org/)
+
 ---
 
 ## 🏃‍♂️ One‑Command Development Setup
@@ -223,10 +232,10 @@ cd website && npm run dev            # Frontend (port 3000)
 # .env file
 DATABASE_URL="mongodb://localhost:27017/urbanreflex"
 JWT_SECRET_KEY="your-secret-key"
-OPENAQ_API_KEY="your-openaq-key"           
-GEMINI_API_KEY="your-gemini-key"          
-PINECONE_API_KEY="your-pinecone-key"      
-ORION_BROKER_URL="http://localhost:1026"   
+OPENAQ_API_KEY="your-openaq-key"
+GEMINI_API_KEY="your-gemini-key"
+PINECONE_API_KEY="your-pinecone-key"
+ORION_BROKER_URL="http://localhost:1026"
 ```
 
 ---
@@ -271,6 +280,7 @@ OpenStreetMap              → Geolocation and POI data
 Google Gemini API          → AI conversational capabilities
 Pinecone Cloud             → Managed vector database
 ```
+
 ---
 
 ## 📊 System Architecture
@@ -447,6 +457,3 @@ Want to report a bug, contribute some code, or improve the documentation? Excell
 <p align="justify">
 This project is licensed under the terms of the <a href="./LICENSE">GNU General Public License v3.0</a>.
 </p>
-
-
-
