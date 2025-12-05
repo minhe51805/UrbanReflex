@@ -437,4 +437,7 @@ dist
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
 
+# Documentation site (deployed separately)
+docs/urban-reflex/
+
 # End of .gitignore
