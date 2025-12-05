@@ -111,72 +111,70 @@ export default function CompactLocationCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.3 }}
-      className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200 w-full max-w-md"
+      className="bg-white rounded-xl shadow-xl overflow-hidden border-2 border-[#64BABE]/30 w-full max-w-md hover:shadow-2xl transition-shadow duration-300"
     >
-      {/* Header - Blue banner */}
-      <div className="bg-blue-600 px-4 py-3">
+      {/* Header - UrbanReflex Teal banner */}
+      <div className="bg-gradient-to-r from-[#008EA0] to-[#64BABE] px-4 py-3">
         <h2 className="text-lg font-semibold text-white">{name}</h2>
       </div>
 
       {/* Location below header */}
-      <div className="px-4 py-2 bg-white border-b border-gray-200">
-        <p className="text-sm text-gray-900">{city}, {country}</p>
+      <div className="px-4 py-2 bg-white border-b border-[#64BABE]/30">
+        <p className="text-sm text-gray-900 font-medium">{city}, {country}</p>
+        {type && (
+          <p className="text-xs text-gray-600 mt-0.5">
+            <span className="font-medium">Type:</span> {type}
+          </p>
+        )}
       </div>
 
       {/* Body - White background with sections */}
       <div className="bg-white">
-        {/* Type Section */}
-        <div className="px-4 py-3 border-b border-gray-200">
-          <p className="text-sm text-gray-700">
-            <span className="font-medium">Type:</span> {type || 'Road'}
-          </p>
-        </div>
-
         {/* Measures Section */}
         {aqiPollutants.length > 0 && (
-          <div className="px-4 py-3 border-b border-gray-200">
-            <p className="text-sm text-gray-700 mb-1">
-              <span className="font-medium">Measures:</span>
+          <div className="px-4 py-3 border-b border-[#64BABE]/30 bg-gradient-to-br from-[#64BABE]/5 to-white">
+            <p className="text-sm text-gray-800 mb-1">
+              <span className="font-bold text-[#008EA0]">Measures:</span>
             </p>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-700">
               {aqiPollutants.join(', ')}
             </p>
           </div>
         )}
 
         {/* Provider Section */}
-        <div className="px-4 py-3 border-b border-gray-200">
-          <p className="text-sm text-gray-700">
-            <span className="font-medium">Provider:</span> {provider}
+        <div className="px-4 py-3 border-b border-[#64BABE]/30">
+          <p className="text-sm text-gray-800">
+            <span className="font-bold text-[#008EA0]">Provider:</span> <span className="text-gray-700">{provider}</span>
           </p>
         </div>
 
         {/* Reporting Section */}
-        <div className="px-4 py-3 border-b border-gray-200">
-          <p className="text-sm text-gray-700">
-            <span className="font-medium">Reporting:</span> {lastUpdated}
+        <div className="px-4 py-3 border-b border-[#64BABE]/30 bg-gradient-to-br from-white to-[#64BABE]/5">
+          <p className="text-sm text-gray-800">
+            <span className="font-bold text-[#008EA0]">Reporting:</span> <span className="text-gray-700">{lastUpdated}</span>
           </p>
-          <p className="text-xs text-gray-500 mt-0.5">Since {since}</p>
+          <p className="text-xs text-[#008EA0] mt-0.5 font-medium">Since {since}</p>
         </div>
 
         {/* Latest Readings Section */}
-        <div className="px-4 py-3 border-b border-gray-200">
-          <p className="text-sm font-medium text-gray-700 mb-2">
-            Latest readings {localTime} (local time)
+        <div className="px-4 py-3 border-b border-[#64BABE]/30">
+          <p className="text-sm font-bold text-[#008EA0] mb-3 flex items-center gap-2">
+            <span>Latest readings {localTime} (local time)</span>
           </p>
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {latestReadings.map((measurement, index) => (
-              <div key={index} className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-900">
+              <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-gradient-to-r from-white to-[#64BABE]/5 border border-[#64BABE]/20 hover:border-[#008EA0]/40 transition-colors">
+                <span className="text-sm font-semibold text-gray-800">
                   {getParameterDisplayName(measurement.parameter)}
                 </span>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-700">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-bold text-[#008EA0]">
                     {measurement.value} {measurement.unit}
                   </span>
-                  {/* Small trend indicator (simple line) */}
+                  {/* Small trend indicator - UrbanReflex style */}
                   <div className="w-8 h-4 flex items-end justify-center">
-                    <svg width="24" height="12" viewBox="0 0 24 12" className="text-purple-400">
+                    <svg width="24" height="12" viewBox="0 0 24 12" className="text-[#64BABE]">
                       <path
                         d="M0,10 Q6,6 12,7 T24,5"
                         stroke="currentColor"
@@ -194,27 +192,27 @@ export default function CompactLocationCard({
 
         {/* Additional Data Section (when expanded) */}
         {isExpanded && (streetlights || reports || pois) && (
-          <div className="px-4 py-3 border-b border-gray-200">
-            <p className="text-sm font-medium text-gray-700 mb-2">Additional Data</p>
+          <div className="px-4 py-3 border-b border-[#64BABE]/30 bg-gradient-to-br from-[#64BABE]/5 to-white">
+            <p className="text-sm font-bold text-[#008EA0] mb-2">Additional Data</p>
             <div className="space-y-2">
               {streetlights && streetlights.total > 0 && (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700">Streetlights</span>
-                  <span className="text-sm text-gray-900 font-medium">
+                <div className="flex items-center justify-between p-2 rounded-lg bg-white border border-[#64BABE]/20">
+                  <span className="text-sm text-gray-700 font-medium">Streetlights</span>
+                  <span className="text-sm text-[#008EA0] font-bold">
                     {streetlights.total} ({streetlights.on} ON / {streetlights.off} OFF)
                   </span>
                 </div>
               )}
               {reports !== undefined && reports > 0 && (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700">Citizen Reports</span>
-                  <span className="text-sm text-gray-900 font-medium">{reports}</span>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-white border border-[#64BABE]/20">
+                  <span className="text-sm text-gray-700 font-medium">Citizen Reports</span>
+                  <span className="text-sm text-[#008EA0] font-bold">{reports}</span>
                 </div>
               )}
               {pois !== undefined && pois > 0 && (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700">Points of Interest</span>
-                  <span className="text-sm text-gray-900 font-medium">{pois}</span>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-white border border-[#64BABE]/20">
+                  <span className="text-sm text-gray-700 font-medium">Points of Interest</span>
+                  <span className="text-sm text-[#008EA0] font-bold">{pois}</span>
                 </div>
               )}
             </div>
@@ -222,11 +220,11 @@ export default function CompactLocationCard({
         )}
 
         {/* Action Buttons */}
-        <div className="px-4 py-4 space-y-2">
+        <div className="px-4 py-4 space-y-2 bg-gradient-to-br from-white to-[#64BABE]/5">
           {/* Expand/Collapse Button */}
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="w-full px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+            className="w-full px-4 py-2 bg-white border-2 border-[#64BABE] text-[#008EA0] font-semibold rounded-lg hover:bg-[#64BABE]/10 hover:border-[#008EA0] transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
           >
             {isExpanded ? (
               <>
@@ -248,7 +246,7 @@ export default function CompactLocationCard({
           {/* Show Full Details Button */}
           <button
             onClick={handleShowFullDetails}
-            className="w-full px-4 py-2.5 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 transition-colors"
+            className="w-full px-4 py-2.5 bg-gradient-to-r from-[#008EA0] to-[#64BABE] text-white font-bold rounded-lg hover:from-[#085979] hover:to-[#008EA0] transition-all duration-200 shadow-md hover:shadow-lg border-2 border-[#085979]"
           >
             Show Full Details
           </button>
