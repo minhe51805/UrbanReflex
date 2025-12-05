@@ -140,7 +140,6 @@ function VirtualizedRoadList({ roads, onRoadClick }: { roads: RoadSegment[]; onR
 
 function ExplorePageContent() {
   const searchParams = useSearchParams();
-  const MAX_ROADS_DISPLAY = 2500;
   const [roadSegments, setRoadSegments] = useState<RoadSegment[]>([]);
   const [filteredRoadSegments, setFilteredRoadSegments] = useState<RoadSegment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -157,17 +156,37 @@ function ExplorePageContent() {
   const [highlightLabel, setHighlightLabel] = useState<string>('');
   const [areaReports, setAreaReports] = useState<ReportMarker[]>([]);
   const [streetlightMarkers, setStreetlightMarkers] = useState<Array<{id: string; coordinates: [number, number]; powerState?: string; status?: string}>>([]);
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const totalRoadCount = filteredRoadSegments.length;
 
-  const displayedRoadSegments = useMemo(
-    () => filteredRoadSegments.slice(0, MAX_ROADS_DISPLAY),
-    [filteredRoadSegments, MAX_ROADS_DISPLAY]
-  );
-
+  // Use all filtered road segments (no artificial display limit)
+  const displayedRoadSegments = filteredRoadSegments;
   const displayedRoadCount = displayedRoadSegments.length;
 
   useEffect(() => {
     loadRoadSegments();
+  }, []);
+
+  // Lấy vị trí hiện tại của người dùng (nếu được browser cho phép)
+  useEffect(() => {
+    if (typeof window === 'undefined' || !navigator.geolocation) return;
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        if (isFinite(latitude) && isFinite(longitude)) {
+          setUserLocation([longitude, latitude]);
+        }
+      },
+      (error) => {
+        console.warn('Geolocation error:', error);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000,
+      }
+    );
   }, []);
 
   useEffect(() => {
@@ -248,7 +267,6 @@ function ExplorePageContent() {
     setReportsLocation(centerLocation);
     setHighlightLocation(centerLocation);
     setHighlightLabel(road.name);
-    setShowReportsSidebar(true);
 
     // Fetch streetlights for this road - chỉ hiện khi road được chọn
     try {
@@ -474,6 +492,7 @@ function ExplorePageContent() {
           highlightLabel={highlightLabel}
           reportMarkers={areaReports}
           streetlightMarkers={streetlightMarkers}
+          userLocation={userLocation}
         />
       </div>
 
@@ -645,6 +664,17 @@ function ExplorePageContent() {
       <RoadDetailModal
         road={selectedRoad}
         onClose={() => setSelectedRoad(null)}
+        onOpenAreaReports={() => {
+          if (!selectedRoad) return;
+          // Đảm bảo đã có vị trí để sidebar dùng
+          if (!reportsLocation && selectedRoad.location?.coordinates?.length) {
+            const centerIndex = Math.floor(selectedRoad.location.coordinates.length / 2);
+            const rawCenter = selectedRoad.location.coordinates[centerIndex] || [0, 0];
+            const [lng, lat] = normalizeLngLat(rawCenter);
+            setReportsLocation([lng, lat]);
+          }
+          setShowReportsSidebar(true);
+        }}
       />
 
       {/*Reports List Sidebar*/}
@@ -652,11 +682,19 @@ function ExplorePageContent() {
         <ReportsListSidebar
           location={reportsLocation}
           radius={1}
+          attachToRoadDetail
           onClose={() => {
             setShowReportsSidebar(false);
             setAreaReports([]);
           }}
           onApprovedReportsUpdate={setAreaReports}
+          onFocusLocation={(coords, label) => {
+            if (!coords) return;
+            const [lng, lat] = coords;
+            if (!isFinite(lng) || !isFinite(lat)) return;
+            setHighlightLocation([lng, lat]);
+            setHighlightLabel(label || 'Citizen report');
+          }}
         />
       )}
 
