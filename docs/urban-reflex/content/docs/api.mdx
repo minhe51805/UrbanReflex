@@ -1,0 +1,342 @@
+---
+title: API Reference
+description: Complete API documentation for UrbanReflex
+---
+
+import { InfoCard } from "@/components/docs/InfoCard";
+
+<div className="mb-12 relative overflow-hidden">
+  <div className="absolute -inset-4 bg-gradient-to-r from-blue-500 via-cyan-500 to-violet-500 rounded-[2rem] blur-3xl opacity-20 animate-pulse-slow"></div>
+  
+  <div className="relative bg-gradient-to-br from-white/95 via-white/90 to-white/95 dark:from-slate-900/95 dark:via-slate-900/90 dark:to-slate-900/95 backdrop-blur-2xl border-2 border-slate-200/50 dark:border-slate-700/50 rounded-3xl p-10 md:p-12 shadow-2xl">
+    <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] dark:bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px] rounded-3xl"></div>
+    
+    <div className="relative">
+      <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-500/10 via-cyan-500/10 to-violet-500/10 border border-blue-500/20 mb-6 shadow-lg">
+        <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+        </svg>
+        <span className="text-sm font-bold bg-gradient-to-r from-blue-600 via-cyan-600 to-violet-600 bg-clip-text text-transparent">
+          RESTful API • FIWARE Compliant • Real-time
+        </span>
+      </div>
+
+      <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mb-4 leading-tight" style={{
+        background: 'linear-gradient(135deg, rgb(59, 130, 246) 0%, rgb(6, 182, 212) 50%, rgb(139, 92, 246) 100%)',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+        backgroundClip: 'text',
+        letterSpacing: '-0.02em'
+      }}>
+        API Reference
+      </h1>
+
+      <div className="text-lg md:text-xl text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
+        UrbanReflex exposes <strong className="text-slate-900 dark:text-white">RESTful APIs</strong> for accessing all urban monitoring data. All endpoints return <strong className="text-blue-600 dark:text-blue-400">JSON responses</strong> following FIWARE data models.
+      </div>
+
+      <div className="flex flex-wrap gap-3">
+        <div className="px-4 py-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-700 dark:text-blue-300 font-bold text-sm">
+          🔐 JWT Authentication
+        </div>
+        <div className="px-4 py-2 rounded-xl bg-green-500/10 border border-green-500/20 text-green-700 dark:text-green-300 font-bold text-sm">
+          ⚡ Rate Limiting
+        </div>
+        <div className="px-4 py-2 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-700 dark:text-purple-300 font-bold text-sm">
+          📡 WebSocket Support
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+## 🌐 Base URL
+
+<div className="not-prose my-6">
+  <div className="group relative overflow-hidden rounded-2xl">
+    <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl blur-lg opacity-20 group-hover:opacity-40 transition-opacity"></div>
+    <div className="relative p-6 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 border-2 border-slate-200/50 dark:border-slate-700/50">
+      <code className="text-lg font-bold text-blue-600 dark:text-blue-400">
+        https://api.urbanreflex.vn/v1
+      </code>
+    </div>
+  </div>
+</div>
+
+## 🔐 Authentication
+
+<InfoCard type="warning" title="API Key Required">
+  All API requests require an API key passed in the **Authorization** header.
+  Get your free API key by signing up.
+</InfoCard>
+
+```bash
+Authorization: Bearer YOUR_API_KEY
+```
+
+## 🌤️ Weather API
+
+### Get Current Weather
+
+<div className="not-prose my-6">
+  <div className="group relative overflow-hidden rounded-2xl transition-all hover:scale-[1.01]">
+    <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl blur-lg opacity-0 group-hover:opacity-30 transition-opacity"></div>
+    <div className="relative p-6 rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-2 border-slate-200/50 dark:border-slate-700/50">
+      <div className="flex items-center gap-4 mb-4">
+        <div className="px-3 py-1 rounded-lg bg-blue-500 text-white font-bold text-sm">
+          GET
+        </div>
+        <code className="text-base font-semibold text-slate-900 dark:text-white">
+          /weather/current
+        </code>
+      </div>
+      <div className="text-sm text-slate-600 dark:text-slate-400">
+        Retrieve current weather conditions for Ho Chi Minh City
+      </div>
+    </div>
+  </div>
+</div>
+
+**Response:**
+
+```json
+{
+  "id": "WeatherObserved:HCMC:2024",
+  "type": "WeatherObserved",
+  "location": {
+    "type": "Point",
+    "coordinates": [106.6297, 10.8231]
+  },
+  "temperature": 32.5,
+  "humidity": 78,
+  "windSpeed": 12.5,
+  "windDirection": 135,
+  "precipitation": 0,
+  "pressure": 1013,
+  "dewPoint": 27.8,
+  "dateObserved": "2024-01-15T14:30:00Z"
+}
+```
+
+### Get Weather Forecast
+
+Get 5-day weather forecast.
+
+**Endpoint:** `GET /weather/forecast`
+
+**Query Parameters:**
+
+- `days` (optional): Number of days (1-7, default: 5)
+
+## Air Quality API
+
+### Get Current AQI
+
+Retrieve current air quality measurements.
+
+**Endpoint:** `GET /airquality/current`
+
+**Query Parameters:**
+
+- `region` (optional): District code (e.g., "D1", "D3")
+
+**Response:**
+
+```json
+{
+  "id": "AirQualityObserved:HCMC:D1:2024",
+  "type": "AirQualityObserved",
+  "location": {
+    "type": "Point",
+    "coordinates": [106.6995, 10.7769]
+  },
+  "pm25": 35.2,
+  "pm10": 52.8,
+  "co": 0.8,
+  "no2": 25.6,
+  "o3": 48.3,
+  "so2": 12.1,
+  "aqi": 68,
+  "category": "Moderate",
+  "dateObserved": "2024-01-15T14:30:00Z"
+}
+```
+
+### Get AQI History
+
+Historical air quality data.
+
+**Endpoint:** `GET /airquality/history`
+
+**Query Parameters:**
+
+- `from`: Start date (ISO 8601)
+- `to`: End date (ISO 8601)
+- `region` (optional): District code
+
+## Streetlight API
+
+### List Streetlights
+
+Get all streetlights with their status.
+
+**Endpoint:** `GET /streetlights`
+
+**Query Parameters:**
+
+- `status` (optional): Filter by status ("on", "off", "faulty")
+- `segment` (optional): Road segment ID
+
+**Response:**
+
+```json
+{
+  "data": [
+    {
+      "id": "Streetlight:HCMC:001",
+      "type": "Streetlight",
+      "location": {
+        "type": "Point",
+        "coordinates": [106.6297, 10.8231]
+      },
+      "status": "on",
+      "powerState": "on",
+      "roadSegment": "Nguyen Hue Boulevard",
+      "lastUpdate": "2024-01-15T14:25:00Z"
+    }
+  ],
+  "total": 342,
+  "page": 1,
+  "pageSize": 50
+}
+```
+
+### Update Streetlight Status
+
+Toggle streetlight on/off.
+
+**Endpoint:** `PATCH /streetlights/:id`
+
+**Request Body:**
+
+```json
+{
+  "powerState": "on"
+}
+```
+
+## Citizen Reports API
+
+### Submit Report
+
+Create a new citizen report.
+
+**Endpoint:** `POST /reports`
+
+**Request Body:**
+
+```json
+{
+  "category": "infrastructure",
+  "description": "Broken streetlight on Nguyen Hue",
+  "location": {
+    "type": "Point",
+    "coordinates": [106.6297, 10.8231]
+  },
+  "urgency": "medium"
+}
+```
+
+**Response:**
+
+```json
+{
+  "id": "Report:HCMC:12345",
+  "status": "pending",
+  "submittedAt": "2024-01-15T14:30:00Z"
+}
+```
+
+### List Reports
+
+Get all citizen reports.
+
+**Endpoint:** `GET /reports`
+
+**Query Parameters:**
+
+- `status` (optional): Filter by status ("pending", "resolved")
+- `category` (optional): Filter by category
+- `limit`: Results per page (default: 20)
+- `offset`: Pagination offset
+
+## Rate Limits
+
+| Tier       | Requests/Hour | Price     |
+| ---------- | ------------- | --------- |
+| Free       | 100           | $0        |
+| Developer  | 10,000        | $29/month |
+| Enterprise | Unlimited     | Custom    |
+
+## Error Handling
+
+All errors follow this format:
+
+```json
+{
+  "error": {
+    "code": "INVALID_REQUEST",
+    "message": "Missing required parameter: location",
+    "details": {}
+  }
+}
+```
+
+### Common Error Codes
+
+- `INVALID_REQUEST` - Malformed request
+- `UNAUTHORIZED` - Invalid API key
+- `RATE_LIMIT_EXCEEDED` - Too many requests
+- `NOT_FOUND` - Resource doesn't exist
+- `INTERNAL_ERROR` - Server error
+
+## SDK Libraries
+
+Official SDKs are available for:
+
+```bash
+# JavaScript/TypeScript
+npm install @urbanreflex/sdk
+
+# Python
+pip install urbanreflex
+
+# Go
+go get github.com/urbanreflex/go-sdk
+```
+
+## WebSocket API
+
+For real-time updates, connect to our WebSocket endpoint:
+
+```javascript
+const ws = new WebSocket("wss://api.urbanreflex.vn/ws");
+
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  console.log("Real-time update:", data);
+};
+
+// Subscribe to weather updates
+ws.send(
+  JSON.stringify({
+    action: "subscribe",
+    channel: "weather",
+  })
+);
+```
+
+---
+
+Need help? Check our [troubleshooting guide](/docs/troubleshooting) or [contact support](mailto:support@urbanreflex.vn).
