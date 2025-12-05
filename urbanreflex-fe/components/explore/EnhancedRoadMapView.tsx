@@ -51,6 +51,7 @@ interface EnhancedRoadMapViewProps {
   highlightLabel?: string;
   reportMarkers?: ReportMarker[];
   streetlightMarkers?: StreetlightMarker[];
+  userLocation?: [number, number] | null;
 }
 
 export interface EnhancedRoadMapViewRef {
@@ -132,6 +133,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
   highlightLabel,
   reportMarkers = [],
   streetlightMarkers = [],
+  userLocation = null,
 }, ref) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
@@ -139,7 +141,8 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
   const [weatherData, setWeatherData] = useState<any>(null);
   const highlightMarkerRef = useRef<maplibregl.Marker | null>(null);
   const reportMarkerRefs = useRef<maplibregl.Marker[]>([]);
-  const streetlightMarkerRefs = useRef<maplibregl.Marker[]>([]);
+  const streetlightMarkerRefs = useRef<maplibregl.Marker[]>([]); // legacy, no longer used for rendering
+  const userLocationMarkerRef = useRef<maplibregl.Marker | null>(null);
   const geoJsonPopupRef = useRef<maplibregl.Popup | null>(null);
   const [isLegendCollapsed, setIsLegendCollapsed] = useState(false);
 
@@ -170,6 +173,8 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
       container: mapContainer.current,
       center: vietnamCenter,
       zoom: vietnamZoom,
+      // Hạn chế mức zoom tối đa để không request tile vượt quá level hỗ trợ (tránh 400)
+      maxZoom: 19,
     };
 
     // If a vector style URL is provided, use it (Google Maps–like look)
@@ -188,6 +193,8 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
                 type: 'raster',
                 tiles: ['/api/tiles/{z}/{x}/{y}'],
                 tileSize: 256,
+                // Giới hạn zoom level của source để không request tile > 19
+                maxzoom: 19,
                 attribution: '© OpenStreetMap contributors',
               },
             },
@@ -305,6 +312,70 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
     }
   }, [highlightLocation, highlightLabel, mapLoaded]);
 
+  // User location marker (vị trí hiện tại của người dùng)
+  useEffect(() => {
+    if (!map.current || !mapLoaded) return;
+
+    // Remove old marker nếu có
+    if (userLocationMarkerRef.current) {
+      userLocationMarkerRef.current.remove();
+      userLocationMarkerRef.current = null;
+    }
+
+    if (!userLocation) return;
+
+    const [lng, lat] = userLocation;
+    if (!isFinite(lng) || !isFinite(lat)) return;
+
+    const el = document.createElement('div');
+    el.style.width = '32px';
+    el.style.height = '32px';
+    el.style.position = 'relative';
+    el.innerHTML = `
+      <div style="
+        position:absolute;
+        bottom:-4px;
+        left:50%;
+        transform:translateX(-50%);
+        width:18px;
+        height:6px;
+        background:rgba(15,23,42,0.35);
+        border-radius:50%;
+        filter:blur(2px);
+      "></div>
+      <div style="
+        position:absolute;
+        top:0;
+        left:50%;
+        transform:translate(-50%,-10%);
+        width:26px;
+        height:26px;
+        border-radius:50%;
+        background:radial-gradient(circle at 30% 30%, #e0f2fe 0, #0ea5e9 45%, #0369a1 100%);
+        border:3px solid white;
+        box-shadow:0 6px 16px rgba(15,118,110,0.55);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+      ">
+        <div style="
+          width:10px;
+          height:10px;
+          border-radius:50%;
+          background:white;
+          box-shadow:0 0 0 3px rgba(59,130,246,0.5);
+        "></div>
+      </div>
+    `;
+
+    userLocationMarkerRef.current = new maplibregl.Marker({
+      element: el,
+      anchor: 'bottom',
+    })
+      .setLngLat([lng, lat])
+      .addTo(map.current);
+  }, [userLocation, mapLoaded]);
+
   // Report markers for approved reports (Đang xử lý / Đã giải quyết)
   useEffect(() => {
     // Remove existing report markers
@@ -421,104 +492,132 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
     };
   }, [reportMarkers, mapLoaded]);
 
-  // Streetlight markers - chỉ hiện khi click vào road có streetlights
+  // Streetlight markers - hiển thị bằng vector layer để không bị "trượt" khi zoom
   useEffect(() => {
-    // Remove existing streetlight markers
-    streetlightMarkerRefs.current.forEach(marker => marker.remove());
-    streetlightMarkerRefs.current = [];
+    if (!map.current || !mapLoaded) return;
 
-    if (!map.current || !mapLoaded || !streetlightMarkers.length) return;
+    const mapInstance = map.current;
 
-    streetlightMarkers.forEach((streetlight) => {
-      if (!Array.isArray(streetlight.coordinates) || streetlight.coordinates.length < 2) return;
-      const [rawLng, rawLat] = streetlight.coordinates;
-      const [lng, lat] = normalizeLngLat([rawLng, rawLat]);
+    // Nếu không có streetlight, clear source nếu tồn tại
+    if (!streetlightMarkers.length) {
+      const src = mapInstance.getSource('streetlights') as maplibregl.GeoJSONSource | undefined;
+      if (src) {
+        src.setData({
+          type: 'FeatureCollection',
+          features: [],
+        } as any);
+      }
+      return;
+    }
 
-      if (!isFinite(lng) || !isFinite(lat)) return;
+    const features = streetlightMarkers
+      .map((sl) => {
+        if (!Array.isArray(sl.coordinates) || sl.coordinates.length < 2) return null;
+        const [lng, lat] = sl.coordinates;
+        if (!isFinite(lng) || !isFinite(lat)) return null;
 
-      const powerState = streetlight.powerState || 'unknown';
-      const isOn = powerState.toLowerCase() === 'on';
-      const color = isOn ? '#fbbf24' : '#6b7280'; // Yellow for on, gray for off
-      const iconColor = isOn ? '#fbbf24' : '#9ca3af';
-
-      const markerEl = document.createElement('div');
-      markerEl.style.width = '32px';
-      markerEl.style.height = '32px';
-      markerEl.style.position = 'relative';
-      markerEl.style.cursor = 'pointer';
-      markerEl.style.zIndex = '1000';
-      markerEl.innerHTML = `
-        <div style="
-          position:absolute;
-          bottom:-4px;
-          left:50%;
-          transform:translateX(-50%);
-          width:20px;
-          height:6px;
-          background:rgba(0,0,0,0.2);
-          border-radius:50%;
-          filter:blur(2px);
-        "></div>
-        <div style="
-          position:absolute;
-          top:0;
-          left:50%;
-          transform:translateX(-50%);
-          width:32px;
-          height:32px;
-          background:${color};
-          border-radius:50%;
-          border:3px solid white;
-          box-shadow:0 4px 12px rgba(0,0,0,0.3);
-          display:flex;
-          align-items:center;
-          justify-content:center;
-        ">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M9 21h6M12 3a6 6 0 0 0-6 6c0 2.5 1.5 4.5 3 6M12 3a6 6 0 0 1 6 6c0 2.5-1.5 4.5-3 6" stroke="${iconColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <circle cx="12" cy="9" r="1" fill="${iconColor}"/>
-          </svg>
-        </div>
-      `;
-
-      const popup = new maplibregl.Popup({
-        offset: [0, -10],
-        closeButton: true,
-        closeOnClick: true,
-        className: 'streetlight-popup'
-      }).setHTML(`
-        <div style="padding:8px; min-width:150px;">
-          <div style="font-weight:600; color:#111827; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M9 21h6M12 3a6 6 0 0 0-6 6c0 2.5 1.5 4.5 3 6M12 3a6 6 0 0 1 6 6c0 2.5-1.5 4.5-3 6" stroke="${iconColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            Streetlight
-          </div>
-          <div style="font-size:12px; color:#6b7280; margin-bottom:4px;">
-            <strong>Trạng thái:</strong> <span style="color:${color}; font-weight:600;">${isOn ? 'Bật' : 'Tắt'}</span>
-          </div>
-          <div style="font-size:11px; color:#9ca3af;">
-            ${lat.toFixed(5)}, ${lng.toFixed(5)}
-          </div>
-        </div>
-      `);
-
-      const marker = new maplibregl.Marker({
-        element: markerEl,
-        anchor: 'bottom',
-        draggable: false, // Không cho phép di chuyển marker
+        return {
+          type: 'Feature' as const,
+          properties: {
+            id: sl.id,
+            powerState: (sl.powerState || '').toLowerCase(),
+            status: sl.status || '',
+          },
+          geometry: {
+            type: 'Point' as const,
+            coordinates: [lng, lat],
+          },
+        };
       })
-        .setLngLat([lng, lat])
-        .setPopup(popup)
-        .addTo(map.current!);
+      .filter(Boolean) as any[];
 
-      streetlightMarkerRefs.current.push(marker);
-    });
-
-    return () => {
-      streetlightMarkerRefs.current.forEach(marker => marker.remove());
-      streetlightMarkerRefs.current = [];
+    const geojson: any = {
+      type: 'FeatureCollection',
+      features,
     };
+
+    const existingSource = mapInstance.getSource('streetlights') as maplibregl.GeoJSONSource | undefined;
+
+    if (existingSource) {
+      existingSource.setData(geojson);
+    } else {
+      mapInstance.addSource('streetlights', {
+        type: 'geojson',
+        data: geojson,
+      } as any);
+
+      // Shadow layer cho streetlight
+      mapInstance.addLayer({
+        id: 'streetlights-shadow',
+        type: 'circle',
+        source: 'streetlights',
+        minzoom: 14,
+        paint: {
+          'circle-radius': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            14, 5,
+            18, 8,
+          ],
+          'circle-color': '#0f172a',
+          'circle-opacity': 0.22,
+          'circle-blur': 0.7,
+          'circle-translate': [0, 1],
+        },
+      } as any);
+
+      // Main streetlight node (vòng ngoài)
+      mapInstance.addLayer({
+        id: 'streetlights-circle',
+        type: 'circle',
+        source: 'streetlights',
+        minzoom: 14,
+        paint: {
+          'circle-radius': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            14, 7,
+            18, 10,
+          ],
+          // Vàng nếu powerState == 'on', xám nếu khác
+          'circle-color': [
+            'case',
+            ['==', ['get', 'powerState'], 'on'],
+            '#facc15',
+            '#9ca3af',
+          ],
+          'circle-stroke-color': '#ffffff',
+          'circle-stroke-width': 1.5,
+          'circle-opacity': 1,
+        },
+      } as any);
+
+      // Inner circle để tạo cảm giác bóng và đậm màu ở giữa
+      mapInstance.addLayer({
+        id: 'streetlights-inner',
+        type: 'circle',
+        source: 'streetlights',
+        minzoom: 14,
+        paint: {
+          'circle-radius': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            14, 4.5,
+            18, 7,
+          ],
+          'circle-color': [
+            'case',
+            ['==', ['get', 'powerState'], 'on'],
+            '#fde68a', // vàng nhạt hơn ở giữa
+            '#e5e7eb', // xám nhạt ở giữa
+          ],
+          'circle-opacity': 1,
+        },
+      } as any);
+    }
   }, [streetlightMarkers, mapLoaded]);
 
   // Zoom to road function
@@ -607,9 +706,36 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
         type: 'geojson',
         data: geojson,
         cluster: true,
-        clusterRadius: 60,   // pixels
-        clusterMaxZoom: 14,  // beyond this zoom, show individual points
+        // Dùng bán kính ở mức trung bình để không gom hết thành 1 cụm
+        // nhưng cũng không nổ quá nhiều cụm nhỏ như khi để 20px.
+        clusterRadius: 30,   // pixels (thỏa hiệp giữa 20 và 60)
+        clusterMaxZoom: 13,  // beyond this zoom, show individual points
       } as any);
+
+      // Cluster shadow layer (soft blur behind main node)
+      if (mapInstance && !mapInstance.getLayer('road-clusters-shadow')) {
+        mapInstance.addLayer({
+          id: 'road-clusters-shadow',
+          type: 'circle',
+          source: 'road-points',
+          filter: ['has', 'point_count'],
+          paint: {
+            'circle-radius': [
+              'step',
+              ['get', 'point_count'],
+              18,
+              10, 26,
+              30, 38,
+              60, 50,
+            ],
+            'circle-color': '#0f172a',
+            // Giảm opacity để bóng cụm đường mềm hơn
+            'circle-opacity': 0.18,
+            'circle-blur': 0.7,
+            'circle-translate': [0, 2],
+          },
+        } as any);
+      }
 
       // Cluster circles
           if (mapInstance && !mapInstance.getLayer('road-clusters')) {
@@ -618,14 +744,16 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
           type: 'circle',
           source: 'road-points',
           filter: ['has', 'point_count'],
+          // Ẩn hẳn cluster khi zoom quá xa (tránh 1 cục 4936 ở level toàn vùng)
+          minzoom: 10,
           paint: {
             'circle-radius': [
               'step',
               ['get', 'point_count'],
-              14,   // default radius
-              10, 20,
-              30, 30,
-              60, 40,
+              12,   // default radius (small cluster)
+              50, 18,
+              150, 24,
+              300, 30,
             ],
             'circle-color': [
               'step',
@@ -636,18 +764,10 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
               30, '#3b82f6', // large cluster
               60, '#1d4ed8', // very large cluster
             ],
-            'circle-stroke-color': '#ffffff',
-            'circle-stroke-width': 2,
-            // Fade clusters in/out smoothly theo zoom
-            'circle-opacity': [
-              'interpolate',
-              ['linear'],
-              ['zoom'],
-              10, 0,
-              11, 0.9,
-              14, 0.9,
-              15, 0,
-            ],
+            'circle-stroke-color': '#1e3a8a',
+            'circle-stroke-width': 1.5,
+            // Luôn hiển thị rõ (không trong suốt) khi đang nhìn ở mức cluster
+            'circle-opacity': 0.95,
           },
         } as any);
       }
@@ -659,6 +779,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
           type: 'symbol',
           source: 'road-points',
           filter: ['has', 'point_count'],
+          minzoom: 10,
           layout: {
             'text-field': ['get', 'point_count'],
             'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
@@ -671,7 +792,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
       }
 
       // Unclustered individual road points (only when zoomed in enough)
-      // Layer viền trắng bên ngoài (đặt trước để nằm phía dưới)
+      // Shadow layer đặt trước để nằm phía dưới node chính cho road nodes
       if (mapInstance && !mapInstance.getLayer('road-points-circle-white')) {
         mapInstance.addLayer({
           id: 'road-points-circle-white',
@@ -684,32 +805,19 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
               ['linear'],
               ['zoom'],
               14, 9,
-              16, 12,
-              18, 15,
+              16, 13,
+              18, 17,
             ],
-            'circle-color': '#ffffff', // Màu trắng cho viền
-            'circle-opacity': 0, // Không fill
-            'circle-stroke-color': '#ffffff', // Viền trắng
-            'circle-stroke-width': [
-              'interpolate',
-              ['linear'],
-              ['zoom'],
-              14, 2,
-              16, 2.5,
-              18, 3,
-            ],
-            'circle-stroke-opacity': [
-              'interpolate',
-              ['linear'],
-              ['zoom'],
-              13.5, 0,
-              14, 0.9,
-            ],
+            'circle-color': '#0f172a', // shadow color
+            // Giảm opacity để bóng node mềm hơn
+            'circle-opacity': 0.18,
+            'circle-blur': 0.7,
+            'circle-translate': [0, 2],
           },
         } as any);
       }
       
-      // Layer donut xanh chính (đặt sau để nằm phía trên viền trắng)
+      // Layer node chính dạng hình tròn đặc với viền
       if (mapInstance && !mapInstance.getLayer('road-points-circle')) {
         mapInstance.addLayer({
           id: 'road-points-circle',
@@ -725,27 +833,42 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
               16, 10,
               18, 13,
             ],
-            'circle-color': '#3b82f6', // Tất cả cùng một màu xanh
-            'circle-opacity': 0, // Không fill, chỉ stroke để tạo donut effect
-            'circle-stroke-color': '#3b82f6', // Màu vòng donut
-            'circle-stroke-width': [
-              'interpolate',
-              ['linear'],
-              ['zoom'],
-              14, 5,
-              16, 6,
-              18, 7,
-            ],
-            'circle-stroke-opacity': [
+            'circle-color': '#3b82f6',
+            'circle-opacity': [
               'interpolate',
               ['linear'],
               ['zoom'],
               13.5, 0,
-              14, 0.9,
+              14, 0.95,
             ],
+            'circle-stroke-color': '#1e3a8a',
+            'circle-stroke-width': 1.5,
+             'circle-stroke-opacity': 0.9,
           },
         } as any);
           }
+
+      // Inner circle để tạo hiệu ứng bóng / highlight cho road nodes
+      if (mapInstance && !mapInstance.getLayer('road-points-inner')) {
+        mapInstance.addLayer({
+          id: 'road-points-inner',
+          type: 'circle',
+          source: 'road-points',
+          filter: ['!', ['has', 'point_count']],
+          paint: {
+            'circle-radius': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              14, 4.5,
+              16, 7,
+              18, 9,
+            ],
+            'circle-color': '#60a5fa', // xanh nhạt hơn ở giữa
+            'circle-opacity': 1,
+          },
+        } as any);
+      }
     }
   }, [roadSegments, mapLoaded]);
 
@@ -765,8 +888,15 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
       const { id, name, roadType, length, laneCount, surface } = props;
 
       const popupHtml = `
-        <div style="padding: 12px; min-width: 200px;">
-          <div style="font-weight: 600; font-size: 14px; color: #111827; margin-bottom: 6px;">
+        <div style="padding: 12px; min-width: 200px; max-width: 260px;">
+          <div style="
+            font-weight: 600;
+            font-size: 14px;
+            color: #111827;
+            margin-bottom: 6px;
+            white-space: normal;
+            word-break: break-word;
+          ">
             ${name || 'Unnamed Road'}
           </div>
           <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
@@ -941,6 +1071,19 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
           border-left-color: transparent;
           border-right-color: transparent;
         }
+        .road-marker-popup .maplibregl-popup-close-button {
+          top: 6px;
+          right: 8px;
+          padding: 2px 4px;
+          border-radius: 999px;
+          background: transparent;
+          color: #9ca3af;
+          font-size: 14px;
+        }
+        .road-marker-popup .maplibregl-popup-close-button:hover {
+          background: #f3f4f6;
+          color: #4b5563;
+        }
       `}</style>
       <div ref={mapContainer} className="w-full h-full" />
 
@@ -957,7 +1100,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
         </div>
       )}
 
-      {/* Map Legend */}
+      {/* Map Legend - đầy đủ node & ý nghĩa màu sắc */}
       {isLegendCollapsed ? (
         <button
           onClick={() => setIsLegendCollapsed(false)}
@@ -966,29 +1109,117 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
           🗺️ Map Legend
         </button>
       ) : (
-        <div className="absolute bottom-4 right-4 z-40 bg-white/95 backdrop-blur-md rounded-xl shadow-lg border border-gray-200 p-4 pointer-events-auto min-w-[220px]">
+        <div className="absolute bottom-4 right-4 z-40 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-200/80 p-4 pointer-events-auto min-w-[260px]">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-blue-50 rounded-lg">
+              <div className="p-1.5 bg-blue-50 rounded-xl">
                 <span className="text-base">🗺️</span>
               </div>
-              <h3 className="font-bold text-sm text-gray-900">Map Legend</h3>
+              <div>
+                <h3 className="font-bold text-sm text-gray-900">Map Legend</h3>
+                <p className="text-[11px] text-gray-500">Ý nghĩa các node & màu sắc</p>
+              </div>
             </div>
             <button
               onClick={() => setIsLegendCollapsed(true)}
-              className="p-1 text-gray-500 hover:text-gray-800"
+              className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
               aria-label="Collapse legend"
             >
               ×
             </button>
           </div>
-          <div className="space-y-2.5 text-xs">
-            <div className="flex items-center gap-2.5">
-              <div className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg bg-blue-50">
-                <RouteIcon className="h-4 w-4 text-blue-600" />
+
+          <div className="space-y-3 text-[11px]">
+            {/* Road nodes (unclustered) */}
+            <div className="flex items-center gap-3">
+              <div className="relative flex-shrink-0 w-7 h-7">
+                <div className="absolute inset-0 rounded-full bg-blue-500 shadow-md border border-blue-700" />
+                <div className="absolute inset-1 rounded-full bg-blue-300" />
               </div>
-              <span className="text-gray-700 font-medium">Road Segments</span>
-      </div>
+              <div>
+                <div className="text-gray-800 font-semibold">Road nodes</div>
+                <div className="text-gray-500">Điểm đường đơn lẻ khi zoom gần</div>
+              </div>
+            </div>
+
+            {/* Clusters */}
+            <div className="flex items-center gap-3">
+              <div className="relative flex-shrink-0 w-7 h-7">
+                <div className="absolute inset-0 rounded-full bg-slate-900 opacity-20 blur-sm translate-y-[1px]" />
+                <div className="absolute inset-[3px] rounded-full bg-gradient-to-br from-sky-400 to-blue-600 border border-blue-800 flex items-center justify-center text-[10px] font-bold text-white">
+                  24
+                </div>
+              </div>
+              <div>
+                <div className="text-gray-800 font-semibold">Clusters</div>
+                <div className="text-gray-500">Nhóm nhiều node khi zoom xa (số = số lượng)</div>
+              </div>
+            </div>
+
+            {/* Streetlights on / off */}
+            <div className="flex items-center gap-3">
+              <div className="relative flex-shrink-0 w-7 h-7">
+                <div className="absolute inset-0 rounded-full bg-slate-900 opacity-20 blur-sm translate-y-[1px]" />
+                <div className="absolute inset-[3px] rounded-full bg-yellow-400 border border-yellow-500" />
+              </div>
+              <div>
+                <div className="text-gray-800 font-semibold">Streetlight ON</div>
+                <div className="text-gray-500">Đèn đang bật (màu vàng)</div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="relative flex-shrink-0 w-7 h-7">
+                <div className="absolute inset-0 rounded-full bg-slate-900 opacity-20 blur-sm translate-y-[1px]" />
+                <div className="absolute inset-[3px] rounded-full bg-gray-400 border border-gray-500" />
+              </div>
+              <div>
+                <div className="text-gray-800 font-semibold">Streetlight OFF</div>
+                <div className="text-gray-500">Đèn tắt / không hoạt động (màu xám)</div>
+              </div>
+            </div>
+
+            {/* User location */}
+            <div className="flex items-center gap-3">
+              <div className="relative flex-shrink-0 w-7 h-7">
+                <div className="absolute inset-0 rounded-full bg-sky-500 opacity-30 blur-sm translate-y-[1px]" />
+                <div className="absolute inset-[3px] rounded-full bg-white border-2 border-sky-500 flex items-center justify-center">
+                  <div className="w-2.5 h-2.5 rounded-full bg-sky-500" />
+                </div>
+              </div>
+              <div>
+                <div className="text-gray-800 font-semibold">Your location</div>
+                <div className="text-gray-500">Vị trí hiện tại (nếu được cấp quyền)</div>
+              </div>
+            </div>
+
+            {/* Selected road / highlight pin */}
+            <div className="flex items-center gap-3">
+              <div className="relative flex-shrink-0 w-7 h-7">
+                <div className="absolute inset-0 rounded-full bg-rose-500 opacity-30 blur-sm translate-y-[1px]" />
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[55%] rotate-[-45deg] w-4 h-4 bg-gradient-to-br from-rose-500 to-red-600 rounded-full rounded-br-none border-2 border-white flex items-center justify-center">
+                  <span className="text-[10px] rotate-[45deg] text-white">📍</span>
+                </div>
+              </div>
+              <div>
+                <div className="text-gray-800 font-semibold">Selected road / report</div>
+                <div className="text-gray-500">Pin highlight khi chọn road hoặc "Xem trên bản đồ"</div>
+              </div>
+            </div>
+
+            {/* Citizen reports markers */}
+            <div className="flex items-center gap-3">
+              <div className="relative flex-shrink-0 w-7 h-7">
+                <div className="absolute inset-0 rounded-full bg-slate-900 opacity-20 blur-sm translate-y-[1px]" />
+                <div className="absolute inset-[5px] rounded-full bg-white border border-rose-400 flex items-center justify-center">
+                  <span className="text-[11px]">⚠️</span>
+                </div>
+              </div>
+              <div>
+                <div className="text-gray-800 font-semibold">Citizen reports</div>
+                <div className="text-gray-500">Các báo cáo đã được duyệt hiển thị trên map</div>
+              </div>
+            </div>
           </div>
         </div>
       )}
