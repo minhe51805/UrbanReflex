@@ -5,8 +5,9 @@
 <h1 align="center">UrbanReflex</h1>
 
 <p align="center">
-	A smart city platform for air quality monitoring and urban infrastructure management
+	A smart city intelligence platform that bridges fragmented urban data sources into a unified NGSI-LD ecosystem, empowering communities and city managers with real-time infrastructure insights and open data access
 </p>
+
 
 <p align="center">
   <a href="https://urbanreflex-882wzswzf-ttas-projects-6148b983.vercel.app/" rel="dofollow" target="blank"><strong>Explore the docs »</strong></a>
@@ -84,249 +85,149 @@
 # What is UrbanReflex?
 
 <p align="justify">
-UrbanReflex is an open-source smart city platform designed to address critical urban challenges through integrated data-driven solutions. The platform combines real-time environmental monitoring with citizen engagement tools to enable transparent, efficient urban management.
+UrbanReflex is an open-source smart city platform that addresses modern urban challenges through integrated, data-driven solutions. It combines real-time environmental monitoring with citizen engagement features to enable transparent, efficient, and responsive urban governance.
 </p>
 
 <blockquote>
 	<p align="justify">
-		<b>UrbanReflex</b> is a smart city platform for air quality monitoring and urban infrastructure management. The application integrates with <b>10,000+ global air quality stations</b>, provides <b>AI-powered insights</b> using Google Gemini, and enables <b>citizen reporting</b> for infrastructure issues. Built with <b>FastAPI</b> and <b>Next.js</b>, the platform is <b>NGSI-LD compliant</b> for interoperability with FIWARE smart city ecosystems.
+		Built on NGSI-LD standards, the platform unifies infrastructure data, air quality monitoring, and citizen reports into actionable intelligence. With open data accessibility, AI-powered analytics, and real-time insights, UrbanReflex empowers communities and city managers to make informed decisions that support sustainable development and promote transparent urban governance.
 	</p>
 </blockquote>
-
-If you want to find out more about the competition, please visit the [Vietnam OLP website](https://www.olp.vn/).
 
 ---
 
 ## ✨ Key Features
 
-### Air Quality Intelligence
+### **Air Quality Intelligence**
+- Real-time AQI from 10,000+ global monitoring stations  
+- Interactive map with heatmaps and clustering  
+- Health advisories based on pollution levels  
+- Historical trend analysis with charts  
+- Location-based search for any city or region  
 
-- **Global Station Network**: Real-time AQI data from 10,000+ monitoring stations worldwide
-- **Interactive Visualization**: Map-based interface with clustering algorithms and heatmap overlays
-- **Health Advisory System**: Personalized recommendations based on current pollution levels
-- **Historical Analysis**: Time-series trend analysis with interactive chart visualizations
-- **Geographic Search**: Location-based queries for any city or region
+### **Citizen Engagement**
+- Report urban issues (streetlights, potholes, waste, etc.)  
+- Photo uploads with automatic geolocation  
+- Real-time status tracking for issue resolution  
+- Community voting for prioritization  
+- Automated severity classification  
 
-### Citizen Engagement Platform
+### **AI Intelligence**
+- Natural language chatbot powered by Gemini  
+- Semantic vector search using Pinecone  
+- Automatic report classification  
+- Predictive analytics and hotspot forecasting (planned v1.1)  
 
-- **Issue Reporting**: Submit infrastructure problems (streetlights, potholes, waste management)
-- **Multimedia Support**: Photo uploads with automatic geolocation metadata
-- **Status Tracking**: Real-time updates on report resolution progress
-- **Community Prioritization**: Voting mechanism for issue prioritization
-- **Severity Classification**: Automated categorization (Low, Medium, High, Critical)
+### **Smart City Infrastructure**
+- NGSI-LD compliant data models (ETSI standard)  
+- Orion-LD for real-time context management  
+- IoT sensor integration for urban monitoring  
+- Open data export (GeoJSON, NDJSON)  
 
-### AI-Powered Intelligence
+### **Role-Based Access Control**
+- **Citizen**: submit reports, view air quality, access chatbot  
+- **City Official**: manage reports, assign tasks, analytics dashboard  
+- **Admin**: system and user management  
+- **Developer**: REST API with full OpenAPI documentation  
 
-- **Natural Language Interface**: Conversational chatbot for air quality queries (Gemini AI)
-- **Semantic Search**: Vector similarity search for report matching (Pinecone)
-- **Automated Classification**: Machine learning-based report categorization
-- **Predictive Analytics**: Air quality forecasting (planned for v1.1)
-
-### Smart City Infrastructure
-
-- **NGSI-LD Standard Compliance**: ETSI-compliant data models for interoperability
-- **Orion Context Broker**: Real-time context information management
-- **IoT Device Integration**: Monitoring capabilities for urban sensors and devices
-- **Open Data Export**: Standardized formats (GeoJSON, NDJSON) for research and analysis
-
-### Role-Based Access Control
-
-- **Citizen Role**: Report submission, air quality viewing, chatbot access
-- **City Official Role**: Report management, task assignment, analytics dashboard
-- **Administrator Role**: System administration, user management, data export
-- **Developer Access**: RESTful API with comprehensive OpenAPI documentation
 
 ---
 
 ## 🚀 Getting Started
 
-### 🛠️ Prerequisites
+## 🛠️ Prerequisites
 
-#### Infrastructure
+### Infrastructure Requirements
 
-<ul>
-	<li align="justify">
-		<b><a href="https://www.docker.com/" target="_blank">Docker Desktop</a></b> (Windows/macOS) or <b><a href="https://docs.docker.com/engine/install/" target="_blank">Docker Engine</a></b> (Linux) - Container platform for running services
-	</li>
-	<li align="justify">
-		<b><a href="https://www.docker.com/products/docker-compose" target="_blank">Docker Compose</a></b> - Multi-container orchestration tool (usually included with Docker Desktop)
-	</li>
-	<li align="justify">
-		<b><a href="https://nodejs.org/en/" target="_blank">Node.js</a></b> (v18 or higher) - JavaScript runtime for frontend development
-	</li>
-	<li align="justify">
-		<b><a href="https://www.python.org/" target="_blank">Python</a></b> (v3.10 or higher) - Python runtime for backend development
-	</li>
-	<li align="justify">
-		<b><a href="https://www.mongodb.com/try/download/community" target="_blank">MongoDB</a></b> (optional) - Document database (can use Docker container)
-	</li>
-	<li align="justify">
-		<b><a href="https://redis.io/download" target="_blank">Redis</a></b> (optional) - In-memory cache (can use Docker container)
-	</li>
-</ul>
+- **Docker Desktop** (Windows/macOS) or **Docker Engine** (Linux) — container platform used to run UrbanReflex services in isolated, reproducible environments.  
+- **Docker Compose** — orchestrates backend, frontend, and supporting services.  
+- **Node.js (v18+)** — required for building and running the Next.js frontend.  
+- **Python (v3.10+)** — runtime for the FastAPI backend and AI service modules.  
+- **MongoDB** (optional) — document database for storing user data and report information.  
+- **Redis** (optional) — in‑memory cache used for session handling and performance optimization.
 
-#### Services & API Keys
+### Services & API Keys
 
-<ul>
-	<li align="justify">
-		<b><a href="https://makersuite.google.com/app/apikey" target="_blank">Google Gemini API Key</a></b> - Required for AI chatbot functionality
-	</li>
-	<li align="justify">
-		<b><a href="https://www.pinecone.io/" target="_blank">Pinecone API Key</a></b> - Required for vector database and semantic search
-	</li>
-	<li align="justify">
-		<b><a href="https://openaq.org/" target="_blank">OpenAQ API</a></b> - Public API for air quality data (no key required)
-	</li>
-</ul>
+- **Google Gemini API Key** — powers AI chatbot interactions and automated classification.  
+- **Pinecone API Key** — enables vector search and semantic similarity indexing.  
+- **OpenAQ API** — source of global air quality data (no key required).
 
-### 🧑‍💻 Setup
+---
 
-First, clone the repository to your local machine:
+## 🚀 Quick Setup
+
+### Prerequisites
+
+**Runtimes**
+- [Python 3.10+](https://www.python.org/downloads/)
+- [Node.js 18+](https://nodejs.org/en/download)
+
+**Containers**
+- [Docker](https://www.docker.com/)
+- [Docker Compose](https://docs.docker.com/compose/)
+
+**Developer Tooling**
+- [uv](https://docs.astral.sh/uv/getting-started/features/)
+- [Just](https://just.systems/)
+
+**Databases (Optional)**
+- [MongoDB](https://www.mongodb.com/try/download/community)
+- [Redis](https://redis.io/download)
+
+**API & External Services**
+- [Google Gemini API Key](https://makersuite.google.com/app/apikey)
+- [Pinecone API Key](https://www.pinecone.io/)
+- [OpenAQ API](https://openaq.org/)
+---
+
+## 🏃‍♂️ One‑Command Development Setup
+
+UrbanReflex supports a streamlined workflow via a `justfile`:
 
 ```bash
+# Clone repository
 git clone https://github.com/minhe51805/UrbanReflex.git
 cd UrbanReflex
-```
 
-#### Environment Configuration
+# Setup development environment
+just setup
 
-Create a `.env` file in the root directory:
-
-```bash
-# Backend Configuration
-MONGODB_URL=mongodb://localhost:27017/urbanreflex
-REDIS_URL=redis://localhost:6379
-SECRET_KEY=your-secret-key-here
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-
-# AI Services
-GEMINI_API_KEY=your-gemini-api-key
-PINECONE_API_KEY=your-pinecone-api-key
-PINECONE_ENVIRONMENT=your-pinecone-environment
-PINECONE_INDEX_NAME=urbanreflex
-
-# External APIs
-OPENAQ_API_URL=https://api.openaq.org/v2
-
-# Orion Context Broker
-ORION_URL=http://localhost:1026
-ORION_SERVICE=openiot
-ORION_SERVICE_PATH=/
-
-# Frontend
-NEXT_PUBLIC_API_URL=http://localhost:8000
-```
-
-### 🚀 Running
-
-#### Option 1: Docker Compose (Recommended)
-
-Start all services with Docker Compose:
-
-```bash
 # Start all services
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop all services
-docker-compose down
-
-# Stop and remove volumes
-docker-compose down -v
+just dev
 ```
 
-Wait approximately 2 minutes for service initialization, then access:
-- **Frontend**: http://localhost:3000
-- **API Docs**: http://localhost:8000/docs
-- **API ReDoc**: http://localhost:8000/redoc
+---
 
-#### Option 2: Development Mode
-
-Run services individually for development:
-
-**Backend (FastAPI):**
+## 🛠️ Manual Setup (Alternative)
 
 ```bash
-cd app
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+# 1. Install dependencies
+uv sync                              # Backend dependencies
+cd website && npm install && cd ..   # Frontend dependencies
+
+# 2. Setup environment variables
+cp .env.example .env
+# Edit .env with your API keys
+
+# 3. Start services
+docker-compose up -d mongodb orion   # Start databases
+uvicorn app.app:app --reload         # Backend (port 8000)
+cd website && npm run dev            # Frontend (port 3000)
 ```
 
-**Frontend (Next.js):**
+---
+
+## 🔧 Environment Variables
 
 ```bash
-cd website
-npm install
-npm run dev
+# .env file
+DATABASE_URL="mongodb://localhost:27017/urbanreflex"
+JWT_SECRET_KEY="your-secret-key"
+OPENAQ_API_KEY="your-openaq-key"           
+GEMINI_API_KEY="your-gemini-key"          
+PINECONE_API_KEY="your-pinecone-key"      
+ORION_BROKER_URL="http://localhost:1026"   
 ```
-
-**MongoDB (if not using Docker):**
-
-```bash
-# Using Docker
-docker run -d -p 27017:27017 --name mongodb mongo:latest
-
-# Or install MongoDB locally and run
-mongod
-```
-
-**Redis (if not using Docker):**
-
-```bash
-# Using Docker
-docker run -d -p 6379:6379 --name redis redis:latest
-
-# Or install Redis locally and run
-redis-server
-```
-
-**Orion Context Broker (if not using Docker):**
-
-```bash
-# Using Docker
-docker run -d -p 1026:1026 --name orion fiware/orion:latest
-```
-
-### 🧪 Testing
-
-Run tests for the backend:
-
-```bash
-cd app
-pytest tests/ -v
-```
-
-Run tests for the frontend:
-
-```bash
-cd website
-npm test
-```
-
-### 📝 Demo Credentials
-
-After starting the services, you can use these demo accounts:
-
-```bash
-Admin Account:
-Email: admin@urbanreflex.dev
-Password: Admin@123456
-
-Citizen Account:
-Email: citizen@urbanreflex.dev
-Password: Citizen@123456
-```
-
-> [!IMPORTANT]
-> 
-> <p align="justify">
-> Make sure to set up your environment variables (especially API keys) before running the services. The application requires Gemini API and Pinecone API keys for full functionality.
-> </p>
 
 ---
 
@@ -337,40 +238,39 @@ Password: Citizen@123456
 ```
 FastAPI + Python 3.10+     → High-performance asynchronous API framework
 MongoDB                    → Document database for users and reports
-Orion Context Broker       → NGSI-LD compliant context information management
-Redis                      → In-memory caching and session management
-Gemini AI                  → Natural language processing and AI insights
-Pinecone                   → Vector database for semantic similarity search
+Orion Context Broker       → NGSI-LD compliant context management
+Redis                      → In-memory caching and state management
+Gemini AI                  → Natural language understanding and analytics
+Pinecone                   → Vector search for semantic similarity
 ```
 
 ### Frontend Architecture
 
 ```
-Next.js 16                 → React framework with App Router architecture
-TypeScript                 → Type-safe development environment
-Tailwind CSS               → Utility-first CSS framework
-MapLibre GL                → WebGL-based mapping with clustering support
-Chart.js                   → Data visualization library
-Framer Motion              → Animation library for smooth transitions
+Next.js 16                 → Modern React framework with App Router
+TypeScript                 → Strongly typed development
+Tailwind CSS               → Utility-first styling
+MapLibre GL                → WebGL-based interactive mapping
+Chart.js                   → Data visualization
+Framer Motion              → Smooth UI animations
 ```
 
 ### Infrastructure
 
 ```
-Docker Compose             → Multi-container orchestration
-Nginx                      → Reverse proxy for production deployment
-GitHub Actions             → Continuous integration and deployment
+Docker Compose             → Multi-service orchestration
+Nginx                      → Reverse proxy for production setup
+GitHub Actions             → CI/CD automation
 ```
 
-### External Service Integrations
+### External Integrations
 
 ```
-OpenAQ API                 → Global air quality data aggregation
-OpenStreetMap              → Geocoding and point-of-interest data
-Google Gemini API          → AI-powered conversational interface
-Pinecone Cloud             → Managed vector database service
+OpenAQ API                 → Global air quality data provider
+OpenStreetMap              → Geolocation and POI data
+Google Gemini API          → AI conversational capabilities
+Pinecone Cloud             → Managed vector database
 ```
-
 ---
 
 ## 📊 System Architecture
@@ -528,20 +428,16 @@ Want to report a bug, contribute some code, or improve the documentation? Excell
 
 <p align="center">
 	<a href="https://hutech.edu.vn/" target="_blank">
-		<img loading="lazy" src="https://file1.hutech.edu.vn/file/editor/homepage/stories/hinh34/logo%20CMYK-01.png" height="60px" alt="HUTECH University">
+		<img loading="lazy" src="https://file1.hutech.edu.vn/file/editor/homepage/stories/hinh34/logo%20CMYK-01.png" height="80px" alt="HUTECH University">
 	</a>
 	&nbsp;&nbsp;&nbsp;
 	<a href="https://vfossa.vn/" target="_blank">
-		<img loading="lazy" src="https://vfossa.vn/uploads/about/logo-6b-new.png" height="60px" alt="VFOSSA">
+		<img loading="lazy" src="https://vfossa.vn/uploads/about/logo-6b-new.png" height="80px" alt="VFOSSA">
 	</a>
 	&nbsp;&nbsp;&nbsp;
 	<a href="https://www.olp.vn/" target="_blank">
-		<img loading="lazy" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRePWbAslFDMVxeJCgHI6f_LSIuNOrlrEsEhA&s" height="60px" alt="Vietnam OLP">
+		<img loading="lazy" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRePWbAslFDMVxeJCgHI6f_LSIuNOrlrEsEhA&s" height="80px" alt="Vietnam OLP">
 	</a>
-</p>
-
-<p align="justify">
-UrbanReflex is developed by students and open-source contributors passionate about smart cities and environmental technology. The project is supported by HUTECH University, VFOSSA (Vietnam Free and Open Source Software Association), and Vietnam OLP (Open Source Software Competition).
 </p>
 
 ---
