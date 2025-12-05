@@ -1,13 +1,23 @@
 /**
- * Citizen Reports API
- * Fetches and creates citizen reports with spatial query support
- * 
- * Author: Backend Integration Team
- * Date: 2025-11-27
- * 
- * Endpoints:
- * - GET /api/reports?lat=10.78&lon=106.7&maxDistance=1000
- * - POST /api/reports (create new report)
+ * ============================================================================
+ * UrbanReflex — Smart City Intelligence Platform
+ * Copyright (C) 2025  WAG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ * For more information, visit: https://github.com/minhe51805/UrbanReflex
+ * ============================================================================
  */
 
 import { NextRequest, NextResponse } from 'next/server';
