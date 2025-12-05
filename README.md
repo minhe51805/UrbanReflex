@@ -445,7 +445,7 @@ Want to report a bug, contribute some code, or improve the documentation? Excell
 ## License
 
 <p align="justify">
-This project is licensed under the terms of the <a href="./LICENSE">Apache License 2.0</a>.
+This project is licensed under the terms of the <a href="./LICENSE">GNU General Public License v3.0</a>.
 </p>
 
 
