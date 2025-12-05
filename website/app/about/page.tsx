@@ -128,7 +128,8 @@ export default function AboutPage() {
               </div>
               <h2 className="text-3xl font-bold text-gray-900 mb-4">Open Source License</h2>
               <p className="max-w-3xl mx-auto text-gray-600">
-                UrbanReflex is released under the Apache License 2.0, ensuring it remains free and open for anyone to use, modify, and distribute.
+                UrbanReflex is released under the GNU General Public License v3.0 (GPL-3.0), 
+                ensuring the software remains free and open for the community to use, modify, and distribute.
               </p>
             </div>
             <div className="max-w-4xl mx-auto bg-white rounded-xl border border-gray-200 shadow-soft">
