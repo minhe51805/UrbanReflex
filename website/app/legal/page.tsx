@@ -269,22 +269,31 @@ export default function LegalPage() {
                 </p>
               </div>
 
-              <h3 className="text-2xl font-bold text-gray-900 mt-8 mb-4">Apache License 2.0</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mt-8 mb-4">GNU General Public License v3.0 (GPL-3.0)</h3>
+
               <p className="text-gray-700 mb-4">
-                UrbanReflex platform code is licensed under the Apache License 2.0, a permissive open source license with patent grants.
+                UrbanReflex platform code is licensed under the GNU General Public License v3.0 (GPL-3.0), ensuring the software remains free and open for all users to study, modify, and redistribute.
               </p>
 
               <div className="bg-gray-100 p-6 rounded-lg mb-6 font-mono text-sm">
-                <p className="mb-4">Apache License 2.0</p>
-                <p className="mb-4">Copyright 2025 The UrbanReflex Authors</p>
+                <p className="mb-4">GNU General Public License v3.0</p>
+                <p className="mb-4">Copyright (C) 2025 UrbanReflex Contributors</p>
                 <p className="mb-4">
-                  Licensed under the Apache License, Version 2.0 (the "License");
-                  you may not use this file except in compliance with the License.
-                  You may obtain a copy of the License at:
+                  This program is free software: you can redistribute it and/or modify
+                  it under the terms of the GNU General Public License as published by
+                  the Free Software Foundation, either version 3 of the License, or
+                  (at your option) any later version.
                 </p>
                 <p className="mb-4">
-                  http://www.apache.org/licenses/LICENSE-2.0
+                  This program is distributed in the hope that it will be useful,
+                  but WITHOUT ANY WARRANTY; without even the implied warranty of
+                  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
                 </p>
+                <p>
+                  You should have received a copy of the GNU General Public License
+                  along with this program. If not, see https://www.gnu.org/licenses/
+                </p>
+
                 <p>
                   Unless required by applicable law or agreed to in writing, software
                   distributed under the License is distributed on an "AS IS" BASIS,
@@ -296,7 +305,8 @@ export default function LegalPage() {
 
               <h3 className="text-2xl font-bold text-gray-900 mt-8 mb-4">Contributing</h3>
               <p className="text-gray-700 mb-4">
-                We welcome contributions! By contributing to UrbanReflex, you agree to license your contributions under the Apache License 2.0.
+                We welcome contributions! By contributing to UrbanReflex, you agree that your contributions will be licensed under the GNU General Public License v3.0 (GPL-3.0).
+
               </p>
 
               <h3 className="text-2xl font-bold text-gray-900 mt-8 mb-4">GitHub Repository</h3>
@@ -330,7 +340,7 @@ export default function LegalPage() {
               Contact our legal team for clarifications or concerns
             </p>
             <a
-              href="mailto:legal@openaq.org"
+              href="mailto:legal@urbanreflex.org"
               className="inline-flex items-center justify-center px-8 py-4 rounded-xl bg-primary-600 text-white font-bold hover:bg-primary-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
             >
               Contact Legal Team
