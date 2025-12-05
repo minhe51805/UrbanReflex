@@ -452,6 +452,27 @@ Want to report a bug, contribute some code, or improve the documentation? Excell
 
 ---
 
+## 📈 Project Stats
+
+<div align="center">
+
+| Metric               | Count                                                                                                                                                                                                       |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🌟 **Stars**         | ![GitHub stars](https://img.shields.io/github/stars/minhe51805/UrbanReflex?style=social)                                                                                                                    |
+| 🍴 **Forks**         | ![GitHub forks](https://img.shields.io/github/forks/minhe51805/UrbanReflex?style=social)                                                                                                                    |
+| 👁️ **Watchers**      | ![GitHub watchers](https://img.shields.io/github/watchers/minhe51805/UrbanReflex?style=social)                                                                                                              |
+| 👥 **Contributors**  | ![GitHub contributors](https://img.shields.io/github/contributors/minhe51805/UrbanReflex)                                                                                                                   |
+| 📝 **Commits**       | ![GitHub commit activity](https://img.shields.io/github/commit-activity/t/minhe51805/UrbanReflex)                                                                                                           |
+| 🐛 **Issues**        | ![GitHub issues](https://img.shields.io/github/issues/minhe51805/UrbanReflex) ![GitHub closed issues](https://img.shields.io/github/issues-closed/minhe51805/UrbanReflex?color=success)                     |
+| 🎯 **Pull Requests** | ![GitHub pull requests](https://img.shields.io/github/issues-pr/minhe51805/UrbanReflex) ![GitHub closed pull requests](https://img.shields.io/github/issues-pr-closed/minhe51805/UrbanReflex?color=success) |
+| 📅 **Last Commit**   | ![GitHub last commit](https://img.shields.io/github/last-commit/minhe51805/UrbanReflex)                                                                                                                     |
+| 📦 **Code Size**     | ![GitHub code size](https://img.shields.io/github/languages/code-size/minhe51805/UrbanReflex)                                                                                                               |
+| 📜 **License**       | ![GitHub license](https://img.shields.io/github/license/minhe51805/UrbanReflex)                                                                                                                             |
+
+</div>
+
+---
+
 ## License
 
 <p align="justify">
