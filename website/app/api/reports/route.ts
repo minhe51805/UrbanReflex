@@ -87,6 +87,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ reports: [], count: 0 });
     }
 
+<<<<<<< HEAD
     // Format reports
     const reports = allReports.map((report: any) => ({
       id: report.id,
@@ -101,6 +102,35 @@ export async function GET(request: NextRequest) {
       location: report.location,
       refRoadSegment: report.refRoadSegment,
     }));
+=======
+    // Format reports - giữ lại cả trường images / imageCount để frontend hiển thị gallery
+    const reports = allReports.map((report: any) => {
+      // Debug: log raw images từ NGSI-LD
+      if (report.images || report.imageCount) {
+        console.log(`[API /reports] Report ${report.id} images:`, report.images);
+        console.log(`[API /reports] Report ${report.id} imageCount:`, report.imageCount);
+      }
+      
+      return {
+        id: report.id,
+        title: getValue(report.title),
+        description: getValue(report.description),
+        category: getValue(report.category),
+        status: getValue(report.status),
+        priority: getValue(report.priority),
+        reporterName: getValue(report.reporterName),
+        reporterContact: getValue(report.reporterContact),
+        dateCreated: report.dateCreated,
+        location: report.location,
+        refRoadSegment: report.refRoadSegment,
+        // Raw images from NGSI-LD (có thể là array hoặc object) - sẽ được chuẩn hoá ở frontend
+        images: report.images,
+        imageCount: report.imageCount,
+        // Thêm metadata nếu có (một số backend trả về images trong metadata)
+        metadata: report.metadata || {},
+      };
+    });
+>>>>>>> frontend
 
     // Sort by dateCreated (newest first)
     reports.sort((a, b) => {

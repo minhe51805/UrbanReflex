@@ -5,12 +5,14 @@
 
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Bot, Minimize2, Sparkles, RefreshCw, Copy, Check, ChevronDown } from 'lucide-react';
+import { useState, useRef, useEffect, useMemo } from 'react';
+import { MessageCircle, X, Send, Bot, Minimize2, RefreshCw, Copy, Check, ChevronDown, LogIn } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -19,14 +21,17 @@ interface Message {
   id: string;
 }
 
+const MAX_QUESTIONS_FOR_GUEST = 5;
+
 export default function FloatingChatButton() {
+  const { isAuthenticated } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '0',
       role: 'assistant',
-      content: '👋 **Xin chào!** Tôi là trợ lý AI của **UrbanReflex**.\n\nTôi có thể giúp bạn:\n- 🔍 Tìm hiểu về hệ thống\n- 📚 Hướng dẫn sử dụng\n- 💡 Trả lời câu hỏi\n- 🛠️ Hỗ trợ kỹ thuật\n\nBạn cần hỗ trợ gì hôm nay?',
+      content: '**Xin chào!** Tôi là trợ lý hỗ trợ của UrbanReflex.\n\nTôi có thể giúp bạn:\n- Tìm hiểu về hệ thống\n- Hướng dẫn sử dụng\n- Trả lời câu hỏi\n- Hỗ trợ kỹ thuật\n\nBạn cần hỗ trợ gì hôm nay?',
       timestamp: new Date(),
     },
   ]);
@@ -35,9 +40,25 @@ export default function FloatingChatButton() {
   const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [buttonRightOffset, setButtonRightOffset] = useState(24); // px, tương đương right-6
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  
+  // Đếm số câu hỏi của user (chỉ đếm user messages, không tính welcome message)
+  const userQuestionCount = useMemo(() => {
+    return messages.filter(msg => msg.role === 'user').length;
+  }, [messages]);
+  
+  // Check nếu đã đạt giới hạn và chưa login
+  const hasReachedLimit = !isAuthenticated && userQuestionCount >= MAX_QUESTIONS_FOR_GUEST;
+  const dragStateRef = useRef<{ isDragging: boolean; startX: number; startRight: number; moved: boolean; containerWidth: number }>({
+    isDragging: false,
+    startX: 0,
+    startRight: 24,
+    moved: false,
+    containerWidth: 72, // default approx width of button
+  });
 
   const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
     messagesEndRef.current?.scrollIntoView({ behavior });
@@ -57,6 +78,66 @@ export default function FloatingChatButton() {
     }
   }, [messages, isOpen, isMinimized]);
 
+  // Horizontal drag for chatbot (kéo qua trái/phải)
+  useEffect(() => {
+    const handlePointerMove = (event: MouseEvent | TouchEvent) => {
+      const dragState = dragStateRef.current;
+      if (!dragState.isDragging) return;
+
+      const clientX =
+        event instanceof TouchEvent ? event.touches[0]?.clientX ?? event.changedTouches[0]?.clientX : event.clientX;
+      if (clientX == null) return;
+
+      const deltaX = clientX - dragState.startX;
+      // Khi kéo sang trái (deltaX > 0) thì giảm right, kéo sang phải tăng right
+      let nextRight = dragState.startRight - deltaX;
+
+      // Giới hạn trong viewport: đảm bảo toàn bộ container vẫn nằm trong màn hình
+      const minRight = 8; // khoảng cách mép phải tối thiểu
+      const viewportWidth = window.innerWidth || 0;
+      const maxRight = Math.max(8, viewportWidth - dragState.containerWidth - 8);
+      if (nextRight < minRight) nextRight = minRight;
+      if (nextRight > maxRight) nextRight = maxRight;
+
+      // Đánh dấu là đã kéo (để không trigger click khi chỉ muốn kéo)
+      if (Math.abs(deltaX) > 3) {
+        dragState.moved = true;
+      }
+
+      setButtonRightOffset(nextRight);
+    };
+
+    const handlePointerUp = () => {
+      const dragState = dragStateRef.current;
+      dragState.isDragging = false;
+    };
+
+    window.addEventListener('mousemove', handlePointerMove);
+    window.addEventListener('mouseup', handlePointerUp);
+    window.addEventListener('touchmove', handlePointerMove, { passive: false });
+    window.addEventListener('touchend', handlePointerUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handlePointerMove);
+      window.removeEventListener('mouseup', handlePointerUp);
+      window.removeEventListener('touchmove', handlePointerMove);
+      window.removeEventListener('touchend', handlePointerUp);
+    };
+  }, []);
+
+  const startDrag = (event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+    const dragState = dragStateRef.current;
+    const clientX =
+      'touches' in event ? event.touches[0]?.clientX ?? event.changedTouches[0]?.clientX : event.clientX;
+    if (clientX == null) return;
+    dragState.isDragging = true;
+    dragState.moved = false;
+    dragState.startX = clientX;
+    dragState.startRight = buttonRightOffset;
+    // Ước lượng width hiện tại của container để clamp (chat window rộng hơn floating button)
+    dragState.containerWidth = isOpen ? (isMinimized ? 320 : 420) : 72;
+  };
+
   const copyToClipboard = async (text: string, messageId: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -68,12 +149,12 @@ export default function FloatingChatButton() {
   };
 
   const handleReset = () => {
-    if (confirm('🔄 Bạn có chắc muốn bắt đầu cuộc trò chuyện mới?')) {
+    if (confirm('Bạn có chắc muốn bắt đầu cuộc trò chuyện mới?')) {
       setMessages([
         {
           id: String(Date.now()),
           role: 'assistant',
-          content: '👋 **Xin chào!** Tôi là trợ lý AI của **UrbanReflex**.\n\nTôi có thể giúp bạn:\n- 🔍 Tìm hiểu về hệ thống\n- 📚 Hướng dẫn sử dụng\n- 💡 Trả lời câu hỏi\n- 🛠️ Hỗ trợ kỹ thuật\n\nBạn cần hỗ trợ gì hôm nay?',
+          content: '**Xin chào!** Tôi là trợ lý hỗ trợ của UrbanReflex.\n\nTôi có thể giúp bạn:\n- Tìm hiểu về hệ thống\n- Hướng dẫn sử dụng\n- Trả lời câu hỏi\n- Hỗ trợ kỹ thuật\n\nBạn cần hỗ trợ gì hôm nay?',
           timestamp: new Date(),
         },
       ]);
@@ -82,6 +163,11 @@ export default function FloatingChatButton() {
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isTyping) return;
+    
+    // Check giới hạn cho guest users
+    if (!isAuthenticated && userQuestionCount >= MAX_QUESTIONS_FOR_GUEST) {
+      return; // Không cho phép gửi thêm
+    }
 
     const userMessage = inputMessage.trim();
     const messageId = String(Date.now());
@@ -119,7 +205,7 @@ export default function FloatingChatButton() {
         {
           id: String(Date.now()),
           role: 'assistant',
-          content: data.response || '❌ Xin lỗi, tôi không thể trả lời câu hỏi này. Vui lòng thử lại sau.',
+          content: data.response || 'Xin lỗi, tôi không thể trả lời câu hỏi này. Vui lòng thử lại sau.',
           timestamp: new Date(),
         },
       ]);
@@ -130,7 +216,7 @@ export default function FloatingChatButton() {
         {
           id: String(Date.now()),
           role: 'assistant',
-          content: '⚠️ **Lỗi kết nối**\n\nXin lỗi, đã có lỗi xảy ra khi kết nối với trợ lý AI.\n\n🔧 Vui lòng:\n- Thử lại sau\n- Kiểm tra kết nối mạng\n- Liên hệ đội ngũ hỗ trợ nếu lỗi vẫn tiếp diễn',
+          content: '**Lỗi kết nối**\n\nXin lỗi, đã có lỗi xảy ra khi kết nối với hệ thống.\n\nVui lòng:\n- Thử lại sau\n- Kiểm tra kết nối mạng\n- Liên hệ đội ngũ hỗ trợ nếu lỗi vẫn tiếp diễn',
           timestamp: new Date(),
         },
       ]);
@@ -142,7 +228,9 @@ export default function FloatingChatButton() {
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSendMessage();
+      if (!hasReachedLimit) {
+        handleSendMessage();
+      }
     }
   };
 
@@ -153,7 +241,7 @@ export default function FloatingChatButton() {
     }).format(date);
   };
 
-  // Custom markdown components for better rendering
+  // Custom markdown components - UrbanReflex Style
   const MarkdownComponents: Partial<Components> = {
     code(props) {
       const { children, className, ...rest } = props;
@@ -166,112 +254,99 @@ export default function FloatingChatButton() {
           style={vscDarkPlus as { [key: string]: React.CSSProperties }}
           language={match[1]}
           PreTag="div"
-          className="rounded-lg text-sm my-2"
+          className="rounded-lg text-sm my-2 border-2 border-[#64BABE]"
         >
           {codeString}
         </SyntaxHighlighter>
       ) : (
-        <code className="bg-gray-100 text-pink-600 px-1.5 py-0.5 rounded text-sm font-mono" {...rest}>
+        <code className="bg-[#64BABE] text-white px-1.5 py-0.5 rounded text-sm font-mono border border-[#008EA0] font-bold" {...rest}>
           {children}
         </code>
       );
     },
-    p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-    ul: ({ children }) => <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>,
-    ol: ({ children }) => <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol>,
+    p: ({ children }) => <p className="mb-2 last:mb-0 text-sm text-gray-800">{children}</p>,
+    ul: ({ children }) => <ul className="list-disc list-inside mb-2 space-y-1 text-sm text-gray-800">{children}</ul>,
+    ol: ({ children }) => <ol className="list-decimal list-inside mb-2 space-y-1 text-sm text-gray-800">{children}</ol>,
     li: ({ children }) => <li className="ml-2">{children}</li>,
-    h1: ({ children }) => <h1 className="text-xl font-bold mb-2 mt-3">{children}</h1>,
-    h2: ({ children }) => <h2 className="text-lg font-bold mb-2 mt-3">{children}</h2>,
-    h3: ({ children }) => <h3 className="text-base font-bold mb-2 mt-2">{children}</h3>,
+    h1: ({ children }) => <h1 className="text-lg font-bold mb-2 mt-3 text-[#008EA0]">{children}</h1>,
+    h2: ({ children }) => <h2 className="text-base font-bold mb-2 mt-3 text-[#008EA0]">{children}</h2>,
+    h3: ({ children }) => <h3 className="text-sm font-bold mb-2 mt-2 text-[#008EA0]">{children}</h3>,
     blockquote: ({ children }) => (
-      <blockquote className="border-l-4 border-blue-500 pl-4 py-2 my-2 bg-blue-50 rounded-r">
+      <blockquote className="border-l-4 border-[#64BABE] pl-4 py-2 my-2 bg-[#64BABE]/10 rounded-r border-t-2 border-b-2 border-r-2 border-[#64BABE]">
         {children}
       </blockquote>
     ),
     a: ({ children, href }) => (
-      <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+      <a href={href} target="_blank" rel="noopener noreferrer" className="text-[#008EA0] hover:text-[#085979] underline font-bold">
         {children}
       </a>
     ),
-    strong: ({ children }) => <strong className="font-bold text-gray-900">{children}</strong>,
+    strong: ({ children }) => <strong className="font-bold text-[#008EA0]">{children}</strong>,
   };
 
   return (
     <>
-      {/* Floating Button with Pulse Animation */}
+      {/* Floating Button - UrbanReflex Style */}
       {!isOpen && (
-        <div className="fixed bottom-6 right-6 z-50">
-          <div className="relative">
-            {/* Pulse rings */}
-            <div className="absolute inset-0 rounded-full bg-blue-400 animate-ping opacity-20"></div>
-            <div className="absolute inset-0 rounded-full bg-blue-400 animate-pulse opacity-30"></div>
-            
-            <button
-              onClick={() => {
-                setIsOpen(true);
-                setIsMinimized(false);
-              }}
-              className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-purple-700 hover:from-blue-700 hover:via-blue-800 hover:to-purple-800 text-white rounded-full p-5 shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 hover:scale-110 group"
-              aria-label="Open Chatbot"
-            >
-              <MessageCircle className="w-7 h-7" />
-              <span className="absolute -top-1 -right-1 flex">
-                <span className="animate-ping absolute inline-flex h-4 w-4 rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-4 w-4 bg-green-500 border-2 border-white"></span>
-              </span>
-              
-              {/* Tooltip */}
-              <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
-                <Sparkles className="w-3 h-3 inline mr-1" />
-                Chat với AI Assistant
-                <div className="absolute top-full right-4 w-2 h-2 bg-gray-900 transform rotate-45 -mt-1"></div>
-              </div>
-            </button>
-          </div>
+        <div
+          className="fixed bottom-6 z-50"
+          style={{ right: `${buttonRightOffset}px` }}
+          onMouseDown={startDrag}
+          onTouchStart={startDrag}
+        >
+          <button
+            onClick={() => {
+              if (dragStateRef.current.moved) {
+                dragStateRef.current.moved = false;
+                return;
+              }
+              setIsOpen(true);
+              setIsMinimized(false);
+            }}
+            className="relative bg-white border-2 border-[#008EA0] text-[#008EA0] rounded-lg px-4 py-3 shadow-[4px_4px_0_0_#008EA0] hover:shadow-[6px_6px_0_0_#008EA0] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-150 active:translate-x-0 active:translate-y-0 active:shadow-[2px_2px_0_0_#008EA0] group flex items-center gap-3"
+            aria-label="Open Chatbot"
+          >
+            <div className="w-9 h-9 bg-[#64BABE] rounded-lg flex items-center justify-center border-2 border-[#008EA0]">
+              <MessageCircle className="w-5 h-5 text-white" />
+            </div>
+            <div className="text-left">
+              <div className="text-sm font-bold text-[#008EA0]">Need Help?</div>
+              <div className="text-xs text-gray-600">Chat with us</div>
+            </div>
+          </button>
         </div>
       )}
 
-      {/* Chat Window - Enhanced Design */}
+      {/* Chat Window - UrbanReflex Style */}
       {isOpen && (
         <div
-          className={`fixed bottom-6 right-6 z-50 backdrop-blur-xl bg-white/95 rounded-3xl shadow-2xl border border-gray-200/50 transition-all duration-500 ease-out ${
+          className={`fixed bottom-6 z-50 bg-white rounded-lg shadow-[8px_8px_0_0_#008EA0] border-2 border-[#008EA0] transition-all duration-300 ease-out ${
             isMinimized
               ? 'w-80 h-16 scale-95'
               : 'w-[420px] h-[680px] scale-100'
           } flex flex-col overflow-hidden`}
           style={{
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+            right: `${buttonRightOffset}px`,
           }}
+          onMouseDown={startDrag}
+          onTouchStart={startDrag}
         >
-          {/* Header - Glassmorphic Design */}
-          <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-purple-700 text-white p-5 flex items-center justify-between overflow-hidden">
-            {/* Animated background */}
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 animate-pulse"></div>
-            <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
-            <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-purple-400/10 rounded-full blur-3xl"></div>
-            
-            <div className="relative flex items-center gap-3 z-10">
-              <div className="relative">
-                <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg">
-                  <Bot className="w-6 h-6 text-white" />
-                </div>
-                <Sparkles className="absolute -top-1 -right-1 w-4 h-4 text-yellow-300 animate-pulse" />
+          {/* Header - UrbanReflex Style */}
+          <div className="bg-gradient-to-r from-[#008EA0] to-[#64BABE] border-b-2 border-[#085979] px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center border-2 border-white/30">
+                <Bot className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h3 className="font-bold text-base flex items-center gap-2">
-                  UrbanReflex AI
-                  <span className="px-2 py-0.5 bg-green-400/20 backdrop-blur-sm border border-green-300/30 rounded-full text-[10px] font-medium">
-                    Online
-                  </span>
-                </h3>
-                <p className="text-xs text-blue-100 font-medium">Trợ lý thông minh • Luôn sẵn sàng</p>
+                <h3 className="font-bold text-base text-white">UrbanReflex Support</h3>
+                <p className="text-xs text-white/80">We're here to help</p>
               </div>
             </div>
             
-            <div className="relative flex items-center gap-1 z-10">
+            <div className="flex items-center gap-1">
               <button
                 onClick={handleReset}
-                className="p-2 hover:bg-white/20 rounded-xl transition-all duration-200 hover:scale-110 active:scale-95"
+                className="p-2 hover:bg-white/20 rounded-lg transition-colors text-white hover:text-white border border-transparent hover:border-white/30"
                 aria-label="Reset chat"
                 title="Bắt đầu lại"
               >
@@ -279,7 +354,7 @@ export default function FloatingChatButton() {
               </button>
               <button
                 onClick={() => setIsMinimized(!isMinimized)}
-                className="p-2 hover:bg-white/20 rounded-xl transition-all duration-200 hover:scale-110 active:scale-95"
+                className="p-2 hover:bg-white/20 rounded-lg transition-colors text-white hover:text-white border border-transparent hover:border-white/30"
                 aria-label={isMinimized ? 'Expand' : 'Minimize'}
               >
                 <Minimize2 className="w-4 h-4" />
@@ -289,7 +364,7 @@ export default function FloatingChatButton() {
                   setIsOpen(false);
                   setIsMinimized(false);
                 }}
-                className="p-2 hover:bg-white/20 rounded-xl transition-all duration-200 hover:scale-110 active:scale-95"
+                className="p-2 hover:bg-white/20 rounded-lg transition-colors text-white hover:text-white border border-transparent hover:border-white/30"
                 aria-label="Close"
               >
                 <X className="w-4 h-4" />
@@ -299,14 +374,14 @@ export default function FloatingChatButton() {
 
           {!isMinimized && (
             <>
-              {/* Messages - Enhanced with Markdown */}
+              {/* Messages - HackQuest Style */}
               <div 
                 ref={messagesContainerRef}
                 onScroll={handleScroll}
-                className="flex-1 overflow-y-auto p-5 space-y-4 bg-gradient-to-b from-gray-50 to-white"
+                className="flex-1 overflow-y-auto p-4 space-y-3 bg-white"
                 style={{
                   scrollbarWidth: 'thin',
-                  scrollbarColor: '#CBD5E1 transparent',
+                  scrollbarColor: '#E5E7EB transparent',
                 }}
               >
                 {messages.map((message, index) => (
@@ -314,23 +389,20 @@ export default function FloatingChatButton() {
                     key={message.id}
                     className={`flex gap-3 ${
                       message.role === 'user' ? 'justify-end' : 'justify-start'
-                    } animate-fade-in`}
-                    style={{
-                      animation: `fadeIn 0.4s ease-out ${index * 0.05}s both`,
-                    }}
+                    }`}
                   >
                     {message.role === 'assistant' && (
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
-                        <Bot className="w-5 h-5 text-white" />
+                      <div className="w-8 h-8 bg-[#64BABE] rounded-lg flex items-center justify-center flex-shrink-0 border-2 border-[#008EA0]">
+                        <Bot className="w-4 h-4 text-white" />
                       </div>
                     )}
                     
                     <div className="flex flex-col gap-1 max-w-[80%]">
                       <div
-                        className={`group relative rounded-2xl px-4 py-3 shadow-sm transition-all duration-200 hover:shadow-md ${
+                        className={`group relative rounded-lg px-4 py-3 border-2 transition-all duration-200 ${
                           message.role === 'user'
-                            ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white'
-                            : 'bg-white text-gray-800 border border-gray-200'
+                            ? 'bg-[#008EA0] text-white border-[#085979] shadow-[2px_2px_0_0_#085979]'
+                            : 'bg-white text-gray-800 border-[#64BABE] shadow-[2px_2px_0_0_#64BABE]'
                         }`}
                       >
                         {message.role === 'assistant' ? (
@@ -340,20 +412,20 @@ export default function FloatingChatButton() {
                             </ReactMarkdown>
                           </div>
                         ) : (
-                          <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                          <p className="text-sm leading-relaxed whitespace-pre-wrap font-medium">{message.content}</p>
                         )}
                         
                         {/* Copy button */}
                         {message.role === 'assistant' && (
                           <button
                             onClick={() => copyToClipboard(message.content, message.id)}
-                            className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 bg-white border border-gray-300 rounded-lg p-1.5 shadow-lg transition-all duration-200 hover:scale-110 active:scale-95"
+                            className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 bg-white border-2 border-[#008EA0] rounded-md p-1.5 transition-all duration-200 hover:bg-[#64BABE] shadow-[2px_2px_0_0_#008EA0]"
                             aria-label="Copy message"
                           >
                             {copiedMessageId === message.id ? (
-                              <Check className="w-3.5 h-3.5 text-green-600" />
+                              <Check className="w-3 h-3 text-[#008EA0]" />
                             ) : (
-                              <Copy className="w-3.5 h-3.5 text-gray-600" />
+                              <Copy className="w-3 h-3 text-[#008EA0]" />
                             )}
                           </button>
                         )}
@@ -362,31 +434,31 @@ export default function FloatingChatButton() {
                       <div className={`flex items-center gap-1.5 px-2 ${
                         message.role === 'user' ? 'justify-end' : 'justify-start'
                       }`}>
-                        <span className="text-[10px] text-gray-500 font-medium">
+                        <span className="text-[10px] text-gray-600 font-medium">
                           {formatTime(message.timestamp)}
                         </span>
                       </div>
                     </div>
                     
                     {message.role === 'user' && (
-                      <div className="w-10 h-10 bg-gradient-to-br from-gray-300 to-gray-400 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
-                        <span className="text-sm font-bold text-white">U</span>
+                      <div className="w-8 h-8 bg-[#085979] rounded-lg flex items-center justify-center flex-shrink-0 border-2 border-[#008EA0]">
+                        <span className="text-xs font-bold text-white">U</span>
                       </div>
                     )}
                   </div>
                 ))}
                 
-                {/* Typing Indicator - Enhanced */}
+                {/* Typing Indicator */}
                 {isTyping && (
-                  <div className="flex gap-3 justify-start animate-fade-in">
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
-                      <Bot className="w-5 h-5 text-white animate-pulse" />
+                  <div className="flex gap-3 justify-start">
+                    <div className="w-8 h-8 bg-[#64BABE] rounded-lg flex items-center justify-center flex-shrink-0 border-2 border-[#008EA0]">
+                      <Bot className="w-4 h-4 text-white" />
                     </div>
-                    <div className="bg-white text-gray-800 border border-gray-200 rounded-2xl px-5 py-3 shadow-sm">
+                    <div className="bg-white text-gray-800 border-2 border-[#64BABE] rounded-lg px-4 py-3 shadow-[2px_2px_0_0_#64BABE]">
                       <div className="flex gap-1.5">
-                        <span className="w-2.5 h-2.5 bg-blue-600 rounded-full animate-bounce"></span>
-                        <span className="w-2.5 h-2.5 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.15s' }}></span>
-                        <span className="w-2.5 h-2.5 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }}></span>
+                        <span className="w-2 h-2 bg-[#008EA0] rounded-full animate-bounce"></span>
+                        <span className="w-2 h-2 bg-[#008EA0] rounded-full animate-bounce" style={{ animationDelay: '0.15s' }}></span>
+                        <span className="w-2 h-2 bg-[#008EA0] rounded-full animate-bounce" style={{ animationDelay: '0.3s' }}></span>
                       </div>
                     </div>
                   </div>
@@ -399,62 +471,106 @@ export default function FloatingChatButton() {
               {showScrollButton && (
                 <button
                   onClick={() => scrollToBottom()}
-                  className="absolute bottom-32 right-8 bg-white border border-gray-300 rounded-full p-2 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 active:scale-95 z-10"
+                  className="absolute bottom-32 right-6 bg-white border-2 border-[#008EA0] rounded-lg p-2 shadow-[2px_2px_0_0_#008EA0] hover:shadow-[4px_4px_0_0_#008EA0] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-150 z-10"
                   aria-label="Scroll to bottom"
                 >
-                  <ChevronDown className="w-4 h-4 text-gray-600" />
+                  <ChevronDown className="w-4 h-4 text-[#008EA0]" />
                 </button>
               )}
 
-              {/* Input - Enhanced Design */}
-              <div className="p-4 border-t border-gray-200/80 bg-white/80 backdrop-blur-xl">
-                <div className="flex gap-2.5 items-end">
+              {/* Input - UrbanReflex Style */}
+              <div className="p-4 border-t-2 border-[#64BABE] bg-white">
+                {/* Thông báo giới hạn cho guest users */}
+                {!isAuthenticated && (
+                  <div className={`mb-3 p-3 rounded-lg border-2 ${
+                    hasReachedLimit 
+                      ? 'bg-[#F3505A]/10 border-[#F3505A]' 
+                      : 'bg-[#64BABE]/10 border-[#64BABE]'
+                  }`}>
+                    {hasReachedLimit ? (
+                      <div className="flex items-start gap-2">
+                        <div className="w-5 h-5 bg-[#F3505A] rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <X className="w-3 h-3 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-bold text-[#D4343F] mb-1">
+                            Đã đạt giới hạn {MAX_QUESTIONS_FOR_GUEST} câu hỏi
+                          </p>
+                          <p className="text-xs text-gray-700 mb-2">
+                            Vui lòng đăng nhập để tiếp tục sử dụng chatbot.
+                          </p>
+                          <Link
+                            href="/login"
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-[#008EA0] hover:bg-[#085979] text-white text-sm font-bold rounded-lg border-2 border-[#085979] shadow-[2px_2px_0_0_#085979] hover:shadow-[4px_4px_0_0_#085979] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-150"
+                          >
+                            <LogIn className="w-4 h-4" />
+                            Đăng nhập ngay
+                          </Link>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 bg-[#64BABE] rounded-full flex items-center justify-center flex-shrink-0">
+                          <Bot className="w-3 h-3 text-white" />
+                        </div>
+                        <p className="text-xs text-gray-700 font-medium">
+                          Bạn còn <span className="font-bold text-[#008EA0]">{MAX_QUESTIONS_FOR_GUEST - userQuestionCount}</span> câu hỏi miễn phí. 
+                          <Link href="/login" className="text-[#008EA0] hover:text-[#085979] underline font-bold ml-1">
+                            Đăng nhập
+                          </Link> để không giới hạn.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                <div className="flex gap-2 items-end">
                   <div className="flex-1 relative">
                     <textarea
                       ref={inputRef}
                       value={inputMessage}
                       onChange={(e) => setInputMessage(e.target.value)}
                       onKeyDown={handleKeyPress}
-                      placeholder="Nhập tin nhắn của bạn..."
+                      placeholder={hasReachedLimit ? "Vui lòng đăng nhập để tiếp tục..." : "Type your message..."}
                       rows={1}
-                      className="w-full px-4 py-3 pr-10 border-2 border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none bg-gray-50 hover:bg-white text-sm leading-relaxed"
+                      className={`w-full px-4 py-2.5 border-2 rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 resize-none bg-white text-sm font-medium text-gray-800 ${
+                        hasReachedLimit
+                          ? 'border-[#F3505A] bg-gray-50 cursor-not-allowed'
+                          : 'border-[#64BABE] focus:ring-[#008EA0] focus:border-[#008EA0]'
+                      }`}
                       style={{
-                        minHeight: '48px',
+                        minHeight: '44px',
                         maxHeight: '120px',
                       }}
-                      disabled={isTyping}
+                      disabled={isTyping || hasReachedLimit}
                       onInput={(e) => {
                         const target = e.target as HTMLTextAreaElement;
                         target.style.height = 'auto';
                         target.style.height = Math.min(target.scrollHeight, 120) + 'px';
                       }}
                     />
-                    {inputMessage.length > 0 && (
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-medium">
-                        {inputMessage.length}
-                      </div>
-                    )}
                   </div>
                   
                   <button
                     onClick={handleSendMessage}
-                    disabled={!inputMessage.trim() || isTyping}
-                    className="bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white p-3 rounded-2xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl flex-shrink-0"
+                    disabled={!inputMessage.trim() || isTyping || hasReachedLimit}
+                    className="bg-[#008EA0] hover:bg-[#085979] text-white p-2.5 rounded-lg border-2 border-[#085979] shadow-[2px_2px_0_0_#085979] hover:shadow-[4px_4px_0_0_#085979] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[2px_2px_0_0_#085979] flex-shrink-0 font-bold"
                     aria-label="Send message"
                   >
                     <Send className="w-5 h-5" />
                   </button>
                 </div>
                 
-                <div className="mt-3 flex items-center justify-between">
-                  <p className="text-[11px] text-gray-500 font-medium">
-                    <kbd className="px-2 py-0.5 bg-gray-200 rounded text-[10px] font-mono">Enter</kbd> gửi • 
-                    <kbd className="px-2 py-0.5 bg-gray-200 rounded text-[10px] font-mono ml-1">Shift+Enter</kbd> xuống dòng
+                <div className="mt-2 flex items-center justify-between">
+                  <p className="text-[10px] text-gray-600 font-medium">
+                    <kbd className="px-1.5 py-0.5 bg-gray-100 border border-[#64BABE] rounded text-[9px] font-mono font-bold text-[#008EA0]">Enter</kbd> to send
                   </p>
-                  <div className="flex items-center gap-1">
-                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                    <span className="text-[10px] text-gray-500 font-medium">AI đang hoạt động</span>
-                  </div>
+                  {isTyping && (
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 bg-[#008EA0] rounded-full animate-pulse"></div>
+                      <span className="text-[10px] text-gray-600 font-medium">Typing...</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </>
@@ -462,39 +578,24 @@ export default function FloatingChatButton() {
         </div>
       )}
       
-      {/* Global styles for animations */}
+      {/* Global styles */}
       <style jsx global>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        .animate-fade-in {
-          animation: fadeIn 0.4s ease-out both;
-        }
-        
         /* Custom scrollbar */
         .overflow-y-auto::-webkit-scrollbar {
           width: 6px;
         }
         
         .overflow-y-auto::-webkit-scrollbar-track {
-          background: transparent;
+          background: #F3F4F6;
         }
         
         .overflow-y-auto::-webkit-scrollbar-thumb {
-          background: #CBD5E1;
-          border-radius: 10px;
+          background: #D1D5DB;
+          border-radius: 3px;
         }
         
         .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-          background: #94A3B8;
+          background: #9CA3AF;
         }
       `}</style>
     </>

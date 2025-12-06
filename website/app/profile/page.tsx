@@ -78,10 +78,40 @@ export default function ProfilePage() {
           keysArray = [];
         }
         
+<<<<<<< HEAD
         // Log API keys to check if they're complete
         console.log('✅ API Keys loaded in frontend:', keysArray.length, 'keys');
         keysArray.forEach((key, idx) => {
           console.log(`  Key ${idx + 1} (${key.name}):`, {
+=======
+        // Normalize IDs so UI actions (delete/toggle) always have a stable identifier
+        const normalizedKeys = keysArray.map((key, idx) => {
+          const normalizedId =
+            key.id ||
+            (key as any).key_id ||
+            (key as any).keyId ||
+            (key as any)._id ||
+            (key as any).id_key ||
+            `key-${Date.now()}-${idx}`;
+
+          if (!key.id && normalizedId) {
+            console.warn('⚠️ API key missing id field. Using fallback id:', {
+              original: key,
+              fallbackId: normalizedId,
+            });
+          }
+
+          return {
+            ...key,
+            id: normalizedId,
+          };
+        });
+
+        // Log API keys to check if they're complete
+        console.log('✅ API Keys loaded in frontend:', normalizedKeys.length, 'keys');
+        normalizedKeys.forEach((key, idx) => {
+          console.log(`  Key ${idx + 1} (${key.name || 'Unnamed'}):`, {
+>>>>>>> frontend
             id: key.id,
             name: key.name,
             keyLength: key.key?.length || 0,
@@ -90,7 +120,11 @@ export default function ProfilePage() {
           });
         });
         
+<<<<<<< HEAD
         setApiKeys(keysArray);
+=======
+        setApiKeys(normalizedKeys);
+>>>>>>> frontend
         setApiKeysError(null);
       } else {
         // Handle different error statuses

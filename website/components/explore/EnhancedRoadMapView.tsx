@@ -1006,3 +1006,1243 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
 }));
 
 export default EnhancedRoadMapView;
+
+/**
+ * Author: Trương Dương Bảo Minh (minhe51805)
+ * Create at: 27-11-2025
+ * Description: Simple map with road segments and markers
+ */
+
+'use client';
+
+import { useEffect, useRef, useState, memo, useImperativeHandle, forwardRef, useCallback } from 'react';
+import { Route as RouteIcon, Lightbulb } from 'lucide-react';
+import maplibregl from 'maplibre-gl';
+
+interface RoadSegment {
+  id: string;
+  type: string;
+  dataProvider: string;
+  dateCreated: string;
+  name: string;
+  roadType: string;
+  length: number;
+  laneCount?: number;
+  surface?: string;
+  oneway?: boolean;
+  maximumAllowedSpeed?: string;
+  source?: string;
+  location: { type: 'LineString'; coordinates: number[][]; };
+  [key: string]: any;
+}
+
+export interface ReportMarker {
+  id: string;
+  title: string;
+  status: string;
+  coordinates: [number, number];
+  description?: string;
+  category?: string;
+  priority?: string;
+}
+
+export interface StreetlightMarker {
+  id: string;
+  coordinates: [number, number];
+  powerState?: string;
+  status?: string;
+}
+
+interface EnhancedRoadMapViewProps {
+  roadSegments: RoadSegment[];
+  onRoadClick?: (road: RoadSegment) => void;
+  highlightLocation?: [number, number] | null;
+  highlightLabel?: string;
+  reportMarkers?: ReportMarker[];
+  streetlightMarkers?: StreetlightMarker[];
+  userLocation?: [number, number] | null;
+}
+
+export interface EnhancedRoadMapViewRef {
+  zoomToRoad: (road: RoadSegment) => void;
+}
+
+// Ensure coordinates are always in [lng, lat] order (GeoJSON standard)
+// Enhanced validation with Vietnam-specific checks for better accuracy
+const normalizeLngLat = (coord: number[]): [number, number] => {
+  if (!Array.isArray(coord) || coord.length < 2) {
+    return [0, 0];
+  }
+
+  let [a, b] = coord;
+
+  // Validate ranges: lng should be -180 to 180, lat should be -90 to 90
+  const aIsLng = a >= -180 && a <= 180;
+  const aIsLat = a >= -90 && a <= 90;
+  const bIsLng = b >= -180 && b <= 180;
+  const bIsLat = b >= -90 && b <= 90;
+
+  // Vietnam-specific: lng ~102-110, lat ~8-24
+  // This helps identify correct format for Vietnam coordinates
+  const isVietnamLng = a >= 102 && a <= 110;
+  const isVietnamLat = b >= 8 && b <= 24;
+  const isVietnamLngSwapped = b >= 102 && b <= 110;
+  const isVietnamLatSwapped = a >= 8 && a <= 24;
+
+  // If both are valid, check which combination makes more sense
+  if (aIsLng && bIsLat) {
+    // Already [lng, lat] - correct format
+    // Prefer Vietnam-specific validation
+    if (isVietnamLng && isVietnamLat) {
+      return [a, b]; // Confirmed correct for Vietnam
+    }
+    return [a, b];
+  } else if (aIsLat && bIsLng) {
+    // [lat, lng] - need to swap
+    // Prefer Vietnam-specific validation
+    if (isVietnamLatSwapped && isVietnamLngSwapped) {
+      return [b, a]; // Confirmed swapped for Vietnam
+    }
+    return [b, a];
+  } else if (aIsLng && bIsLng) {
+    // Both are lng - invalid, but assume first is lng, second is lat (edge case)
+    return [a, b];
+  } else if (aIsLat && bIsLat) {
+    // Both are lat - invalid, but assume first is lat, second is lng (edge case)
+    return [b, a];
+  }
+
+  // Fallback: if |a| <= 90 and |b| > 90, likely [lat, lng]
+  if (Math.abs(a) <= 90 && Math.abs(b) > 90) {
+    return [b, a];
+  }
+
+  // Default: assume already [lng, lat]
+  return [a, b];
+};
+
+// Optional external style URL (Google Maps–like) - configure via env if desired
+// Example (MapTiler Streets, similar to Google Maps):
+// NEXT_PUBLIC_MAP_STYLE_URL="https://api.maptiler.com/maps/streets-v2/style.json?key=YOUR_KEY"
+const MAP_STYLE_URL = process.env.NEXT_PUBLIC_MAP_STYLE_URL;
+
+const normalizeStatusKey = (status: string) =>
+  (status || '')
+    .toString()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_|_$/g, '');
+
+const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoadMapViewProps>(function EnhancedRoadMapView({
+  roadSegments,
+  onRoadClick,
+  highlightLocation,
+  highlightLabel,
+  reportMarkers = [],
+  streetlightMarkers = [],
+  userLocation = null,
+}, ref) {
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<maplibregl.Map | null>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [weatherData, setWeatherData] = useState<any>(null);
+  const highlightMarkerRef = useRef<maplibregl.Marker | null>(null);
+  const reportMarkerRefs = useRef<maplibregl.Marker[]>([]);
+  const streetlightMarkerRefs = useRef<maplibregl.Marker[]>([]); // legacy, no longer used for rendering
+  const userLocationMarkerRef = useRef<maplibregl.Marker | null>(null);
+  const geoJsonPopupRef = useRef<maplibregl.Popup | null>(null);
+  const [isLegendCollapsed, setIsLegendCollapsed] = useState(false);
+
+  const vietnamCenter: [number, number] = [106.6297, 10.8231];
+  const vietnamZoom = 10;
+
+  // Fetch weather data
+  useEffect(() => {
+    const fetchWeather = async () => {
+      try {
+        const weatherRes = await fetch('/api/ngsi-ld?type=WeatherObserved&options=keyValues&limit=1');
+        const weatherDataRes = await weatherRes.json();
+        if (Array.isArray(weatherDataRes) && weatherDataRes.length > 0) {
+          setWeatherData(weatherDataRes[0]);
+        }
+      } catch (error) {
+        console.error('Error fetching weather:', error);
+      }
+    };
+    fetchWeather();
+  }, []);
+
+  // Initialize map
+  useEffect(() => {
+    if (!mapContainer.current || map.current) return;
+
+    const baseOptions: maplibregl.MapOptions = {
+      container: mapContainer.current,
+      center: vietnamCenter,
+      zoom: vietnamZoom,
+      // Hạn chế mức zoom tối đa để không request tile vượt quá level hỗ trợ (tránh 400)
+      maxZoom: 19,
+    };
+
+    // If a vector style URL is provided, use it (Google Maps–like look)
+    // Otherwise, fall back to our local raster tiles.
+    const options: maplibregl.MapOptions = MAP_STYLE_URL
+      ? {
+          ...baseOptions,
+          style: MAP_STYLE_URL,
+        }
+      : {
+          ...baseOptions,
+          style: {
+            version: 8,
+            sources: {
+              'osm-tiles': {
+                type: 'raster',
+                tiles: ['/api/tiles/{z}/{x}/{y}'],
+                tileSize: 256,
+                // Giới hạn zoom level của source để không request tile > 19
+                maxzoom: 19,
+                attribution: '© OpenStreetMap contributors',
+              },
+            },
+            layers: [{ id: 'osm-tiles', type: 'raster', source: 'osm-tiles' }],
+          } as any,
+        };
+
+    map.current = new maplibregl.Map(options as any);
+
+    map.current.addControl(new maplibregl.FullscreenControl(), 'top-right');
+
+    map.current.on('load', () => {
+      setMapLoaded(true);
+    });
+
+    // Handle window resize
+    const handleResize = () => {
+      if (map.current) {
+        map.current.resize();
+      }
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      map.current?.remove();
+      map.current = null;
+    };
+
+    // Cleanup report markers
+    reportMarkerRefs.current.forEach(marker => marker.remove());
+    reportMarkerRefs.current = [];
+  }, []);
+
+  // Highlight marker
+  useEffect(() => {
+    if (!map.current || !mapLoaded) return;
+
+    if (highlightMarkerRef.current) {
+      highlightMarkerRef.current.remove();
+      highlightMarkerRef.current = null;
+    }
+
+    if (highlightLocation) {
+      const el = document.createElement('div');
+      el.style.width = '40px';
+      el.style.height = '40px';
+      el.style.position = 'relative';
+      el.style.cursor = 'pointer';
+      el.style.zIndex = '1000';
+      el.innerHTML = `
+        <div style="
+          position:absolute;
+          bottom:-2px;
+          left:50%;
+          transform:translateX(-50%);
+          width:22px;
+          height:8px;
+          background:rgba(0,0,0,0.2);
+          border-radius:50%;
+          filter:blur(2px);
+        "></div>
+        <div style="
+          position:absolute;
+          top:0;
+          left:50%;
+          transform:translateX(-50%) rotate(-45deg);
+          width:32px;
+          height:32px;
+          background:linear-gradient(135deg,#ef4444 0%,#dc2626 100%);
+          border-radius:50% 50% 50% 0;
+          border:3px solid white;
+          box-shadow:0 8px 20px rgba(220,38,38,0.4);
+        ">
+          <div style="
+            position:absolute;
+            top:50%;
+            left:50%;
+            transform:translate(-50%,-50%) rotate(45deg);
+            font-size:13px;
+            color:white;
+            font-weight:700;
+          ">📍</div>
+        </div>
+      `;
+
+      const popup = new maplibregl.Popup({ 
+        offset: [0, -10],
+        closeButton: true,      // allow user to close
+        closeOnClick: true,     // clicking map will also close
+        className: 'highlight-popup'
+      }).setHTML(`
+        <div style="padding:10px;">
+          <div style="font-weight:600; color:#111827;">${highlightLabel || 'Selected Road'}</div>
+          <div style="font-size:12px; color:#6b7280;">${highlightLocation[1].toFixed(4)}, ${highlightLocation[0].toFixed(4)}</div>
+        </div>
+      `);
+
+      highlightMarkerRef.current = new maplibregl.Marker({ 
+        element: el, 
+        anchor: 'bottom',
+        draggable: false
+      })
+        .setLngLat(highlightLocation)
+        .setPopup(popup)
+        .addTo(map.current);
+
+      // Khi đóng popup thì remove luôn marker để không còn pin trên map
+      popup.on('close', () => {
+        if (highlightMarkerRef.current) {
+          highlightMarkerRef.current.remove();
+          highlightMarkerRef.current = null;
+        }
+      });
+    }
+  }, [highlightLocation, highlightLabel, mapLoaded]);
+
+  // User location marker (vị trí hiện tại của người dùng)
+  useEffect(() => {
+    if (!map.current || !mapLoaded) return;
+
+    // Remove old marker nếu có
+    if (userLocationMarkerRef.current) {
+      userLocationMarkerRef.current.remove();
+      userLocationMarkerRef.current = null;
+    }
+
+    if (!userLocation) return;
+
+    const [lng, lat] = userLocation;
+    if (!isFinite(lng) || !isFinite(lat)) return;
+
+    const el = document.createElement('div');
+    el.style.width = '32px';
+    el.style.height = '32px';
+    el.style.position = 'relative';
+    el.innerHTML = `
+      <div style="
+        position:absolute;
+        bottom:-4px;
+        left:50%;
+        transform:translateX(-50%);
+        width:18px;
+        height:6px;
+        background:rgba(15,23,42,0.35);
+        border-radius:50%;
+        filter:blur(2px);
+      "></div>
+      <div style="
+        position:absolute;
+        top:0;
+        left:50%;
+        transform:translate(-50%,-10%);
+        width:26px;
+        height:26px;
+        border-radius:50%;
+        background:radial-gradient(circle at 30% 30%, #e0f2fe 0, #0ea5e9 45%, #0369a1 100%);
+        border:3px solid white;
+        box-shadow:0 6px 16px rgba(15,118,110,0.55);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+      ">
+        <div style="
+          width:10px;
+          height:10px;
+          border-radius:50%;
+          background:white;
+          box-shadow:0 0 0 3px rgba(59,130,246,0.5);
+        "></div>
+      </div>
+    `;
+
+    userLocationMarkerRef.current = new maplibregl.Marker({
+      element: el,
+      anchor: 'bottom',
+    })
+      .setLngLat([lng, lat])
+      .addTo(map.current);
+  }, [userLocation, mapLoaded]);
+
+  // Report markers for approved reports (Đang xử lý / Đã giải quyết)
+  useEffect(() => {
+    // Remove existing report markers
+    reportMarkerRefs.current.forEach(marker => marker.remove());
+    reportMarkerRefs.current = [];
+
+    if (!map.current || !mapLoaded || !reportMarkers.length) return;
+
+    const resolvedKeys = new Set(['resolved', 'da_giai_quyet', 'hoan_thanh', 'resolved_status']);
+    const inProgressKeys = new Set(['in_progress', 'dang_xu_ly', 'processing', 'dieu_tra']);
+
+    const escapeHtml = (value: string | undefined) =>
+      (value ?? '')
+        .toString()
+        .replace(/[&<>"']/g, (char) => {
+          switch (char) {
+            case '&': return '&amp;';
+            case '<': return '&lt;';
+            case '>': return '&gt;';
+            case '"': return '&quot;';
+            case '\'': return '&#39;';
+            default: return char;
+          }
+        });
+
+    reportMarkers.forEach((report) => {
+      if (!Array.isArray(report.coordinates) || report.coordinates.length < 2) return;
+      const [rawLng, rawLat] = report.coordinates;
+      const [lng, lat] = normalizeLngLat([rawLng, rawLat]);
+
+      if (!isFinite(lng) || !isFinite(lat)) return;
+
+      const normalizedStatus = normalizeStatusKey(report.status);
+      const isResolved = resolvedKeys.has(normalizedStatus);
+      const isInProgress = inProgressKeys.has(normalizedStatus);
+
+      if (!isResolved && !isInProgress) return;
+
+      const color = isResolved ? '#22c55e' : '#f97316';
+      const label = isResolved ? 'Đã giải quyết' : 'Đang xử lý';
+      const icon = isResolved ? '✔' : '⏳';
+
+      const markerEl = document.createElement('div');
+      markerEl.style.width = '30px';
+      markerEl.style.height = '30px';
+      markerEl.style.position = 'relative';
+      markerEl.style.cursor = 'pointer';
+      markerEl.innerHTML = `
+        <div style="
+          position:absolute;
+          bottom:-4px;
+          left:50%;
+          transform:translateX(-50%);
+          width:18px;
+          height:6px;
+          background:rgba(0,0,0,0.25);
+          border-radius:50%;
+          filter:blur(2px);
+        "></div>
+        <div style="
+          position:absolute;
+          top:0;
+          left:50%;
+          transform:translate(-50%, -20%) rotate(-45deg);
+          width:32px;
+          height:32px;
+          background:${color};
+          border-radius:50% 50% 50% 0;
+          border:2px solid white;
+          box-shadow:0 8px 18px rgba(0,0,0,0.25);
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          color:white;
+          font-weight:700;
+          font-size:14px;
+        ">
+          ${icon}
+        </div>
+      `;
+
+      const popup = new maplibregl.Popup({
+        offset: [0, -10],
+        closeButton: true,
+        closeOnClick: true,
+        className: 'report-marker-popup',
+      }).setHTML(`
+        <div style="min-width:180px; max-width:240px;">
+          <div style="font-weight:600; font-size:14px; color:#111827; margin-bottom:4px;">${escapeHtml(report.title)}</div>
+          <div style="font-size:12px; color:#374151; margin-bottom:6px;">${escapeHtml(report.description || '')}</div>
+          <div style="display:flex; flex-direction:column; gap:4px; font-size:12px; color:#6b7280;">
+            <div><strong>Trạng thái:</strong> <span style="color:${color}; font-weight:600;">${label}</span></div>
+            ${report.category ? `<div><strong>Loại:</strong> ${escapeHtml(report.category)}</div>` : ''}
+            ${report.priority ? `<div><strong>Ưu tiên:</strong> ${escapeHtml(report.priority)}</div>` : ''}
+            <div><strong>Vị trí:</strong> ${lat.toFixed(4)}, ${lng.toFixed(4)}</div>
+          </div>
+        </div>
+      `);
+
+      const marker = new maplibregl.Marker({
+        element: markerEl,
+        anchor: 'bottom',
+      })
+        .setLngLat([lng, lat])
+        .setPopup(popup)
+        .addTo(map.current!);
+
+      reportMarkerRefs.current.push(marker);
+    });
+
+    return () => {
+      reportMarkerRefs.current.forEach(marker => marker.remove());
+      reportMarkerRefs.current = [];
+    };
+  }, [reportMarkers, mapLoaded]);
+
+  // Streetlight markers - hiển thị bằng vector layer để không bị "trượt" khi zoom
+  useEffect(() => {
+    if (!map.current || !mapLoaded) return;
+
+    const mapInstance = map.current;
+
+    // Nếu không có streetlight, clear source nếu tồn tại
+    if (!streetlightMarkers.length) {
+      const src = mapInstance.getSource('streetlights') as maplibregl.GeoJSONSource | undefined;
+      if (src) {
+        src.setData({
+          type: 'FeatureCollection',
+          features: [],
+        } as any);
+      }
+      return;
+    }
+
+    const features = streetlightMarkers
+      .map((sl) => {
+        if (!Array.isArray(sl.coordinates) || sl.coordinates.length < 2) return null;
+        const [lng, lat] = sl.coordinates;
+        if (!isFinite(lng) || !isFinite(lat)) return null;
+
+        return {
+          type: 'Feature' as const,
+          properties: {
+            id: sl.id,
+            powerState: (sl.powerState || '').toLowerCase(),
+            status: sl.status || '',
+          },
+          geometry: {
+            type: 'Point' as const,
+            coordinates: [lng, lat],
+          },
+        };
+      })
+      .filter(Boolean) as any[];
+
+    const geojson: any = {
+      type: 'FeatureCollection',
+      features,
+    };
+
+    const existingSource = mapInstance.getSource('streetlights') as maplibregl.GeoJSONSource | undefined;
+
+    if (existingSource) {
+      existingSource.setData(geojson);
+    } else {
+      mapInstance.addSource('streetlights', {
+        type: 'geojson',
+        data: geojson,
+      } as any);
+
+      // Shadow layer cho streetlight
+      mapInstance.addLayer({
+        id: 'streetlights-shadow',
+        type: 'circle',
+        source: 'streetlights',
+        minzoom: 14,
+        paint: {
+          'circle-radius': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            14, 5,
+            18, 8,
+          ],
+          'circle-color': '#0f172a',
+          'circle-opacity': 0.22,
+          'circle-blur': 0.7,
+          'circle-translate': [0, 1],
+        },
+      } as any);
+
+      // Main streetlight node (vòng ngoài)
+      mapInstance.addLayer({
+        id: 'streetlights-circle',
+        type: 'circle',
+        source: 'streetlights',
+        minzoom: 14,
+        paint: {
+          'circle-radius': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            14, 7,
+            18, 10,
+          ],
+          // Vàng nếu powerState == 'on', xám nếu khác
+          'circle-color': [
+            'case',
+            ['==', ['get', 'powerState'], 'on'],
+            '#facc15',
+            '#9ca3af',
+          ],
+          'circle-stroke-color': '#ffffff',
+          'circle-stroke-width': 1.5,
+          'circle-opacity': 1,
+        },
+      } as any);
+
+      // Inner circle để tạo cảm giác bóng và đậm màu ở giữa
+      mapInstance.addLayer({
+        id: 'streetlights-inner',
+        type: 'circle',
+        source: 'streetlights',
+        minzoom: 14,
+        paint: {
+          'circle-radius': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            14, 4.5,
+            18, 7,
+          ],
+          'circle-color': [
+            'case',
+            ['==', ['get', 'powerState'], 'on'],
+            '#fde68a', // vàng nhạt hơn ở giữa
+            '#e5e7eb', // xám nhạt ở giữa
+          ],
+          'circle-opacity': 1,
+        },
+      } as any);
+    }
+  }, [streetlightMarkers, mapLoaded]);
+
+  // Zoom to road function
+  useImperativeHandle(ref, () => ({
+    zoomToRoad: (road: RoadSegment) => {
+      if (!map.current || !road.location.coordinates.length) return;
+      const bounds = new maplibregl.LngLatBounds();
+      road.location.coordinates.forEach(coord => {
+        const [lng, lat] = normalizeLngLat(coord);
+        bounds.extend([lng, lat]);
+      });
+      map.current.fitBounds(bounds, { padding: 50, maxZoom: 16, duration: 1000 });
+    }
+  }), []);
+
+  // ---------- GeoJSON layer for road nodes (points) ----------
+
+  // Build / update GeoJSON source from roadSegments
+  useEffect(() => {
+    if (!map.current || !mapLoaded) return;
+
+    const mapInstance = map.current;
+    if (!roadSegments.length) {
+      const src = mapInstance.getSource('road-points') as maplibregl.GeoJSONSource | undefined;
+      if (src) {
+        src.setData({
+          type: 'FeatureCollection',
+          features: [],
+        } as any);
+      }
+      return;
+    }
+
+    // Build features for all roads (MapLibre sẽ tự ẩn/hiện theo zoom qua circle-opacity)
+    const features = roadSegments
+      .map((road) => {
+        const coords = road.location?.coordinates;
+        if (!coords || !coords.length) return null;
+
+          const midIndex = Math.floor(coords.length / 2);
+        const raw = coords[midIndex];
+        if (!Array.isArray(raw) || raw.length < 2) return null;
+
+        const [lng, lat] = normalizeLngLat(raw);
+          if (
+            typeof lng !== 'number' ||
+            typeof lat !== 'number' ||
+            isNaN(lng) ||
+            isNaN(lat) ||
+            !isFinite(lng) ||
+            !isFinite(lat)
+          ) {
+          return null;
+          }
+
+        return {
+          type: 'Feature' as const,
+          properties: {
+            id: road.id,
+            name: road.name,
+            roadType: road.roadType,
+            length: road.length,
+            laneCount: road.laneCount ?? null,
+            surface: road.surface ?? null,
+          },
+          geometry: {
+            type: 'Point' as const,
+            coordinates: [lng, lat],
+          },
+        };
+      })
+      .filter(Boolean) as any[];
+
+    const geojson: any = {
+      type: 'FeatureCollection',
+      features,
+    };
+
+    const existingSource = mapInstance.getSource('road-points') as maplibregl.GeoJSONSource | undefined;
+
+    if (existingSource) {
+      existingSource.setData(geojson);
+    } else {
+      // Enable built-in clustering to group nearby roads (roughly by area/district)
+      mapInstance.addSource('road-points', {
+        type: 'geojson',
+        data: geojson,
+        cluster: true,
+        // Dùng bán kính ở mức trung bình để không gom hết thành 1 cụm
+        // nhưng cũng không nổ quá nhiều cụm nhỏ như khi để 20px.
+        clusterRadius: 30,   // pixels (thỏa hiệp giữa 20 và 60)
+        clusterMaxZoom: 13,  // beyond this zoom, show individual points
+      } as any);
+
+      // Cluster shadow layer (soft blur behind main node)
+      if (mapInstance && !mapInstance.getLayer('road-clusters-shadow')) {
+        mapInstance.addLayer({
+          id: 'road-clusters-shadow',
+          type: 'circle',
+          source: 'road-points',
+          filter: ['has', 'point_count'],
+          paint: {
+            'circle-radius': [
+              'step',
+              ['get', 'point_count'],
+              18,
+              10, 26,
+              30, 38,
+              60, 50,
+            ],
+            'circle-color': '#0f172a',
+            // Giảm opacity để bóng cụm đường mềm hơn
+            'circle-opacity': 0.18,
+            'circle-blur': 0.7,
+            'circle-translate': [0, 2],
+          },
+        } as any);
+      }
+
+      // Cluster circles
+          if (mapInstance && !mapInstance.getLayer('road-clusters')) {
+        mapInstance.addLayer({
+          id: 'road-clusters',
+          type: 'circle',
+          source: 'road-points',
+          filter: ['has', 'point_count'],
+          // Ẩn hẳn cluster khi zoom quá xa (tránh 1 cục 4936 ở level toàn vùng)
+          minzoom: 10,
+          paint: {
+            'circle-radius': [
+              'step',
+              ['get', 'point_count'],
+              12,   // default radius (small cluster)
+              50, 18,
+              150, 24,
+              300, 30,
+            ],
+            'circle-color': [
+              'step',
+              ['get', 'point_count'],
+              // Use project primary blue shades instead of arbitrary greens
+              '#bfdbfe',    // small cluster (light blue)
+              10, '#60a5fa', // medium cluster
+              30, '#3b82f6', // large cluster
+              60, '#1d4ed8', // very large cluster
+            ],
+            'circle-stroke-color': '#1e3a8a',
+            'circle-stroke-width': 1.5,
+            // Luôn hiển thị rõ (không trong suốt) khi đang nhìn ở mức cluster
+            'circle-opacity': 0.95,
+          },
+        } as any);
+      }
+
+      // Cluster count labels
+      if (mapInstance && !mapInstance.getLayer('road-cluster-count')) {
+        mapInstance.addLayer({
+          id: 'road-cluster-count',
+          type: 'symbol',
+          source: 'road-points',
+          filter: ['has', 'point_count'],
+          minzoom: 10,
+          layout: {
+            'text-field': ['get', 'point_count'],
+            'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
+            'text-size': 12,
+          },
+          paint: {
+            'text-color': '#ffffff',
+          },
+        } as any);
+      }
+
+      // Unclustered individual road points (only when zoomed in enough)
+      // Shadow layer đặt trước để nằm phía dưới node chính cho road nodes
+      if (mapInstance && !mapInstance.getLayer('road-points-circle-white')) {
+        mapInstance.addLayer({
+          id: 'road-points-circle-white',
+          type: 'circle',
+          source: 'road-points',
+          filter: ['!', ['has', 'point_count']],
+          paint: {
+            'circle-radius': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              14, 9,
+              16, 13,
+              18, 17,
+            ],
+            'circle-color': '#0f172a', // shadow color
+            // Giảm opacity để bóng node mềm hơn
+            'circle-opacity': 0.18,
+            'circle-blur': 0.7,
+            'circle-translate': [0, 2],
+          },
+        } as any);
+      }
+      
+      // Layer node chính dạng hình tròn đặc với viền
+      if (mapInstance && !mapInstance.getLayer('road-points-circle')) {
+        mapInstance.addLayer({
+          id: 'road-points-circle',
+          type: 'circle',
+          source: 'road-points',
+          filter: ['!', ['has', 'point_count']],
+          paint: {
+            'circle-radius': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              14, 7,
+              16, 10,
+              18, 13,
+            ],
+            'circle-color': '#3b82f6',
+            'circle-opacity': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              13.5, 0,
+              14, 0.95,
+            ],
+            'circle-stroke-color': '#1e3a8a',
+            'circle-stroke-width': 1.5,
+             'circle-stroke-opacity': 0.9,
+          },
+        } as any);
+          }
+
+      // Inner circle để tạo hiệu ứng bóng / highlight cho road nodes
+      if (mapInstance && !mapInstance.getLayer('road-points-inner')) {
+        mapInstance.addLayer({
+          id: 'road-points-inner',
+          type: 'circle',
+          source: 'road-points',
+          filter: ['!', ['has', 'point_count']],
+          paint: {
+            'circle-radius': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              14, 4.5,
+              16, 7,
+              18, 9,
+            ],
+            'circle-color': '#60a5fa', // xanh nhạt hơn ở giữa
+            'circle-opacity': 1,
+          },
+        } as any);
+      }
+    }
+  }, [roadSegments, mapLoaded]);
+
+  // Hover & click for GeoJSON circles & clusters
+  useEffect(() => {
+    if (!map.current || !mapLoaded) return;
+    const mapInstance = map.current;
+
+    const handleMouseEnter = (e: any) => {
+      if (!e.features || !e.features.length) return;
+      mapInstance.getCanvas().style.cursor = 'pointer';
+
+      const feature = e.features[0];
+      const props = feature.properties || {};
+      const [lng, lat] = feature.geometry.coordinates;
+
+      const { id, name, roadType, length, laneCount, surface } = props;
+
+      const popupHtml = `
+        <div style="padding: 12px; min-width: 200px; max-width: 260px;">
+          <div style="
+            font-weight: 600;
+            font-size: 14px;
+            color: #111827;
+            margin-bottom: 6px;
+            white-space: normal;
+            word-break: break-word;
+          ">
+            ${name || 'Unnamed Road'}
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+            <span style="
+              display: inline-block;
+              padding: 2px 8px;
+              background: rgba(37, 99, 235, 0.08);
+              color: #1d4ed8;
+              border-radius: 4px;
+              font-size: 11px;
+              font-weight: 600;
+              text-transform: uppercase;
+            ">${roadType || 'road'}</span>
+          </div>
+          <div style="font-size: 12px; color: #6b7280; margin-top: 6px;">
+            ${length ? `📏 ${Number(length).toFixed(0)}m` : ''}
+            ${laneCount ? ` • 🛣️ ${laneCount} lanes` : ''}
+            ${surface ? ` • 🏔️ ${surface}` : ''}
+          </div>
+          <div style="font-size: 10px; color: #9ca3af; margin-top: 4px; font-family: monospace;">
+            ID: ${id ? String(id).substring(0, 8) : 'n/a'}...
+          </div>
+        </div>
+          `;
+
+      if (!geoJsonPopupRef.current) {
+        geoJsonPopupRef.current = new maplibregl.Popup({
+          offset: [0, -12],
+          closeButton: true,      // hiển thị nút X để tắt popup
+          closeOnClick: false,
+          className: 'road-marker-popup',
+          maxWidth: '300px',
+        });
+      }
+
+      geoJsonPopupRef.current
+            .setLngLat([lng, lat])
+        .setHTML(popupHtml)
+        .addTo(mapInstance);
+    };
+
+    const handleMouseLeave = () => {
+      mapInstance.getCanvas().style.cursor = '';
+      if (geoJsonPopupRef.current) {
+        geoJsonPopupRef.current.remove();
+      }
+    };
+    
+    const handleClick = (e: any) => {
+      if (!e.features || !e.features.length) return;
+      const feature = e.features[0];
+      const props = feature.properties || {};
+
+      // If this is a cluster, zoom into it instead of opening detail
+      if (props.cluster) {
+        const clusterId = props.cluster_id;
+        const source = mapInstance.getSource('road-points') as any;
+        if (!source || typeof source.getClusterExpansionZoom !== 'function') return;
+
+        source.getClusterExpansionZoom(clusterId, (err: any, zoom: number) => {
+          if (err) return;
+          mapInstance.easeTo({
+            center: feature.geometry.coordinates,
+            zoom,
+          });
+        });
+        return;
+      }
+
+      // Unclustered point → open road detail
+      const roadId = props.id;
+      if (!roadId || !onRoadClick) return;
+      const road = roadSegments.find((r) => r.id === roadId);
+      if (road) {
+        onRoadClick(road);
+      }
+    };
+
+    // Check if mapInstance exists before adding event listeners
+    if (!mapInstance) return;
+    
+    try {
+      if (mapInstance.getLayer('road-points-circle')) {
+        mapInstance.on('mouseenter', 'road-points-circle', handleMouseEnter);
+        mapInstance.on('mouseleave', 'road-points-circle', handleMouseLeave);
+        mapInstance.on('click', 'road-points-circle', handleClick);
+      }
+    } catch (e) {
+      console.warn('Error adding event listeners to road-points-circle:', e);
+    }
+    
+    try {
+      if (mapInstance.getLayer('road-clusters')) {
+        mapInstance.on('mouseenter', 'road-clusters', () => {
+          try {
+            if (mapInstance.getCanvas()) {
+              mapInstance.getCanvas().style.cursor = 'pointer';
+            }
+          } catch (e) {
+            // Ignore
+          }
+        });
+        mapInstance.on('mouseleave', 'road-clusters', () => {
+          try {
+            if (mapInstance.getCanvas()) {
+              mapInstance.getCanvas().style.cursor = '';
+            }
+          } catch (e) {
+            // Ignore
+          }
+        });
+        mapInstance.on('click', 'road-clusters', handleClick);
+      }
+    } catch (e) {
+      console.warn('Error adding event listeners to road-clusters:', e);
+    }
+
+    return () => {
+      // Check if mapInstance exists before accessing its methods
+      if (!mapInstance) return;
+      
+      try {
+        if (mapInstance.getCanvas()) {
+          mapInstance.getCanvas().style.cursor = '';
+        }
+      } catch (e) {
+        // Map may be destroyed, ignore
+      }
+      
+      if (geoJsonPopupRef.current) {
+        try {
+          geoJsonPopupRef.current.remove();
+        } catch (e) {
+          // Popup may already be removed, ignore
+        }
+      }
+      
+      try {
+        if (mapInstance.getLayer('road-points-circle')) {
+          mapInstance.off('mouseenter', 'road-points-circle', handleMouseEnter);
+          mapInstance.off('mouseleave', 'road-points-circle', handleMouseLeave);
+          mapInstance.off('click', 'road-points-circle', handleClick);
+        }
+      } catch (e) {
+        // Layer may not exist, ignore
+      }
+      
+      try {
+        if (mapInstance.getLayer('road-clusters')) {
+          mapInstance.off('click', 'road-clusters', handleClick);
+          mapInstance.off('mouseenter', 'road-clusters', () => {});
+          mapInstance.off('mouseleave', 'road-clusters', () => {});
+        }
+      } catch (e) {
+        // Layer may not exist, ignore
+      }
+    };
+  }, [mapLoaded, roadSegments, onRoadClick]);
+
+  return (
+    <div className="relative w-full h-full">
+      <style>{`
+        .road-marker-popup .maplibregl-popup-content {
+          background: white;
+          border: 1px solid #e5e7eb;
+          border-radius: 12px;
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+          padding: 0 !important;
+        }
+        .road-marker-popup .maplibregl-popup-tip {
+          border-top-color: white;
+          border-left-color: transparent;
+          border-right-color: transparent;
+        }
+        .road-marker-popup .maplibregl-popup-close-button {
+          top: 6px;
+          right: 8px;
+          padding: 2px 4px;
+          border-radius: 999px;
+          background: transparent;
+          color: #9ca3af;
+          font-size: 14px;
+        }
+        .road-marker-popup .maplibregl-popup-close-button:hover {
+          background: #f3f4f6;
+          color: #4b5563;
+        }
+      `}</style>
+      <div ref={mapContainer} className="w-full h-full" />
+
+      {/* Weather Info Card */}
+      {weatherData && (
+        <div className="absolute top-4 right-12 z-40 bg-white/95 backdrop-blur-md rounded-xl shadow-lg border border-gray-200 p-4 max-w-xs pointer-events-auto">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="text-3xl">☁️</div>
+            <div>
+              <div className="font-bold text-lg">{weatherData.temperature}°C</div>
+              <div className="text-xs text-gray-500">{weatherData.weatherDescription || 'Weather'}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Map Legend - đầy đủ node & ý nghĩa màu sắc */}
+      {isLegendCollapsed ? (
+        <button
+          onClick={() => setIsLegendCollapsed(false)}
+          className="absolute bottom-4 right-4 z-40 bg-white/95 backdrop-blur-md rounded-full shadow-lg border border-gray-200 px-4 py-2 pointer-events-auto text-xs font-semibold text-gray-700 hover:bg-white"
+        >
+          🗺️ Map Legend
+        </button>
+      ) : (
+        <div className="absolute bottom-4 right-4 z-40 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-200/80 p-4 pointer-events-auto min-w-[260px]">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-blue-50 rounded-xl">
+                <span className="text-base">🗺️</span>
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-gray-900">Map Legend</h3>
+                <p className="text-[11px] text-gray-500">Ý nghĩa các node & màu sắc</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsLegendCollapsed(true)}
+              className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+              aria-label="Collapse legend"
+            >
+              ×
+            </button>
+          </div>
+
+          <div className="space-y-3 text-[11px]">
+            {/* Road nodes (unclustered) */}
+            <div className="flex items-center gap-3">
+              <div className="relative flex-shrink-0 w-7 h-7">
+                <div className="absolute inset-0 rounded-full bg-blue-500 shadow-md border border-blue-700" />
+                <div className="absolute inset-1 rounded-full bg-blue-300" />
+              </div>
+              <div>
+                <div className="text-gray-800 font-semibold">Road nodes</div>
+                <div className="text-gray-500">Điểm đường đơn lẻ khi zoom gần</div>
+              </div>
+            </div>
+
+            {/* Clusters */}
+            <div className="flex items-center gap-3">
+              <div className="relative flex-shrink-0 w-7 h-7">
+                <div className="absolute inset-0 rounded-full bg-slate-900 opacity-20 blur-sm translate-y-[1px]" />
+                <div className="absolute inset-[3px] rounded-full bg-gradient-to-br from-sky-400 to-blue-600 border border-blue-800 flex items-center justify-center text-[10px] font-bold text-white">
+                  24
+                </div>
+              </div>
+              <div>
+                <div className="text-gray-800 font-semibold">Clusters</div>
+                <div className="text-gray-500">Nhóm nhiều node khi zoom xa (số = số lượng)</div>
+              </div>
+            </div>
+
+            {/* Streetlights on / off */}
+            <div className="flex items-center gap-3">
+              <div className="relative flex-shrink-0 w-7 h-7">
+                <div className="absolute inset-0 rounded-full bg-slate-900 opacity-20 blur-sm translate-y-[1px]" />
+                <div className="absolute inset-[3px] rounded-full bg-yellow-400 border border-yellow-500" />
+              </div>
+              <div>
+                <div className="text-gray-800 font-semibold">Streetlight ON</div>
+                <div className="text-gray-500">Đèn đang bật (màu vàng)</div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="relative flex-shrink-0 w-7 h-7">
+                <div className="absolute inset-0 rounded-full bg-slate-900 opacity-20 blur-sm translate-y-[1px]" />
+                <div className="absolute inset-[3px] rounded-full bg-gray-400 border border-gray-500" />
+              </div>
+              <div>
+                <div className="text-gray-800 font-semibold">Streetlight OFF</div>
+                <div className="text-gray-500">Đèn tắt / không hoạt động (màu xám)</div>
+              </div>
+            </div>
+
+            {/* User location */}
+            <div className="flex items-center gap-3">
+              <div className="relative flex-shrink-0 w-7 h-7">
+                <div className="absolute inset-0 rounded-full bg-sky-500 opacity-30 blur-sm translate-y-[1px]" />
+                <div className="absolute inset-[3px] rounded-full bg-white border-2 border-sky-500 flex items-center justify-center">
+                  <div className="w-2.5 h-2.5 rounded-full bg-sky-500" />
+                </div>
+              </div>
+              <div>
+                <div className="text-gray-800 font-semibold">Your location</div>
+                <div className="text-gray-500">Vị trí hiện tại (nếu được cấp quyền)</div>
+              </div>
+            </div>
+
+            {/* Selected road / highlight pin */}
+            <div className="flex items-center gap-3">
+              <div className="relative flex-shrink-0 w-7 h-7">
+                <div className="absolute inset-0 rounded-full bg-rose-500 opacity-30 blur-sm translate-y-[1px]" />
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[55%] rotate-[-45deg] w-4 h-4 bg-gradient-to-br from-rose-500 to-red-600 rounded-full rounded-br-none border-2 border-white flex items-center justify-center">
+                  <span className="text-[10px] rotate-[45deg] text-white">📍</span>
+                </div>
+              </div>
+              <div>
+                <div className="text-gray-800 font-semibold">Selected road / report</div>
+                <div className="text-gray-500">Pin highlight khi chọn road hoặc "Xem trên bản đồ"</div>
+              </div>
+            </div>
+
+            {/* Citizen reports markers */}
+            <div className="flex items-center gap-3">
+              <div className="relative flex-shrink-0 w-7 h-7">
+                <div className="absolute inset-0 rounded-full bg-slate-900 opacity-20 blur-sm translate-y-[1px]" />
+                <div className="absolute inset-[5px] rounded-full bg-white border border-rose-400 flex items-center justify-center">
+                  <span className="text-[11px]">⚠️</span>
+                </div>
+              </div>
+              <div>
+                <div className="text-gray-800 font-semibold">Citizen reports</div>
+                <div className="text-gray-500">Các báo cáo đã được duyệt hiển thị trên map</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!mapLoaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+            <p className="mt-4 text-gray-600 font-medium">Loading map...</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}));
+
+export default EnhancedRoadMapView;
