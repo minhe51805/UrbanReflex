@@ -24,12 +24,11 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Search, MapPin, Maximize2, Navigation2, Building2, Satellite, Map, Loader2 } from 'lucide-react';
+import { Maximize2, Building2, Satellite, Map, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function MapSection() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentLocation, setCurrentLocation] = useState({ lat: 10.8231, lng: 106.6297, name: 'Ho Chi Minh City, Vietnam' });
+  const [currentLocation] = useState({ lat: 10.8231, lng: 106.6297, name: 'Ho Chi Minh City, Vietnam' });
   const [vrViewMode, setVrViewMode] = useState<'3d' | 'satellite' | 'terrain'>('terrain'); // Default to terrain (OpenStreetMap) to avoid f4map
   const [vrZoom] = useState(18);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
@@ -144,28 +143,6 @@ export default function MapSection() {
     };
   }, []);
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
-
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`
-      );
-      const data = await response.json();
-
-      if (data && data.length > 0) {
-        const { lat, lon, display_name } = data[0];
-        setCurrentLocation({ lat: parseFloat(lat), lng: parseFloat(lon), name: display_name });
-        setMapError(null);
-      } else {
-        alert('Location not found. Please try a different search term.');
-      }
-    } catch (error) {
-      console.error('Search error:', error);
-      alert('Failed to search location. Please try again.');
-    }
-  };
 
   const handleMapLoad = useCallback(() => {
     setIsMapLoaded(true);
@@ -262,49 +239,6 @@ export default function MapSection() {
       {/* Top Gradient Overlay */}
       <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-black/60 via-black/30 to-transparent z-10 pointer-events-none" />
 
-      {/* Search Bar - Top Center - Hidden in 3D mode */}
-      {vrViewMode !== '3d' && (
-        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[30] w-full max-w-2xl px-4">
-          <motion.form
-            initial={{ y: -20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            onSubmit={handleSearch}
-            className="relative"
-          >
-            <div className="relative bg-white/95 backdrop-blur-xl rounded-full shadow-2xl border border-white/50">
-              <div className="absolute left-5 top-1/2 -translate-y-1/2 text-primary-600">
-                <MapPin className="w-5 h-5" />
-              </div>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search location for air quality data..."
-                className="w-full pl-14 pr-14 py-4 rounded-full outline-none text-gray-800 placeholder-gray-400 text-base font-medium bg-transparent"
-              />
-              <button
-                type="submit"
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white p-3 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
-                aria-label="Search"
-              >
-                <Search className="w-5 h-5" />
-              </button>
-            </div>
-          </motion.form>
-
-          {/* Current Location Badge */}
-          <motion.div
-            initial={{ y: -10, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="mt-3 flex items-center justify-center gap-2 text-white/90 text-sm"
-          >
-            <Navigation2 className="w-4 h-4" />
-            <span className="font-medium">{currentLocation.name}</span>
-          </motion.div>
-        </div>
-      )}
 
 
 
