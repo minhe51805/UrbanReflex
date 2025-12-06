@@ -194,7 +194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (fetchError: any) {
           // Handle network errors
           if (fetchError.message?.includes('Failed to fetch') || fetchError.message?.includes('ERR_CONNECTION_REFUSED')) {
-            throw new Error('Không thể kết nối đến server. Vui lòng kiểm tra lại kết nối hoặc liên hệ quản trị viên.');
+            throw new Error('Unable to connect to server. Please check your connection or contact the administrator.');
           }
           throw fetchError;
         }
@@ -283,7 +283,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             throw new Error(`Lỗi xác thực: ${detailStr}`);
           }
         }
-        throw new Error(errorMsg || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin đăng nhập.');
+        throw new Error(errorMsg || 'Login failed. Please check your login information.');
       }
 
       // Handle successful response
