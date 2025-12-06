@@ -1,8 +1,8 @@
-# API Endpoints - Chi tiết chức năng
+# API Endpoints - Feature Details
 
-## 📋 Tổng quan
+## 📋 Overview
 
-UrbanReflex API cung cấp các endpoints để truy cập dữ liệu chất lượng không khí.
+UrbanReflex API provides endpoints to access air quality data.
 
 **Base URL**: `https://your-domain.com/api/v1`  
 **Authentication**: API Key required in `X-API-Key` header
@@ -13,18 +13,18 @@ UrbanReflex API cung cấp các endpoints để truy cập dữ liệu chất l�
 
 | Endpoint | Method | Description | Auth Required |
 |----------|--------|-------------|---------------|
-| `/api/v1/locations` | GET | Lấy danh sách monitoring locations | ✅ |
-| `/api/v1/locations` | POST | Thêm location mới | ✅ |
-| `/api/v1/measurements` | GET | Lấy measurements data | ✅ |
-| `/api/v1/measurements` | POST | Submit measurement mới | ✅ |
+| `/api/v1/locations` | GET | Get list of monitoring locations | ✅ |
+| `/api/v1/locations` | POST | Add new location | ✅ |
+| `/api/v1/measurements` | GET | Get measurements data | ✅ |
+| `/api/v1/measurements` | POST | Submit new measurement | ✅ |
 | `/api/v1/validate-key` | POST | Validate API key | ❌ |
 
 ---
 
 ## 📍 GET /api/v1/locations
 
-### Mô tả
-Lấy danh sách các monitoring locations với thông tin chi tiết.
+### Description
+Get list of monitoring locations with detailed information.
 
 ### Authentication
 Required: `X-API-Key` header
@@ -114,8 +114,8 @@ Current implementation returns 5 sample locations:
 
 ## 📍 POST /api/v1/locations
 
-### Mô tả
-Thêm monitoring location mới vào hệ thống.
+### Description
+Add new monitoring location to the system.
 
 ### Authentication
 Required: `X-API-Key` header
@@ -190,8 +190,8 @@ curl -X POST "https://your-domain.com/api/v1/locations" \
 
 ## 📊 GET /api/v1/measurements
 
-### Mô tả
-Lấy air quality measurements từ các monitoring locations.
+### Description
+Get air quality measurements from monitoring locations.
 
 ### Authentication
 Required: `X-API-Key` header
@@ -289,8 +289,8 @@ curl -X GET "https://your-domain.com/api/v1/measurements?date_from=2025-11-17T11
 
 ## 📊 POST /api/v1/measurements
 
-### Mô tả
-Submit measurement mới vào hệ thống.
+### Description
+Submit new measurement to the system.
 
 ### Authentication
 Required: `X-API-Key` header
@@ -356,8 +356,8 @@ curl -X POST "https://your-domain.com/api/v1/measurements" \
 
 ## 🔑 POST /api/v1/validate-key
 
-### Mô tả
-Validate API key format và tính hợp lệ.
+### Description
+Validate API key format and validity.
 
 ### Authentication
 Not required (this endpoint validates the key)

@@ -1,8 +1,8 @@
-# API Authentication - Chi tiết chức năng
+# API Authentication - Feature Details
 
-##[object Object]Tổng quan
+## Overview
 
-Hệ thống authentication cho UrbanReflex API sử dụng API Key-based authentication thông qua HTTP headers.
+UrbanReflex API authentication system uses API Key-based authentication through HTTP headers.
 
 **Method**: API Key in Header  
 **Header Name**: `X-API-Key`
@@ -25,7 +25,7 @@ Return data or 401 error
 
 ---
 
-## 🎯 Cách sử dụng
+## 🎯 Usage
 
 ### 1. Include API Key trong Header
 

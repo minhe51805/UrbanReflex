@@ -24,7 +24,7 @@ For more information, visit: https://github.com/minhe51805/UrbanReflex
 
 ## 📋 Overview
 
-UrbanReflex sử dụng hệ thống quản lý trạng thái báo cáo (Report Status Workflow) tự động hóa với AI để tối ưu quy trình duyệt và hiển thị báo cáo của người dân.
+UrbanReflex uses an automated AI-powered report status management system (Report Status Workflow) to optimize the review and display process for citizen reports.
 
 ## 🔄 Status Flow Diagram
 
@@ -57,53 +57,53 @@ User Submit Report
 
 ### 1. `submitted` 📝
 
-- **Nghĩa:** Báo cáo vừa được gửi
-- **Hiển thị công khai:** ❌ Không
-- **Mô tả:** User vừa submit báo cáo, chưa qua xử lý AI
+- **Meaning:** Report just submitted
+- **Public Display:** ❌ No
+- **Description:** User just submitted report, not yet processed by AI
 
 ### 2. `ai_processing` 🤖
 
-- **Nghĩa:** AI đang phân tích
-- **Hiển thị công khai:** ❌ Không
-- **Mô tả:** Backend AI đang classify category, priority, severity
+- **Meaning:** AI is analyzing
+- **Public Display:** ❌ No
+- **Description:** Backend AI is classifying category, priority, severity
 
 ### 3. `auto_approved` ✅
 
-- **Nghĩa:** Tự động duyệt bởi AI
-- **Hiển thị công khai:** ✅ Có
-- **Mô tả:** Thỏa điều kiện auto-approval, hiển thị ngay trên bản đồ
+- **Meaning:** Auto-approved by AI
+- **Public Display:** ✅ Yes
+- **Description:** Meets auto-approval conditions, displayed immediately on map
 
 ### 4. `pending_review` ⏳
 
-- **Nghĩa:** Chờ admin duyệt
-- **Hiển thị công khai:** ❌ Không
-- **Mô tả:** Không thỏa điều kiện auto-approval, cần admin review
+- **Meaning:** Pending admin review
+- **Public Display:** ❌ No
+- **Description:** Does not meet auto-approval conditions, requires admin review
 
 ### 5. `approved` ✓
 
-- **Nghĩa:** Admin duyệt thủ công
-- **Hiển thị công khai:** ✅ Có
-- **Mô tả:** Admin đã review và approve, hiển thị trên bản đồ
+- **Meaning:** Manually approved by admin
+- **Public Display:** ✅ Yes
+- **Description:** Admin has reviewed and approved, displayed on map
 
 ### 6. `rejected` ✗
 
-- **Nghĩa:** Bị từ chối
-- **Hiển thị công khai:** ❌ Không
-- **Mô tả:** Báo cáo không hợp lệ, spam, hoặc trùng lặp
+- **Meaning:** Rejected
+- **Public Display:** ❌ No
+- **Description:** Report is invalid, spam, or duplicate
 
 ### 7. `resolved` 🎉
 
-- **Nghĩa:** Đã giải quyết
-- **Hiển thị công khai:** ✅ Có
-- **Mô tả:** Vấn đề đã được xử lý xong (vẫn hiển thị để track history)
+- **Meaning:** Resolved
+- **Public Display:** ✅ Yes
+- **Description:** Issue has been resolved (still displayed to track history)
 
 ---
 
 ## 🤖 Auto-Approval Logic
 
-### Điều kiện tự động duyệt
+### Auto-Approval Conditions
 
-Report được **tự động duyệt** (`auto_approved`) nếu thỏa **TẤT CẢ** các điều kiện sau:
+Report is **auto-approved** (`auto_approved`) if it meets **ALL** of the following conditions:
 
 #### ✅ 1. AI Confidence >= 70%
 
@@ -111,37 +111,37 @@ Report được **tự động duyệt** (`auto_approved`) nếu thỏa **TẤT 
 categoryConfidence >= 0.7;
 ```
 
-- AI phải tự tin >= 70% về category classification
-- Đảm bảo độ chính xác cao
+- AI must be >= 70% confident about category classification
+- Ensures high accuracy
 
-#### ✅ 2. Priority Thấp/Trung Bình
+#### ✅ 2. Low/Medium Priority
 
 ```typescript
 priority in ["low", "medium"];
 ```
 
-- Chỉ auto-approve báo cáo không khẩn cấp
-- `high` và `urgent` cần admin review
+- Only auto-approve non-urgent reports
+- `high` and `urgent` require admin review
 
-#### ✅ 3. Severity Thấp/Trung Bình
+#### ✅ 3. Low/Medium Severity
 
 ```typescript
 severity in ["low", "medium"];
 ```
 
-- Vấn đề không nghiêm trọng
-- Severity cao cần đánh giá kỹ
+- Issue is not critical
+- High severity requires careful evaluation
 
-#### ✅ 4. Có Ảnh Minh Chứng
+#### ✅ 4. Has Evidence Image
 
 ```typescript
 verified === true || imageUrl.length > 0;
 ```
 
-- Phải có ảnh chứng minh
-- Tăng độ tin cậy
+- Must have evidence image
+- Increases reliability
 
-### Ví dụ
+### Example
 
 #### ✅ Auto-Approved
 
@@ -198,7 +198,7 @@ lib/utils/reportStatus.ts
 
 #### `shouldAutoApprove(report, criteria?)`
 
-Kiểm tra report có thỏa điều kiện auto-approve không
+Check if report meets auto-approval conditions
 
 ```typescript
 import { shouldAutoApprove } from "@/lib/utils/reportStatus";
@@ -215,7 +215,7 @@ const canAutoApprove = shouldAutoApprove({
 
 #### `getStatusAfterAI(report)`
 
-Lấy status sau khi AI xử lý xong
+Get status after AI processing is complete
 
 ```typescript
 import { getStatusAfterAI } from "@/lib/utils/reportStatus";
@@ -226,7 +226,7 @@ const nextStatus = getStatusAfterAI(reportData);
 
 #### `isPubliclyVisible(status)`
 
-Kiểm tra status có hiển thị công khai không
+Check if status is publicly visible
 
 ```typescript
 import { isPubliclyVisible } from "@/lib/utils/reportStatus";
@@ -237,13 +237,13 @@ isPubliclyVisible("pending_review"); // → false
 
 #### `formatStatus(status)`
 
-Format status thành chuỗi hiển thị
+Format status into display string
 
 ```typescript
 import { formatStatus } from "@/lib/utils/reportStatus";
 
-formatStatus("auto_approved"); // → "✅ Tự động duyệt"
-formatStatus("pending_review"); // → "⏳ Chờ duyệt"
+formatStatus("auto_approved"); // → "✅ Auto Approved"
+formatStatus("pending_review"); // → "⏳ Pending Review"
 ```
 
 ---
@@ -280,7 +280,7 @@ import { STATUS_CONFIG, formatStatus } from "@/lib/utils/reportStatus";
 
 ## 📈 Statistics & Metrics
 
-### Tính toán Auto-Approval Rate
+### Calculate Auto-Approval Rate
 
 ```typescript
 const autoApprovalRate =
@@ -328,19 +328,19 @@ const canApprove = shouldAutoApprove(report, strictCriteria);
 
 ## 📝 Notes
 
-- **Public Visibility:** Chỉ reports có `isPublic: true` mới hiển thị trên bản đồ công khai
-- **AI Processing:** Backend AI endpoint phải update status từ `submitted` → `ai_processing` → `auto_approved/pending_review`
-- **Admin Override:** Admin có thể manually override bất kỳ status nào
-- **Audit Trail:** Mọi status change nên log vào `dateModified` field
+- **Public Visibility:** Only reports with `isPublic: true` are displayed on public map
+- **AI Processing:** Backend AI endpoint must update status from `submitted` → `ai_processing` → `auto_approved/pending_review`
+- **Admin Override:** Admin can manually override any status
+- **Audit Trail:** All status changes should be logged to `dateModified` field
 
 ---
 
 ## 🚀 Future Improvements
 
-1. **Machine Learning:** Học từ admin decisions để cải thiện auto-approval logic
-2. **Priority Scoring:** Tự động tính priority score dựa trên multiple factors
-3. **Duplicate Detection:** AI detect báo cáo trùng lặp
-4. **Auto-Resolution:** Tự động resolve sau khi fix xong (integration với công việc thực tế)
+1. **Machine Learning:** Learn from admin decisions to improve auto-approval logic
+2. **Priority Scoring:** Automatically calculate priority score based on multiple factors
+3. **Duplicate Detection:** AI detects duplicate reports
+4. **Auto-Resolution:** Automatically resolve after fix is complete (integration with actual work)
 
 ---
 
