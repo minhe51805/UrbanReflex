@@ -20,7 +20,7 @@
  * ============================================================================
  */
 
-import { source } from "@/app/source";
+import { source } from "../../source";
 import {
     DocsPage,
     DocsBody,

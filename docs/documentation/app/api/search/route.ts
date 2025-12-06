@@ -21,7 +21,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { source } from "@/app/source";
+import { source } from "../../source";
 
 export const dynamic = "force-static";
 export const revalidate = 3600; // Revalidate every hour
