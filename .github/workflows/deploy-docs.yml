@@ -35,10 +35,10 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
-          cache-dependency-path: "docs/documentation/package-lock.json"
+          cache-dependency-path: "./docs/documentation/package-lock.json"
 
       - name: Install dependencies
-        run: cd docs/documentation && npm ci
+        run: cd docs/documentation && npm ci --legacy-peer-deps
 
       - name: Build documentation
         run: cd docs/documentation && npm run build
