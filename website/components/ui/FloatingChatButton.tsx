@@ -6,7 +6,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { MessageCircle, X, Send, Bot, Minimize2, RefreshCw, Copy, Check, ChevronDown, LogIn } from 'lucide-react';
+import { MessageCircle, X, Send, Bot, RefreshCw, Copy, Check, ChevronDown, LogIn } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -351,13 +351,6 @@ export default function FloatingChatButton() {
                 title="Bắt đầu lại"
               >
                 <RefreshCw className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setIsMinimized(!isMinimized)}
-                className="p-2 hover:bg-white/20 rounded-lg transition-colors text-white hover:text-white border border-transparent hover:border-white/30"
-                aria-label={isMinimized ? 'Expand' : 'Minimize'}
-              >
-                <Minimize2 className="w-4 h-4" />
               </button>
               <button
                 onClick={() => {
