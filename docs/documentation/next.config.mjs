@@ -21,6 +21,11 @@
  */
 
 import { createMDX } from "fumadocs-mdx/next";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const withMDX = createMDX();
 
@@ -48,6 +53,11 @@ const config = {
     },
     // Suppress warnings in webpack
     webpack: (config, { isServer }) => {
+        // Add @ path alias
+        config.resolve.alias = {
+            ...config.resolve.alias,
+            '@': path.resolve(__dirname),
+        };
         if (!isServer) {
             config.resolve.fallback = {
                 ...config.resolve.fallback,
