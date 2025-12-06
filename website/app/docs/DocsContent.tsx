@@ -347,7 +347,7 @@ const roads = await client.roads.list();`}
                           </span>
                         </div>
                         <p className="text-gray-700 mb-4">
-                          API chính để truy cập dữ liệu NGSI-LD với nhiều tính năng mạnh mẽ: timeframe filtering, entity selection, và date range queries.
+                          Main API for accessing NGSI-LD data with powerful features: timeframe filtering, entity selection, and date range queries.
                         </p>
                         <div className="flex items-center gap-3">
                           <span className="px-3 py-1.5 bg-green-500 text-white text-xs font-bold rounded-md shadow-sm flex items-center gap-1.5">
@@ -369,7 +369,7 @@ const roads = await client.roads.list();`}
                       <h4 className="font-bold text-gray-900 text-lg">Authentication</h4>
                     </div>
                     <p className="text-sm text-gray-700 mb-4">
-                      API key được đặt trực tiếp trong URL path. Format: <code className="bg-white px-2.5 py-1 rounded-md border border-amber-200 font-mono text-amber-800">ur_xxxxxxxxxxxxx</code>
+                      API key is placed directly in the URL path. Format: <code className="bg-white px-2.5 py-1 rounded-md border border-amber-200 font-mono text-amber-800">ur_xxxxxxxxxxxxx</code>
                     </p>
                     <div className="bg-gray-900 rounded-lg p-4 border border-gray-700 shadow-inner">
                       <pre className="text-green-400 text-sm overflow-x-auto font-mono">
@@ -379,7 +379,7 @@ const roads = await client.roads.list();`}
                     <div className="mt-4 flex items-start gap-2 p-3 bg-white rounded-lg border border-amber-200">
                       <Info className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
                       <p className="text-xs text-gray-700">
-                        <strong className="text-amber-800">Lưu ý:</strong> API key phải bắt đầu với <code className="bg-amber-100 px-1.5 py-0.5 rounded text-amber-900">ur_</code>. Bạn có thể tạo API key mới trong trang Profile → API Keys.
+                        <strong className="text-amber-800">Note:</strong> API key must start with <code className="bg-amber-100 px-1.5 py-0.5 rounded text-amber-900">ur_</code>. You can create a new API key on the Profile → API Keys page.
                       </p>
                     </div>
                   </div>
@@ -403,30 +403,30 @@ const roads = await client.roads.list();`}
                           <h5 className="font-bold text-gray-900">Timeframe</h5>
                           <code className="bg-white px-2.5 py-1 rounded-md border border-blue-200 text-xs font-mono text-blue-800">timeframe</code>
                         </div>
-                        <p className="text-sm text-gray-700 mb-4">Chọn cách lấy dữ liệu theo thời gian:</p>
+                        <p className="text-sm text-gray-700 mb-4">Choose how to retrieve data by time:</p>
                         <div className="space-y-3">
                           <div className="bg-white rounded-lg p-4 border border-blue-200">
                             <div className="flex items-center gap-2 mb-2">
                               <CheckCircle className="h-4 w-4 text-green-500" />
                               <code className="bg-blue-100 px-2.5 py-1 rounded-md text-xs font-mono text-blue-800 font-semibold">latest</code>
-                              <span className="text-sm font-semibold text-gray-900">- Lấy dữ liệu mới nhất</span>
+                              <span className="text-sm font-semibold text-gray-900">- Get latest data</span>
                             </div>
-                            <p className="text-xs text-gray-600 ml-6">WeatherObserved: 1 record mới nhất | AirQualityObserved: 1 record mới nhất cho mỗi station (10 stations)</p>
+                            <p className="text-xs text-gray-600 ml-6">WeatherObserved: 1 latest record | AirQualityObserved: 1 latest record for each station (10 stations)</p>
                           </div>
                           <div className="bg-white rounded-lg p-4 border border-blue-200">
                             <div className="flex items-center gap-2 mb-2">
                               <Database className="h-4 w-4 text-blue-500" />
                               <code className="bg-blue-100 px-2.5 py-1 rounded-md text-xs font-mono text-blue-800 font-semibold">alltime</code>
-                              <span className="text-sm font-semibold text-gray-900">- Lấy tất cả dữ liệu (mặc định)</span>
+                              <span className="text-sm font-semibold text-gray-900">- Get all data (default)</span>
                             </div>
                           </div>
                           <div className="bg-white rounded-lg p-4 border border-blue-200">
                             <div className="flex items-center gap-2 mb-2">
                               <Calendar className="h-4 w-4 text-purple-500" />
                               <code className="bg-blue-100 px-2.5 py-1 rounded-md text-xs font-mono text-blue-800 font-semibold">custom</code>
-                              <span className="text-sm font-semibold text-gray-900">- Lọc theo khoảng thời gian</span>
+                              <span className="text-sm font-semibold text-gray-900">- Filter by time range</span>
                             </div>
-                            <p className="text-xs text-gray-600 ml-6">Yêu cầu: <code className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-800">startDate</code> và/hoặc <code className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-800">endDate</code> (ISO 8601 format)</p>
+                            <p className="text-xs text-gray-600 ml-6">Requires: <code className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-800">startDate</code> and/or <code className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-800">endDate</code> (ISO 8601 format)</p>
                           </div>
                         </div>
                       </div>
@@ -440,13 +440,13 @@ const roads = await client.roads.list();`}
                           <h5 className="font-bold text-gray-900">Entity Selection</h5>
                           <code className="bg-white px-2.5 py-1 rounded-md border border-purple-200 text-xs font-mono text-purple-800">entities</code>
                         </div>
-                        <p className="text-sm text-gray-700 mb-4">Chọn entity types cụ thể để lấy (comma-separated):</p>
+                        <p className="text-sm text-gray-700 mb-4">Select specific entity types to retrieve (comma-separated):</p>
                         <div className="grid md:grid-cols-2 gap-4">
                           <div className="bg-white rounded-lg p-4 border border-purple-200">
                             <div className="flex items-center gap-2 mb-3">
                               <Database className="h-4 w-4 text-gray-500" />
                               <p className="font-bold text-gray-900">Static Data</p>
-                              <span className="ml-auto px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">Dữ liệu tĩnh</span>
+                              <span className="ml-auto px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">Static Data</span>
                             </div>
                             <ul className="space-y-2 text-sm">
                               <li className="flex items-center gap-2">
@@ -469,7 +469,7 @@ const roads = await client.roads.list();`}
                             <div className="flex items-center gap-2 mb-3">
                               <Zap className="h-4 w-4 text-yellow-500" />
                               <p className="font-bold text-gray-900">Dynamic Data</p>
-                              <span className="ml-auto px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded-full">Dữ liệu động</span>
+                              <span className="ml-auto px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded-full">Dynamic Data</span>
                             </div>
                             <ul className="space-y-2 text-sm">
                               <li className="flex items-center gap-2">
@@ -506,15 +506,15 @@ const roads = await client.roads.list();`}
                         <div className="grid md:grid-cols-2 gap-3">
                           <div className="bg-white rounded-lg p-3 border border-gray-200">
                             <code className="bg-gray-100 px-2 py-1 rounded text-xs font-mono text-gray-800">type</code>
-                            <p className="text-xs text-gray-600 mt-1">Single entity type (legacy, dùng <code className="bg-gray-100 px-1 rounded">entities</code> thay thế)</p>
+                            <p className="text-xs text-gray-600 mt-1">Single entity type (legacy, use <code className="bg-gray-100 px-1 rounded">entities</code> instead)</p>
                           </div>
                           <div className="bg-white rounded-lg p-3 border border-gray-200">
                             <code className="bg-gray-100 px-2 py-1 rounded text-xs font-mono text-gray-800">limit</code>
-                            <p className="text-xs text-gray-600 mt-1">Số lượng items mỗi page (max: 1000, default: 1000)</p>
+                            <p className="text-xs text-gray-600 mt-1">Number of items per page (max: 1000, default: 1000)</p>
                           </div>
                           <div className="bg-white rounded-lg p-3 border border-gray-200">
                             <code className="bg-gray-100 px-2 py-1 rounded text-xs font-mono text-gray-800">offset</code>
-                            <p className="text-xs text-gray-600 mt-1">Offset cho pagination</p>
+                            <p className="text-xs text-gray-600 mt-1">Offset for pagination</p>
                           </div>
                           <div className="bg-white rounded-lg p-3 border border-gray-200">
                             <code className="bg-gray-100 px-2 py-1 rounded text-xs font-mono text-gray-800">options</code>
@@ -522,15 +522,15 @@ const roads = await client.roads.list();`}
                           </div>
                           <div className="bg-white rounded-lg p-3 border border-gray-200">
                             <code className="bg-gray-100 px-2 py-1 rounded text-xs font-mono text-gray-800">startDate</code>
-                            <p className="text-xs text-gray-600 mt-1">Ngày bắt đầu (ISO 8601, cho custom timeframe)</p>
+                            <p className="text-xs text-gray-600 mt-1">Start date (ISO 8601, for custom timeframe)</p>
                           </div>
                           <div className="bg-white rounded-lg p-3 border border-gray-200">
                             <code className="bg-gray-100 px-2 py-1 rounded text-xs font-mono text-gray-800">endDate</code>
-                            <p className="text-xs text-gray-600 mt-1">Ngày kết thúc (ISO 8601, cho custom timeframe)</p>
+                            <p className="text-xs text-gray-600 mt-1">End date (ISO 8601, for custom timeframe)</p>
                           </div>
                           <div className="bg-white rounded-lg p-3 border border-gray-200">
                             <code className="bg-gray-100 px-2 py-1 rounded text-xs font-mono text-gray-800">unwrapped</code>
-                            <p className="text-xs text-gray-600 mt-1">Trả về array trực tiếp (backward compatibility)</p>
+                            <p className="text-xs text-gray-600 mt-1">Return array directly (backward compatibility)</p>
                           </div>
                         </div>
                       </div>
@@ -551,7 +551,7 @@ const roads = await client.roads.list();`}
                       <div className="bg-white rounded-lg p-5 border border-indigo-200 shadow-sm">
                         <div className="flex items-center gap-2 mb-3">
                           <div className="w-6 h-6 bg-indigo-500 text-white rounded-full flex items-center justify-center text-xs font-bold">1</div>
-                          <p className="text-sm font-bold text-gray-900">Lấy dữ liệu mới nhất của tất cả types</p>
+                          <p className="text-sm font-bold text-gray-900">Get latest data for all types</p>
                         </div>
                         <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
                           <pre className="text-green-400 text-sm overflow-x-auto font-mono">
@@ -564,7 +564,7 @@ const roads = await client.roads.list();`}
                       <div className="bg-white rounded-lg p-5 border border-indigo-200 shadow-sm">
                         <div className="flex items-center gap-2 mb-3">
                           <div className="w-6 h-6 bg-indigo-500 text-white rounded-full flex items-center justify-center text-xs font-bold">2</div>
-                          <p className="text-sm font-bold text-gray-900">Chỉ lấy WeatherObserved mới nhất</p>
+                          <p className="text-sm font-bold text-gray-900">Get only latest WeatherObserved</p>
                         </div>
                         <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
                           <pre className="text-green-400 text-sm overflow-x-auto font-mono">
@@ -577,7 +577,7 @@ const roads = await client.roads.list();`}
                       <div className="bg-white rounded-lg p-5 border border-indigo-200 shadow-sm">
                         <div className="flex items-center gap-2 mb-3">
                           <div className="w-6 h-6 bg-indigo-500 text-white rounded-full flex items-center justify-center text-xs font-bold">3</div>
-                          <p className="text-sm font-bold text-gray-900">Chỉ lấy CitizenReport (tất cả)</p>
+                          <p className="text-sm font-bold text-gray-900">Get only CitizenReport (all)</p>
                         </div>
                         <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
                           <pre className="text-green-400 text-sm overflow-x-auto font-mono">
@@ -590,7 +590,7 @@ const roads = await client.roads.list();`}
                       <div className="bg-white rounded-lg p-5 border border-indigo-200 shadow-sm">
                         <div className="flex items-center gap-2 mb-3">
                           <div className="w-6 h-6 bg-indigo-500 text-white rounded-full flex items-center justify-center text-xs font-bold">4</div>
-                          <p className="text-sm font-bold text-gray-900">Lấy OpenAQ và OWM mới nhất</p>
+                          <p className="text-sm font-bold text-gray-900">Get latest OpenAQ and OWM</p>
                         </div>
                         <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
                           <pre className="text-green-400 text-sm overflow-x-auto font-mono">
@@ -603,7 +603,7 @@ const roads = await client.roads.list();`}
                       <div className="bg-white rounded-lg p-5 border border-indigo-200 shadow-sm">
                         <div className="flex items-center gap-2 mb-3">
                           <div className="w-6 h-6 bg-indigo-500 text-white rounded-full flex items-center justify-center text-xs font-bold">5</div>
-                          <p className="text-sm font-bold text-gray-900">Lấy CitizenReport trong tháng 11/2025</p>
+                          <p className="text-sm font-bold text-gray-900">Get CitizenReport in November 2025</p>
                         </div>
                         <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
                           <pre className="text-green-400 text-sm overflow-x-auto font-mono">
@@ -616,7 +616,7 @@ const roads = await client.roads.list();`}
                       <div className="bg-white rounded-lg p-5 border border-indigo-200 shadow-sm">
                         <div className="flex items-center gap-2 mb-3">
                           <div className="w-6 h-6 bg-indigo-500 text-white rounded-full flex items-center justify-center text-xs font-bold">6</div>
-                          <p className="text-sm font-bold text-gray-900">Lấy tất cả RoadSegment và Streetlight</p>
+                          <p className="text-sm font-bold text-gray-900">Get all RoadSegment and Streetlight</p>
                         </div>
                         <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
                           <pre className="text-green-400 text-sm overflow-x-auto font-mono">
@@ -641,9 +641,9 @@ const roads = await client.roads.list();`}
                         <div className="flex items-center gap-2 mb-3">
                           <CheckCircle className="h-4 w-4 text-emerald-500" />
                           <p className="text-sm font-bold text-gray-900">Wrapped Format</p>
-                          <span className="ml-auto px-2 py-1 bg-emerald-100 text-emerald-700 text-xs rounded-full font-semibold">Mặc định</span>
+                          <span className="ml-auto px-2 py-1 bg-emerald-100 text-emerald-700 text-xs rounded-full font-semibold">Default</span>
                         </div>
-                        <p className="text-xs text-gray-600 mb-3">Sử dụng khi có timeframe hoặc entities parameter</p>
+                        <p className="text-xs text-gray-600 mb-3">Used when timeframe or entities parameter is present</p>
                         <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
                           <pre className="text-green-400 text-sm overflow-x-auto font-mono">
                             {`{
@@ -670,7 +670,7 @@ const roads = await client.roads.list();`}
                           <p className="text-sm font-bold text-gray-900">Unwrapped Format</p>
                           <span className="ml-auto px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-semibold">Backward Compatible</span>
                         </div>
-                        <p className="text-xs text-gray-600 mb-3">Trả về array trực tiếp, tương thích với code cũ</p>
+                        <p className="text-xs text-gray-600 mb-3">Returns array directly, compatible with old code</p>
                         <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
                           <pre className="text-green-400 text-sm overflow-x-auto font-mono">
                             {`[
@@ -681,7 +681,7 @@ const roads = await client.roads.list();`}
                         <div className="mt-3 flex items-start gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
                           <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
                           <p className="text-xs text-gray-700">
-                            Thêm <code className="bg-white px-2 py-1 rounded border border-blue-200 text-blue-800 font-mono">?unwrapped=true</code> để dùng format này
+                            Add <code className="bg-white px-2 py-1 rounded border border-blue-200 text-blue-800 font-mono">?unwrapped=true</code> to use this format
                           </p>
                         </div>
                       </div>
