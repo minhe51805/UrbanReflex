@@ -168,15 +168,15 @@ export default function WhyOpenDataContent() {
               </h2>
 
               <p className="text-neutral-soft-700 text-base leading-relaxed mb-6">
-                UrbanReflex aggregates global air quality data sources into a unified, accessible open-source platform designed to support changemakers addressing air inequality.
+                UrbanReflex is an open-source smart city platform that unifies air quality monitoring, infrastructure management, and citizen reporting into a single, accessible system designed to support data-driven urban governance.
               </p>
 
               <p className="text-neutral-soft-700 text-base leading-relaxed mb-6">
-                Despite the urgency of confronting air pollution, only 61% of governments worldwide produce air quality data, leaving over 1 billion people without access to fundamental information that could protect them from the harmful effects of air pollution.
+                Despite the critical need for integrated urban data, many cities operate with fragmented systems that limit transparency and citizen engagement, leaving communities without the tools they need to advocate for improvements.
               </p>
 
               <p className="text-neutral-soft-700 text-base leading-relaxed mb-8">
-                Anyone can use the UrbanReflex platform for free to find out what air quality data monitoring is occurring in or near their community and use that information to advocate for increased monitoring where needed and to advocate for air pollution solutions.
+                Anyone can use the UrbanReflex platform for free to access real-time environmental and infrastructure data, submit citizen reports, and leverage open data standards to advocate for increased monitoring, transparency, and evidence-based urban solutions.
               </p>
 
               {/* How to Use UrbanReflex Section */}
@@ -185,7 +185,7 @@ export default function WhyOpenDataContent() {
               </h2>
 
               <p className="text-neutral-soft-700 text-base leading-relaxed mb-6">
-                Anyone can use the data platform or the <Link href="/explore" className="text-primary-500 hover:text-primary-600 underline">UrbanReflex Explorer Tool</Link> for analysis, from basic interpretations to in-depth analyses using the API.
+                Anyone can use the data platform or the <Link href="/docs" className="text-primary-500 hover:text-primary-600 underline">UrbanReflex Explorer Tool</Link> for analysis, from basic interpretations to in-depth analyses using the API.
               </p>
 
               <p className="text-neutral-soft-700 text-base leading-relaxed mb-8">
@@ -207,7 +207,7 @@ export default function WhyOpenDataContent() {
                   href="/explore"
                   className="inline-flex items-center justify-center px-8 py-3 rounded-full bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-medium hover:shadow-large transform hover:scale-105"
                 >
-                  Explore Air Quality Data
+                  Explore UrbanReflex Data
                 </Link>
               </div>
 

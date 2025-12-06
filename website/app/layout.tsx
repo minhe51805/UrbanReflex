@@ -46,6 +46,7 @@ export default function RootLayout({
   const pathname = usePathname();
   const isExplorePage = pathname === '/explore';
   const isAdminPage = pathname === '/admin';
+  const isDocsPage = pathname === '/docs';
 
   return (
     <html lang="en">
@@ -66,7 +67,7 @@ export default function RootLayout({
           <main className="min-h-screen">
             {children}
           </main>
-          {!isExplorePage && !isAdminPage && <Footer />}
+          {!isExplorePage && !isAdminPage && !isDocsPage && <Footer />}
           <FloatingChatButton />
         </AuthProvider>
       </body>
