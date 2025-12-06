@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UrbanReflex</title>
+  <link rel="stylesheet" href="css/popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>UrbanReflex</h1>
+      <p class="subtitle">HCMC City Data</p>
+    </header>
+
+    <div class="settings-section">
+      <button id="settingsBtn" class="icon-btn" title="Settings">⚙️</button>
+    </div>
+
+    <div id="settingsPanel" class="settings-panel hidden">
+      <h3>Settings</h3>
+      <div class="form-group">
+        <label for="apiEndpoint">API Endpoint:</label>
+        <input type="text" id="apiEndpoint" placeholder="https://api.urbanreflex.example.com">
+      </div>
+      <button id="saveSettings" class="btn btn-primary">Save</button>
+      <button id="closeSettings" class="btn btn-secondary">Cancel</button>
+    </div>
+
+    <div class="search-section">
+      <div class="form-group">
+        <label for="locationInput">Road or Coordinates:</label>
+        <input type="text" id="locationInput" placeholder="e.g., Nguyen Hue or 10.7769,106.7009">
+      </div>
+      <button id="searchBtn" class="btn btn-primary">Search</button>
+    </div>
+
+    <div id="loadingIndicator" class="loading hidden">
+      <div class="spinner"></div>
+      <p>Loading data...</p>
+    </div>
+
+    <div id="errorMessage" class="error-message hidden"></div>
+
+    <div id="dataContainer" class="data-container hidden">
+      <!-- Road Context Section -->
+      <section class="data-section">
+        <h2>🛣️ Road Context</h2>
+        <div id="roadContext" class="data-content">
+          <p class="no-data">No data available</p>
+        </div>
+      </section>
+
+      <!-- Environment Section -->
+      <section class="data-section">
+        <h2>🌤️ Environment</h2>
+        <div id="environment" class="data-content">
+          <div class="env-grid">
+            <div class="env-item">
+              <span class="label">Weather:</span>
+              <span id="weather" class="value">--</span>
+            </div>
+            <div class="env-item">
+              <span class="label">Temperature:</span>
+              <span id="temperature" class="value">--</span>
+            </div>
+            <div class="env-item">
+              <span class="label">Air Quality:</span>
+              <span id="airQuality" class="value">--</span>
+            </div>
+            <div class="env-item">
+              <span class="label">Humidity:</span>
+              <span id="humidity" class="value">--</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Infrastructure Section -->
+      <section class="data-section">
+        <h2>🏢 Nearby Facilities</h2>
+        <div id="infrastructure" class="data-content">
+          <div id="facilitiesList" class="facilities-list">
+            <p class="no-data">No facilities found</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Citizen Reports Section -->
+      <section class="data-section">
+        <h2>📢 Citizen Reports</h2>
+        <div id="citizenReports" class="data-content">
+          <div id="reportsList" class="reports-list">
+            <p class="no-data">No reports found</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <footer>
+      <p class="footer-text">UrbanReflex v1.0.0</p>
+    </footer>
+  </div>
+
+  <script src="js/popup.js"></script>
+</body>
+</html>
