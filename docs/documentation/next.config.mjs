@@ -35,6 +35,14 @@ const config = {
     // GitHub Pages configuration
     basePath: process.env.GITHUB_PAGES === 'true' ? '/UrbanReflex' : '',
     output: 'export',
+    // Configure turbo with path aliases
+    experimental: {
+        turbo: {
+            resolveAlias: {
+                '@': __dirname,
+            },
+        },
+    },
     // Configure images for external domains
     images: {
         remotePatterns: [
