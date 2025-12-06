@@ -1,54 +1,506 @@
-# UrbanReflex
+# UrbanReflex v0.1.0
 
 <div align="center">
 
+[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/minhe51805/UrbanReflex/releases/tag/v0.1.0)
+[![Release](https://img.shields.io/badge/release-Beta-orange.svg)](https://github.com/minhe51805/UrbanReflex/releases)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.121-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![Next.js](https://img.shields.io/badge/Next.js-16.0-black?logo=next.js&logoColor=white)](https://nextjs.org/)
-[![Python](https://img.shields.io/badge/Python-3.10+-3776ab?logo=python&logoColor=white)](https://www.python.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-7.0-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com/)
-[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
-[![NGSI-LD](https://img.shields.io/badge/NGSI--LD-Compliant-00A3E0)](https://www.etsi.org/deliver/etsi_gs/CIM/001_099/009/01.08.01_60/gs_CIM009v010801p.pdf)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![Status](https://img.shields.io/badge/Status-Testing-yellow.svg)](https://github.com/minhe51805/UrbanReflex)
 
-**Enterprise-Grade Smart City Platform - Developer Handbook**
+**🏙️ Smart City Platform - Air Quality Monitoring & Urban Infrastructure Management**
 
-[Quick Start](#quick-start) • [Architecture](#architecture) • [Development](#development-workflow) • [Code Review](#code-review-guidelines) • [Testing](#testing) • [Contributing](#contributing)
+**Beta Release for Testing & Demonstration**
+
+[🚀 Quick Demo](#-quick-demo-setup) • [✨ Features](#-features-in-this-release) • [📊 Demo Credentials](#-demo-credentials) • [🐛 Known Issues](#-known-limitations) • [📝 Changelog](#-changelog)
 
 </div>
 
 ---
 
-## Table of Contents
+## 📋 Release Information
 
-- [For Developers](#for-developers)
-- [Quick Start](#quick-start)
-- [Architecture](#architecture)
-- [Development Workflow](#development-workflow)
-- [Code Review Guidelines](#code-review-guidelines)
-- [Coding Standards](#coding-standards)
-- [Testing](#testing)
-- [Debugging & Troubleshooting](#debugging--troubleshooting)
-- [Contributing](#contributing)
-- [Team Collaboration](#team-collaboration)
+- **Version**: `0.1.0` (Beta)
+- **Release Date**: December 4, 2025
+- **Status**: Testing & Demonstration
+- **Target Audience**: Testers, Mentors, Internal Demo
+- **Stability**: Beta - Feature Complete, Testing in Progress
 
 ---
 
-## For Developers
+## 🎯 What's in This Release
 
-This README is **specifically written for developers, code reviewers, and team members** working on UrbanReflex. It focuses on:
+This is the **initial beta release** of UrbanReflex, featuring core functionality for smart city data management and air quality monitoring. This version is ready for testing and demonstration purposes.
 
-- **Technical architecture** and design decisions
-- **Development workflow** and best practices
-- **Code review process** and quality standards
-- **Team collaboration** guidelines
-- **Debugging** and troubleshooting tips
+### ✅ Completed Features
 
-> **Note**: For end-user documentation, see [User Guide](./docs/USER_GUIDE.md)
+#### 🌍 Air Quality Monitoring
+
+- ✅ Real-time AQI data integration with OpenAQ API
+- ✅ Interactive map with 10,000+ global monitoring stations
+- ✅ Location-based air quality search and filtering
+- ✅ Historical data charts and trends
+- ✅ Health recommendations based on AQI levels
+- ✅ Mock data fallback for development/testing
+
+#### 🏙️ Smart City Infrastructure
+
+- ✅ NGSI-LD compliant data model implementation
+- ✅ Orion Context Broker integration
+- ✅ Road segment data visualization
+- ✅ Streetlight monitoring and status tracking
+- ✅ Weather data correlation with air quality
+- ✅ Point of Interest (POI) management
+
+#### 👥 User Management
+
+- ✅ User registration and authentication (JWT)
+- ✅ Role-based access control (Citizen, Admin, City Official)
+- ✅ API key generation and management
+- ✅ User profile management
+- ✅ Session management
+
+#### 📝 Citizen Reporting System
+
+- ✅ Submit infrastructure issues (streetlights, roads, waste)
+- ✅ Photo upload with automatic location tagging
+- ✅ Report status tracking (Open, In Progress, Resolved, Closed)
+- ✅ Priority assignment (Low, Medium, High, Critical)
+- ✅ Community voting on reports
+- ✅ Admin dashboard for report management
+
+#### 🤖 AI Features
+
+- ✅ Gemini AI-powered chatbot for air quality queries
+- ✅ Natural language processing for user questions
+- ✅ Context-aware responses with data citations
+- ✅ Vector search for semantic report search (Pinecone)
+- ✅ Intelligent report classification
+
+#### 🎨 User Interface
+
+- ✅ Responsive web application (Mobile-first design)
+- ✅ Interactive MapLibre GL map with clustering
+- ✅ Real-time data visualization with Chart.js
+- ✅ Modern UI with Tailwind CSS and Framer Motion
+- ✅ Dark mode support
+- ✅ Multi-language support foundation
 
 ---
 
-## Quick Start
+## 🚀 Quick Demo Setup
+
+### Prerequisites
+
+```bash
+# Required
+✅ Docker Desktop (Windows/Mac) or Docker Engine (Linux)
+✅ Docker Compose v2.0+
+✅ 8GB RAM minimum
+✅ 10GB free disk space
+```
+
+### 🏃‍♂️ One-Command Demo Launch
+
+```bash
+# 1. Clone this release
+git clone -b release/0.1.0 https://github.com/minhe51805/UrbanReflex.git
+cd UrbanReflex
+
+# 2. Start all services with Docker Compose
+docker-compose up -d
+
+# 3. Wait for services to initialize (~2 minutes)
+# Monitor startup progress
+docker-compose logs -f
+
+# 4. Access the application
+# Frontend: http://localhost:3000
+# Backend API: http://localhost:8000
+# API Docs: http://localhost:8000/docs
+```
+
+### 🔧 Environment Configuration
+
+The release includes pre-configured environment files:
+
+```bash
+# No configuration needed for demo!
+# Default credentials and mock data are pre-loaded
+
+# Optional: To use real external APIs, edit:
+.env.production  # Backend configuration
+website/.env.production  # Frontend configuration
+```
+
+### ✅ Verify Installation
+
+```bash
+# Check all services are running
+docker-compose ps
+
+# Expected output:
+# mongodb    - Up (port 27017)
+# orion      - Up (port 1026)
+# redis      - Up (port 6379)
+# backend    - Up (port 8000)
+# frontend   - Up (port 3000)
+
+# Health check
+curl http://localhost:8000/health
+# Expected: {"status": "healthy"}
+```
+
+---
+
+## 📊 Demo Credentials
+
+### 🔐 Pre-configured Test Accounts
+
+```bash
+# Admin Account (Full Access)
+Email: admin@urbanreflex.dev
+Password: Admin@123456
+Role: Administrator
+Permissions: Full system access, user management, report management
+
+# City Official Account (Report Management)
+Email: official@urbanreflex.dev
+Password: Official@123456
+Role: City Official
+Permissions: Manage citizen reports, view analytics
+
+# Citizen Account (Standard User)
+Email: citizen@urbanreflex.dev
+Password: Citizen@123456
+Role: Citizen
+Permissions: Submit reports, view data, use chatbot
+
+# Developer Account (API Access)
+Email: developer@urbanreflex.dev
+Password: Developer@123456
+API Key: dev_pk_1234567890abcdef
+Permissions: Full API access
+```
+
+### 🌐 Demo URLs
+
+```
+Frontend Application: http://localhost:3000
+Backend API: http://localhost:8000
+API Documentation: http://localhost:8000/docs
+API Redoc: http://localhost:8000/redoc
+MongoDB Express: http://localhost:8081 (admin/pass)
+Orion Context Broker: http://localhost:1026/version
+```
+
+---
+
+## 🎪 Demo Scenarios
+
+### Scenario 1: Air Quality Monitoring
+
+```
+1. Visit http://localhost:3000
+2. View global air quality map
+3. Search for "Ho Chi Minh City"
+4. Click on a station marker
+5. View detailed AQI data and charts
+6. Check health recommendations
+```
+
+### Scenario 2: Citizen Reporting
+
+```
+1. Login as citizen@urbanreflex.dev
+2. Click "Report Issue" button
+3. Fill in issue details:
+   - Title: "Broken streetlight on Main Street"
+   - Category: Streetlight
+   - Priority: Medium
+4. Upload photo (optional)
+5. Click map to set location
+6. Submit report
+7. Track report status in dashboard
+```
+
+### Scenario 3: Admin Dashboard
+
+```
+1. Login as admin@urbanreflex.dev
+2. Navigate to Admin Dashboard
+3. View all citizen reports
+4. Filter by status/priority/category
+5. Assign report to city official
+6. Update report status
+7. Add resolution notes
+8. View analytics and statistics
+```
+
+### Scenario 4: AI Chatbot
+
+```
+1. Click chatbot icon (bottom right)
+2. Ask: "What's the air quality in Hanoi today?"
+3. Chatbot provides real-time AQI data
+4. Ask: "How does this affect my health?"
+5. Receive personalized recommendations
+6. Ask: "Show me historical trends"
+7. Get data visualization links
+```
+
+### Scenario 5: API Integration
+
+```bash
+# Get JWT token
+curl -X POST "http://localhost:8000/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"developer@urbanreflex.dev","password":"Developer@123456"}'
+
+# Use token to access API
+curl "http://localhost:8000/api/v1/aqi/stations?limit=10" \
+  -H "Authorization: Bearer <your_token>"
+
+# Create citizen report via API
+curl -X POST "http://localhost:8000/api/v1/citizen-reports" \
+  -H "Authorization: Bearer <your_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Pothole on Highway 1",
+    "description": "Large pothole causing traffic issues",
+    "category": "road",
+    "priority": "high",
+    "location": {"latitude": 10.7769, "longitude": 106.6951}
+  }'
+```
+
+---
+
+## 🐛 Known Limitations
+
+### ⚠️ Current Limitations (v0.1.0)
+
+1. **Performance**
+
+   - Map clustering limited to 1000 markers for performance
+   - Large dataset queries may be slow (>10,000 records)
+   - First load time can be 5-10 seconds
+
+2. **Features**
+
+   - Real-time notifications not yet implemented
+   - Email notifications disabled in beta
+   - SMS alerts not available
+   - Mobile app not included
+   - Offline mode not supported
+
+3. **Data**
+
+   - Mock data used when external APIs unavailable
+   - Historical data limited to 30 days in demo
+   - Vector search requires API keys (optional)
+   - Some international locations have limited data
+
+4. **Infrastructure**
+
+   - No auto-scaling configured
+   - Single-instance deployment only
+   - No backup/restore functionality
+   - Limited monitoring/logging
+
+5. **Browser Compatibility**
+   - Optimized for Chrome/Edge/Firefox (latest versions)
+   - Safari may have minor UI issues
+   - IE11 not supported
+
+### 🔧 Workarounds
+
+- **Slow loading**: Reduce map zoom level, use filters
+- **Missing data**: Enable mock data in settings
+- **API errors**: Check `.env` file configuration
+- **Docker issues**: Restart with `docker-compose restart`
+
+---
+
+## 📝 Changelog
+
+### Version 0.1.0 (2025-12-04) - Initial Beta Release
+
+#### ✨ New Features
+
+- Complete air quality monitoring system
+- NGSI-LD compliant smart city data model
+- Citizen reporting with photo uploads
+- AI-powered chatbot with Gemini integration
+- Admin dashboard with analytics
+- JWT authentication and role-based access
+- Interactive map with clustering
+- Real-time data visualization
+
+#### 🔧 Infrastructure
+
+- Docker Compose orchestration
+- MongoDB for primary data storage
+- Orion Context Broker for NGSI-LD
+- Redis for caching and sessions
+- FastAPI backend with async support
+- Next.js 16 frontend with App Router
+
+#### 📚 Documentation
+
+- Complete API documentation
+- Developer setup guides
+- User manual
+- Architecture documentation
+- Testing guidelines
+
+#### 🐛 Known Issues
+
+- Map performance with >1000 markers
+- Email notifications not implemented
+- Mobile responsiveness needs improvement
+- Some API rate limits not enforced
+
+---
+
+## 🧪 Testing Guidelines
+
+### For Testers
+
+```bash
+# Test Checklist
+✅ User registration and login
+✅ Create/Edit/Delete citizen reports
+✅ Upload photos to reports
+✅ Search air quality by location
+✅ View historical data charts
+✅ Test chatbot responses
+✅ Admin dashboard functionality
+✅ API endpoint testing
+✅ Mobile responsiveness
+✅ Cross-browser compatibility
+
+# Performance Testing
+- Load test with 100 concurrent users
+- Test with 1000+ map markers
+- Test large file uploads (>5MB)
+- Test slow network conditions
+
+# Security Testing
+- Test authentication flows
+- Test authorization (role access)
+- Test API rate limiting
+- Test input validation
+- Test XSS/CSRF protection
+```
+
+### Reporting Issues
+
+Found a bug? Please report it:
+
+1. Go to [GitHub Issues](https://github.com/minhe51805/UrbanReflex/issues)
+2. Use the **Bug Report** template
+3. Include:
+   - Version: v0.1.0
+   - Steps to reproduce
+   - Expected vs actual behavior
+   - Screenshots if applicable
+   - Browser/OS information
+
+---
+
+## 🔄 Migration from Future Versions
+
+This is the initial release. For future versions:
+
+```bash
+# Backup your data before upgrading
+docker-compose exec mongodb mongodump --out /backup
+
+# Pull new version
+git fetch origin
+git checkout release/0.2.0
+
+# Run migration scripts
+docker-compose down
+docker-compose up -d
+python scripts/migrate_v0.1_to_v0.2.py
+
+# Restore data if needed
+docker-compose exec mongodb mongorestore /backup
+```
+
+---
+
+## 📞 Support for This Release
+
+### 🆘 Getting Help
+
+- 📖 **Documentation**: [./docs/](./docs/)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/minhe51805/UrbanReflex/discussions)
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/minhe51805/UrbanReflex/issues)
+- 📧 **Email**: support@urbanreflex.dev
+
+### 🔍 Troubleshooting
+
+Common issues with this release:
+
+```bash
+# Services won't start
+docker-compose down -v
+docker-compose up -d --build
+
+# Database connection errors
+docker-compose restart mongodb
+docker-compose logs mongodb
+
+# Frontend build errors
+docker-compose exec frontend npm install
+docker-compose restart frontend
+
+# Port conflicts
+# Edit docker-compose.yml ports section
+# Change to available ports
+```
+
+---
+
+## 🏫 Support & Organization
+
+<p align="center">
+    <a href="https://hutech.edu.vn/" target="_blank">
+        <img loading="lazy" src="https://file1.hutech.edu.vn/file/editor/homepage/stories/hinh34/logo%20CMYK-01.png" height="60px" alt="Hutech">
+    </a>
+    <a href="https://vfossa.vn/" target="_blank">
+        <img loading="lazy" src="https://vfossa.vn/uploads/about/logo-6b-new.png" height="60px" alt="VFOSSA">
+    </a>
+    <a href="https://www.olp.vn/" target="_blank">
+        <img loading="lazy" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRePWbAslFDMVxeJCgHI6f_LSIuNOrlrEsEhA&s" height="60px" alt="OLP">
+    </a>
+</p>
+
+---
+
+## 📄 License
+
+This project is licensed under the **Apache License 2.0** - see the [LICENSE](LICENSE) file for details.
+
+---
+
+<div align="center">
+
+**UrbanReflex v0.1.0 - Beta Release**
+
+Built with ❤️ for Vietnam Open Source Software Competition
+
+[🏠 Homepage](https://urbanreflex.dev) • [📚 Documentation](./docs/) • [🐛 Report Bug](https://github.com/minhe51805/UrbanReflex/issues) • [💬 Discussions](https://github.com/minhe51805/UrbanReflex/discussions)
+
+**⚠️ This is a beta release for testing purposes. Not recommended for production use.**
+
+</div>
+
+## 🚀 Quick Setup
 
 ### Prerequisites
 
