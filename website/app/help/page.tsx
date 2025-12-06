@@ -23,6 +23,7 @@
 
 'use client';
 
+import React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { 
@@ -30,11 +31,11 @@ import {
   Book, 
   MessageCircle, 
   Mail, 
-  FileText, 
   Code, 
-  Database,
   Search,
-  ChevronRight
+  ChevronRight,
+  Github,
+  Send
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -123,20 +124,6 @@ const resources = [
     description: 'Detailed endpoint specifications',
     href: '/developers#api-reference',
     color: 'from-purple-500 to-purple-600'
-  },
-  {
-    icon: Database,
-    title: 'Data Sources',
-    description: 'Learn about our data providers',
-    href: '/partners',
-    color: 'from-teal-500 to-teal-600'
-  },
-  {
-    icon: FileText,
-    title: 'Tutorials',
-    description: 'Step-by-step guides and examples',
-    href: '/developers#tutorials',
-    color: 'from-orange-500 to-orange-600'
   }
 ];
 
@@ -155,76 +142,100 @@ export default function HelpPage() {
   return (
     <main className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-b from-white to-gray-50 py-20 overflow-hidden">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <section className="relative bg-gradient-to-br from-primary-50 via-white to-accent-50 py-24 overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-primary-500 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent-500 rounded-full blur-3xl"></div>
+        </div>
+        
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             className="text-center"
           >
-            <HelpCircle className="h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-6 text-[#1e64ab]" />
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#30363c] mb-6">
+            {/* Icon with professional styling */}
+            <div className="inline-flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 mb-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full shadow-xl">
+              <HelpCircle className="h-10 w-10 sm:h-12 sm:w-12 text-white" strokeWidth={2.5} />
+            </div>
+            
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-primary-600 via-primary-500 to-accent-500 bg-clip-text text-transparent mb-6">
               How can we help you?
             </h1>
-            <p className="text-lg sm:text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+            <p className="text-lg sm:text-xl text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed">
               Find answers to common questions, explore our documentation, or get in touch with our team
             </p>
 
-            {/* Search Bar */}
+            {/* Enhanced Search Bar */}
             <div className="max-w-2xl mx-auto">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="relative"
+              >
+                <div className="absolute left-5 top-1/2 transform -translate-y-1/2 z-10">
+                  <Search className="h-5 w-5 text-gray-400" />
+                </div>
                 <input
                   type="text"
                   placeholder="Search for help..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-4 rounded-xl text-gray-900 text-lg focus:outline-none focus:ring-2 focus:ring-[#1e64ab] border border-gray-200 shadow-soft"
+                  className="w-full pl-14 pr-6 py-5 rounded-2xl text-gray-900 text-base font-medium focus:outline-none focus:ring-4 focus:ring-primary-200 border-2 border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 bg-white/95 backdrop-blur-sm"
                 />
-              </div>
+              </motion.div>
             </div>
           </motion.div>
         </div>
       </section>
 
       {/* Quick Resources */}
-      <section className="py-16 -mt-12">
+      <section className="py-20 -mt-16 relative z-10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {resources.map((resource, index) => (
-              <motion.div
-                key={resource.title}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                <Link href={resource.href}>
-                  <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 h-full">
-                    <div className={`inline-flex p-3 rounded-lg bg-gradient-to-r ${resource.color} text-white mb-4`}>
-                      <resource.icon className="h-6 w-6" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+            {resources.map((resource, index) => {
+              const IconComponent = resource.icon;
+              return (
+                <motion.div
+                  key={resource.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                >
+                  <Link href={resource.href} className="block h-full group">
+                    <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-2 border-gray-100 hover:border-primary-200 h-full flex flex-col">
+                      <div className={`inline-flex p-4 rounded-xl bg-gradient-to-br ${resource.color} text-white mb-5 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                        {React.createElement(IconComponent, { className: "h-7 w-7", strokeWidth: 2 })}
+                      </div>
+                      <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-primary-600 transition-colors">{resource.title}</h3>
+                      <p className="text-gray-600 text-sm leading-relaxed flex-grow">{resource.description}</p>
+                      <div className="mt-4 flex items-center text-primary-600 text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
+                        Learn more
+                        <ChevronRight className="h-4 w-4 ml-1" />
+                      </div>
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-2">{resource.title}</h3>
-                    <p className="text-gray-600 text-sm">{resource.description}</p>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
+                  </Link>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
 
       {/* FAQs */}
-      <section className="py-16">
+      <section className="py-20 bg-gray-50">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="text-center mb-12"
+            className="text-center mb-16"
           >
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h2>
-            <p className="text-lg text-gray-600">
+            <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               Quick answers to common questions about UrbanReflex
             </p>
           </motion.div>
@@ -247,27 +258,36 @@ export default function HelpPage() {
                     const isExpanded = expandedFaq === faqId;
 
                     return (
-                      <div
+                      <motion.div
                         key={faqId}
-                        className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: faqIndex * 0.05 }}
+                        className="bg-white rounded-xl shadow-md hover:shadow-lg overflow-hidden border-2 border-gray-100 transition-all duration-300"
                       >
                         <button
                           onClick={() => setExpandedFaq(isExpanded ? null : faqId)}
-                          className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
+                          className="w-full px-6 py-5 text-left flex items-center justify-between hover:bg-gradient-to-r hover:from-primary-50 hover:to-transparent transition-all duration-200 group"
                         >
-                          <span className="font-semibold text-gray-900 pr-4">{faq.q}</span>
+                          <span className="font-semibold text-gray-900 pr-4 group-hover:text-primary-600 transition-colors text-base">{faq.q}</span>
                           <ChevronRight
-                            className={`h-5 w-5 text-primary-500 flex-shrink-0 transition-transform ${
-                              isExpanded ? 'transform rotate-90' : ''
+                            className={`h-5 w-5 text-primary-500 flex-shrink-0 transition-all duration-300 ${
+                              isExpanded ? 'transform rotate-90 text-primary-600' : 'group-hover:translate-x-1'
                             }`}
                           />
                         </button>
                         {isExpanded && (
-                          <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-                            <p className="text-gray-700">{faq.a}</p>
-                          </div>
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="px-6 py-5 bg-gradient-to-br from-gray-50 to-white border-t-2 border-primary-100"
+                          >
+                            <p className="text-gray-700 leading-relaxed">{faq.a}</p>
+                          </motion.div>
                         )}
-                      </div>
+                      </motion.div>
                     );
                   })}
                 </div>
@@ -285,34 +305,52 @@ export default function HelpPage() {
       </section>
 
       {/* Contact Section */}
-      <section className="py-16 bg-gradient-to-br from-primary-50 to-primary-100">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+      <section className="py-20 bg-gradient-to-br from-primary-600 via-primary-500 to-accent-500 relative overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-10 right-20 w-64 h-64 bg-white rounded-full blur-3xl"></div>
+          <div className="absolute bottom-10 left-20 w-80 h-80 bg-white rounded-full blur-3xl"></div>
+        </div>
+        
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             className="text-center"
           >
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Still need help?</h2>
-            <p className="text-lg text-gray-600 mb-8">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">Still need help?</h2>
+            <p className="text-lg text-white/90 mb-12 max-w-2xl mx-auto">
               Our team is here to assist you with any questions or issues
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
-              <Link href="mailto:info@openaq.org">
-                <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                  <Mail className="h-8 w-8 text-primary-600 mx-auto mb-3" />
-                  <h3 className="font-bold text-gray-900 mb-2">Email Support</h3>
-                  <p className="text-gray-600 text-sm">info@openaq.org</p>
-                </div>
+              <Link href="https://t.me/+o1X9iR9j7_czYmE1" target="_blank" rel="noopener noreferrer" className="group">
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-300 border-2 border-white/20"
+                >
+                  <div className="inline-flex p-4 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 text-white mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    <Send className="h-7 w-7" strokeWidth={2} />
+                  </div>
+                  <h3 className="font-bold text-gray-900 mb-2 text-lg">Telegram</h3>
+                  <p className="text-gray-600 text-sm font-medium">Join our community</p>
+                </motion.div>
               </Link>
 
-              <Link href="https://github.com/openaq" target="_blank">
-                <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                  <MessageCircle className="h-8 w-8 text-primary-600 mx-auto mb-3" />
-                  <h3 className="font-bold text-gray-900 mb-2">Community Forum</h3>
-                  <p className="text-gray-600 text-sm">Join the discussion</p>
-                </div>
+              <Link href="https://github.com/minhe51805/UrbanReflex" target="_blank" rel="noopener noreferrer" className="group">
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-300 border-2 border-white/20"
+                >
+                  <div className="inline-flex p-4 rounded-xl bg-gradient-to-br from-accent-500 to-accent-600 text-white mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    <Github className="h-7 w-7" strokeWidth={2} />
+                  </div>
+                  <h3 className="font-bold text-gray-900 mb-2 text-lg">GitHub</h3>
+                  <p className="text-gray-600 text-sm font-medium">View our repository</p>
+                </motion.div>
               </Link>
             </div>
           </motion.div>
