@@ -1,10 +1,10 @@
 # API Routes Directory
 
-## Tổng quan
+## Overview
 
-Folder `app/api/` chứa tất cả các API routes của ứng dụng UrbanReflex, sử dụng Next.js API Routes. Các routes này hoạt động như proxy/gateway giữa frontend và backend services (NGSI-LD Context Broker, Backend API).
+The `app/api/` folder contains all API routes for the UrbanReflex application, using Next.js API Routes. These routes act as proxy/gateway between frontend and backend services (NGSI-LD Context Broker, Backend API).
 
-## Cấu trúc
+## Structure
 
 ```
 app/api/
@@ -15,7 +15,7 @@ app/api/
 ├── roads/             # Road segment APIs
 ├── reports/           # Citizen reports APIs
 ├── v1/                # Public API v1 (for API keys)
-│   ├── [key]/         # Dynamic route với API key
+│   ├── [key]/         # Dynamic route with API key
 │   └── keyapi/        # API key endpoint
 ├── keys/              # API key management
 ├── auth/              # Authentication APIs
@@ -25,7 +25,7 @@ app/api/
 └── tiles/             # Map tile proxy
 ```
 
-## Flow chính
+## Main Flows
 
 ### 1. NGSI-LD Proxy Flow
 ```
@@ -68,54 +68,54 @@ External Request
   ↓
 Validate API key format
   ↓
-Fetch all data from NGSI-LD với pagination
+Fetch all data from NGSI-LD with pagination
   ↓
 Return full NGSI-LD format (not keyValues)
 ```
 
-## API Routes chi tiết
+## Detailed API Routes
 
 ### `/api/ngsi-ld`
 - **File**: `app/api/ngsi-ld/route.ts`
 - **Methods**: GET, POST, PATCH
-- **Chức năng**: Proxy cho NGSI-LD Context Broker
+- **Function**: Proxy for NGSI-LD Context Broker
 - **Query params**:
   - `type`: Entity type (RoadSegment, WeatherObserved, etc.)
   - `options`: Format (keyValues, etc.)
   - `limit`, `offset`: Pagination
-- **Headers**: Tự động thêm Link headers (contexts)
+- **Headers**: Automatically add Link headers (contexts)
 
 ### `/api/admin/reports`
 - **File**: `app/api/admin/reports/route.ts`
 - **Methods**: GET, POST
-- **Chức năng**: Quản lý báo cáo cho admin
+- **Function**: Report management for admin
 - **GET**:
-  - Fetch cả `CitizenReport` và `RoadReport`
+  - Fetch both `CitizenReport` and `RoadReport`
   - Filter by status, priority, search
-  - Return formatted data với statistics
-- **POST**: Tạo report mới (delegate to `/api/reports`)
+  - Return formatted data with statistics
+- **POST**: Create new report (delegate to `/api/reports`)
 
 ### `/api/admin/reports/[id]`
 - **File**: `app/api/admin/reports/[id]/route.ts`
 - **Methods**: GET, PATCH, DELETE
-- **Chức năng**: CRUD operations cho single report
+- **Function**: CRUD operations for single report
 - **PATCH**: Update status, priority, category
 
 ### `/api/admin/users`
 - **File**: `app/api/admin/users/route.ts`
 - **Methods**: GET
-- **Chức năng**: Lấy danh sách users từ backend
+- **Function**: Get list of users from backend
 
 ### `/api/admin/users/[id]`
 - **File**: `app/api/admin/users/[id]/route.ts`
 - **Methods**: PUT, DELETE
-- **PUT**: Update user info hoặc password
-- **DELETE**: Xóa user
+- **PUT**: Update user info or password
+- **DELETE**: Delete user
 
 ### `/api/roads/[id]`
 - **File**: `app/api/roads/[id]/route.ts`
 - **Methods**: GET
-- **Chức năng**: Lấy chi tiết đầy đủ của một đoạn đường
+- **Function**: Get full details of a road segment
 - **Returns**:
   - Road segment info
   - Weather data (latest)
@@ -128,45 +128,45 @@ Return full NGSI-LD format (not keyValues)
 - **File**: `app/api/reports/route.ts`
 - **Methods**: GET, POST
 - **GET**: 
-  - Spatial query với lat/lon/maxDistance
+  - Spatial query with lat/lon/maxDistance
   - Return reports trong radius
-- **POST**: Tạo CitizenReport mới
+- **POST**: Create new CitizenReport
 
 ### `/api/v1/[key]`
 - **File**: `app/api/v1/[key]/route.ts`
 - **Methods**: GET
-- **Chức năng**: Public API với API key authentication
+- **Function**: Public API with API key authentication
 - **Features**:
-  - Fetch all entity types nếu không có `type` param
-  - Pagination tự động (limit=1000, iterate với offset)
-  - Return full NGSI-LD format (không keyValues)
-  - Support `all=true` để fetch tất cả types
+  - Fetch all entity types if no `type` param
+  - Automatic pagination (limit=1000, iterate with offset)
+  - Return full NGSI-LD format (not keyValues)
+  - Support `all=true` to fetch all types
 
 ### `/api/v1/keyapi`
 - **File**: `app/api/v1/keyapi/route.ts`
 - **Methods**: GET
-- **Chức năng**: Lấy API keys của user hiện tại
+- **Function**: Get API keys of current user
 
 ### `/api/keys`
 - **File**: `app/api/keys/route.ts`
 - **Methods**: GET, POST
-- **Chức năng**: Quản lý API keys (proxy to backend)
+- **Function**: Manage API keys (proxy to backend)
 
 ## Authentication
 
 ### Admin Routes
-- Yêu cầu `Authorization: Bearer <token>` header
-- Token từ `localStorage.getItem('auth_token')`
-- Forward token đến backend API
+- Requires `Authorization: Bearer <token>` header
+- Token from `localStorage.getItem('auth_token')`
+- Forward token to backend API
 
 ### Public API v1
 - API key trong URL path: `/api/v1/{apiKey}`
 - Validate format: `startsWith('ur_')`
-- Không cần Bearer token
+- No Bearer token required
 
 ## Error Handling
 
-Tất cả routes đều có error handling:
+All routes have error handling:
 - Try-catch blocks
 - Status code checks
 - Detailed error logging
@@ -181,21 +181,21 @@ Tất cả routes đều có error handling:
 4. **Use TypeScript**: Type safety cho request/response
 5. **Cache when appropriate**: Use Next.js cache options
 6. **Rate limiting**: Consider adding rate limiting cho public APIs
-7. **CORS**: Handle CORS headers nếu cần
+7. **CORS**: Handle CORS headers if needed
 
 ## NGSI-LD Integration
 
-Hầu hết APIs đều integrate với NGSI-LD Context Broker:
+Most APIs integrate with NGSI-LD Context Broker:
 - **URL**: `http://103.178.233.233:1026/ngsi-ld/v1`
-- **Contexts**: Tự động thêm Link headers dựa trên entity type
-- **Format**: Support cả full format và keyValues
-- **Pagination**: Limit=1000, iterate với offset
+- **Contexts**: Automatically add Link headers based on entity type
+- **Format**: Support both full format and keyValues
+- **Pagination**: Limit=1000, iterate with offset
 
 ## Future Enhancements
 
 - Rate limiting middleware
-- Request validation với Zod
-- Response caching với Redis
+- Request validation with Zod
+- Response caching with Redis
 - Webhook support
 - GraphQL API option
 - API versioning strategy

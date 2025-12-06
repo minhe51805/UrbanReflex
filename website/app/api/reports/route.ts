@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
         // Raw images from NGSI-LD (có thể là array hoặc object) - sẽ được chuẩn hoá ở frontend
         images: report.images,
         imageCount: report.imageCount,
-        // Thêm metadata nếu có (một số backend trả về images trong metadata)
+        // Add metadata if available (some backends return images in metadata)
         metadata: report.metadata || {},
       };
     });
