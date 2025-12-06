@@ -2,6 +2,7 @@
 name = "urban-reflex"
 version = "0.1.0"
 description = "Add your description here"
+license = {text = "Apache-2.0"}
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [

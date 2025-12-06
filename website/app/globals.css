@@ -1,0 +1,119 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #262626;
+  --primary: #008EA0;  /* Medium teal */
+  --primary-dark: #085979;  /* Dark teal */
+  --secondary: #F3505A;  /* Coral/salmon-pink */
+  --secondary-dark: #D4343F;  /* Deep red */
+  --accent: #64BABE;  /* Light aqua */
+  --neutral: #ECEBEA;  /* Very light grey */
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  background: #ffffff;
+  color: var(--foreground);
+
+
+  font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  width: 100%;
+  position: relative;
+  min-height: 100vh;
+}
+
+/* Subtle gradient overlay for depth */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 20% 30%, rgba(0, 142, 160, 0.03) 0%, transparent 50%),
+              radial-gradient(circle at 80% 70%, rgba(100, 186, 190, 0.03) 0%, transparent 50%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Ensure content is above background */
+header, main, footer {
+  position: relative;
+  z-index: 10;
+}
+
+/* Smooth transitions for interactive elements */
+button, a, input, textarea, select {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f5f5f5;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d4d4d4;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a3a3a3;
+}
+
+/* MapLibre GL popup styles */
+.maplibregl-popup {
+  z-index: 100;
+}
+
+.maplibregl-popup-content {
+  padding: 0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e5e7eb;
+}
+
+.maplibregl-popup-tip {
+  border-top-color: white;
+}
+
+/* MapLibre GL controls */
+.maplibregl-ctrl-group {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.maplibregl-ctrl-group button {
+  border: none;
+}
+
+.maplibregl-ctrl-group button:hover {
+  background-color: #f3f4f6;
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
