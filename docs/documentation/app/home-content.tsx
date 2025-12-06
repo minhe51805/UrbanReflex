@@ -90,7 +90,7 @@ export function HomeContent() {
                         {/* Badge */}
                         <div className="inline-flex items-center gap-2 px-4 py-2 mb-8 text-sm font-black bg-yellow-400 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                             <span className="w-2 h-2 bg-black"></span>
-                            <span>NEW: Next.js 16, FastAPI, Gemini AI & NGSI-LD</span>
+                            <span>NEW: Next.js 16, FastAPI, AI-Powered & NGSI-LD</span>
                         </div>
 
                         {/* Main Title */}
@@ -124,15 +124,11 @@ export function HomeContent() {
 
                         {/* Trust Badge */}
                         <div className="flex flex-col items-center gap-4">
-                            <div className="flex items-center gap-3">
-                                <div className="flex -space-x-3">
-                                    {[...Array(5)].map((_, i) => (
-                                        <div key={i} className="w-10 h-10 bg-black border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center text-white text-sm font-black">
-                                            {String.fromCharCode(65 + i)}
-                                        </div>
-                                    ))}
+                            <div className="flex items-center gap-4">
+                                <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 border-4 border-black rounded-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                                    <span className="text-sm font-black text-black">Smart City Developers</span>
                                 </div>
-                                <div className="flex items-center gap-1 ml-3">
+                                <div className="flex items-center gap-1">
                                     {[...Array(5)].map((_, i) => (
                                         <span key={i} className="text-yellow-400 text-xl">★</span>
                                     ))}
@@ -140,7 +136,7 @@ export function HomeContent() {
                                 </div>
                             </div>
                             <p className="text-base text-black font-bold">
-                                TRUSTED BY 900+ DEVELOPERS
+                                TRUSTED BY 100+ DEVELOPERS
                             </p>
                         </div>
                     </div>
@@ -156,7 +152,6 @@ export function HomeContent() {
                     <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12">
                         {[
                             { name: "Next.js", icon: Code },
-                            { name: "React", icon: Code },
                             { name: "TypeScript", icon: Layers },
                             { name: "Tailwind CSS", icon: Sparkles },
                             { name: "FastAPI", icon: Server },
@@ -192,14 +187,14 @@ export function HomeContent() {
                             {[
                                 { 
                                     title: "Real-time Monitoring", 
-                                    desc: "Monitor air quality, weather, traffic data với WebSocket updates theo thời gian thực.",
+                                    desc: "Monitor air quality, weather, and traffic data with real-time WebSocket updates.",
                                     icon: Zap,
                                     link: "/docs/api",
                                     color: "bg-blue-400"
                                 },
                                 { 
                                     title: "AI-Powered Analytics", 
-                                    desc: "RAG chatbot với Gemini AI, automatic classification, và semantic search.",
+                                    desc: "RAG chatbot with Gemini AI, automatic classification, and semantic search.",
                                     icon: Bot,
                                     link: "/docs/ai-services",
                                     badge: "Gemini AI",
@@ -207,7 +202,7 @@ export function HomeContent() {
                                 },
                                 { 
                                     title: "NGSI-LD Compliant", 
-                                    desc: "Tuân thủ tiêu chuẩn ETSI Smart City để tích hợp với các hệ thống IoT.",
+                                    desc: "Compliant with ETSI Smart City standard for integration with IoT systems.",
                                     icon: Link2,
                                     link: "/docs/data-models",
                                     badge: "Orion-LD",
@@ -215,7 +210,7 @@ export function HomeContent() {
                                 },
                                 { 
                                     title: "Citizen Reports", 
-                                    desc: "Hệ thống báo cáo với AI classification và priority detection.",
+                                    desc: "Community-driven reporting system with AI classification and priority detection.",
                                     icon: BarChart3,
                                     link: "/docs/api",
                                     color: "bg-red-400"
@@ -229,7 +224,7 @@ export function HomeContent() {
                                 },
                                 { 
                                     title: "Scalable Architecture", 
-                                    desc: "Docker-ready, microservices design với horizontal scaling support.",
+                                    desc: "Docker-ready, microservices design with horizontal scaling support.",
                                     icon: Rocket,
                                     link: "/docs/deployment",
                                     color: "bg-pink-400"
@@ -282,7 +277,7 @@ export function HomeContent() {
                                 </span>
                             </h2>
                             <p className="text-xl text-black font-bold">
-                                Chỉ cần vài lệnh để bắt đầu với UrbanReflex
+                                Just a few commands to get started with UrbanReflex
                             </p>
                         </div>
 
@@ -297,15 +292,15 @@ export function HomeContent() {
                                     <span className="text-sm font-black font-mono ml-3">bash</span>
                                 </div>
                             </CardHeader>
-                            <CardContent className="p-8">
-                                <pre className="text-sm md:text-base font-mono text-black font-bold">
+                            <CardContent className="p-8 bg-black rounded-lg">
+                                <pre className="text-sm md:text-base font-mono text-white font-bold">
                                     <code>
-                                        <span className="text-gray-600"># Clone repository</span>{"\n"}
-                                        <span className="text-green-600">$</span> git clone https://github.com/minhe51805/UrbanReflex.git{"\n"}
-                                        <span className="text-green-600">$</span> cd UrbanReflex{"\n\n"}
-                                        <span className="text-gray-600"># Setup and run</span>{"\n"}
-                                        <span className="text-green-600">$</span> just setup{"\n"}
-                                        <span className="text-green-600">$</span> just dev
+                                        <span className="text-gray-400"># Clone repository</span>{"\n"}
+                                        <span className="text-green-400">$</span> git clone https://github.com/minhe51805/UrbanReflex.git{"\n"}
+                                        <span className="text-green-400">$</span> cd UrbanReflex{"\n\n"}
+                                        <span className="text-gray-400"># Setup and run</span>{"\n"}
+                                        <span className="text-green-400">$</span> just setup{"\n"}
+                                        <span className="text-green-400">$</span> just dev
                                     </code>
                                 </pre>
                             </CardContent>
@@ -325,13 +320,13 @@ export function HomeContent() {
                             </span>
                         </h2>
                         <p className="text-xl text-black font-bold max-w-2xl mx-auto">
-                            Tích hợp với các dịch vụ hàng đầu trong ngành
+                            Integrate with industry-leading services and platforms
                         </p>
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-6xl mx-auto">
                         {[
-                            { name: "OpenAQ", desc: "Air Quality Data", icon: Globe, color: "bg-blue-400" },
+                            { name: "Open Data Sources", desc: "OSM, OWM, OpenAQ", icon: Globe, color: "bg-blue-400" },
                             { name: "Orion-LD", desc: "Context Broker", icon: Link2, color: "bg-green-400" },
                             { name: "Pinecone", desc: "Vector Database", icon: Database, color: "bg-purple-400" },
                             { name: "Gemini AI", desc: "LLM Provider", icon: Sparkles, color: "bg-yellow-400" }
@@ -429,7 +424,7 @@ export function HomeContent() {
                         </span>
                     </h2>
                     <p className="text-xl text-white font-bold mb-12 max-w-3xl mx-auto">
-                        Khám phá documentation đầy đủ và bắt đầu xây dựng nền tảng Smart City của bạn.
+                        Explore comprehensive documentation and start building your Smart City platform today.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <Button asChild size="lg" variant="secondary" className="text-lg">
@@ -438,11 +433,12 @@ export function HomeContent() {
                                 <ArrowRight className="w-5 h-5" strokeWidth={3} />
                             </Link>
                         </Button>
-                        <Button asChild size="lg" variant="outline" className="text-lg border-white text-white hover:bg-white hover:text-black">
+                        <Button asChild size="lg" variant="outline" className="text-lg border-white text-black hover:bg-white hover:text-black gap-2 bg-white">
                             <a
                                 href="https://github.com/minhe51805/UrbanReflex"
                                 target="_blank"
                                 rel="noopener noreferrer"
+                                className="flex items-center gap-2"
                             >
                                 <Github className="w-5 h-5" strokeWidth={3} />
                                 View Full Project
@@ -471,7 +467,7 @@ export function HomeContent() {
                                 <span className="font-black text-2xl text-black">UrbanReflex</span>
                             </div>
                             <p className="text-sm text-black font-bold leading-relaxed max-w-xs mx-auto md:mx-0">
-                                Enterprise-Grade Smart City Platform với AI-powered analytics và NGSI-LD compliance.
+                                Enterprise-Grade Smart City Platform with AI-powered analytics and NGSI-LD compliance.
                             </p>
                         </div>
 
