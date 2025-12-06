@@ -4,14 +4,9 @@ on:
   push:
     branches:
       - docs
-    paths:
-      - "docs/documentation/**"
-      - ".github/workflows/deploy-docs.yml"
   pull_request:
     branches:
       - develop
-    paths:
-      - "docs/documentation/**"
   workflow_dispatch:
 
 permissions:
@@ -32,15 +27,16 @@ jobs:
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
-        continue-on-error: true
         with:
           node-version: "20"
 
       - name: Install dependencies
-        run: cd docs/documentation && npm install
+        working-directory: ./docs/documentation
+        run: npm install
 
       - name: Build documentation
-        run: cd docs/documentation && npm run build
+        working-directory: ./docs/documentation
+        run: npm run build
         env:
           GITHUB_PAGES: "true"
 
