@@ -32,15 +32,11 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./docs/documentation
-        run: npm ci --prefer-offline --no-audit
-
-      - name: Clean build
-        working-directory: ./docs/documentation
-        run: rm -rf node_modules .next out
-
-      - name: Install dependencies again
-        working-directory: ./docs/documentation
         run: npm install
+
+      - name: Clean build artifacts
+        working-directory: ./docs/documentation
+        run: rm -rf .next out
 
       - name: Build documentation
         working-directory: ./docs/documentation
