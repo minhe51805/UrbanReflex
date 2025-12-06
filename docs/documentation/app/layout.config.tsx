@@ -28,19 +28,21 @@ export const baseOptions: BaseLayoutProps = {
     nav: {
         title: (
             <div className="flex items-center gap-3">
-                <div className="w-20 h-20 bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center p-1.5">
+                <div className="w-12 h-12 bg-white border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center p-0.5 rounded-sm">
                     <img
                         src={`${basePath}/img/logo.png`}
                         alt="UrbanReflex Logo"
-                        width={200}
-                        height={200}
-                        className="w-full h-full object-contain"
+                        width={50}
+                        height={50}
+                        className="w-full h-full object-contain scale-110"
                     />
                 </div>
-                <span className="font-black text-xl">UrbanReflex</span>
+                <span className="font-bold text-xl">UrbanReflex</span>
             </div>
         ),
+        transparentMode: 'top',
     },
+    
     links: [
         {
             text: "Docs",

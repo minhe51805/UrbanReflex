@@ -190,6 +190,7 @@ export function HomeContent() {
                                     desc: "Monitor air quality, weather, and traffic data with real-time WebSocket updates.",
                                     icon: Zap,
                                     link: "/docs/api",
+                                    badge: "Open Data",
                                     color: "bg-blue-400"
                                 },
                                 { 

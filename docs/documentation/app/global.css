@@ -1,927 +1,650 @@
 @import "fumadocs-ui/style.css";
 @import "tailwindcss";
 
-/* Neobrutalism Theme Variables */
+/* Neobrutalism Theme - Black, White, Yellow */
 @layer base {
   :root {
     --background: 0 0% 100%;
     --foreground: 0 0% 0%;
     --card: 0 0% 100%;
     --card-foreground: 0 0% 0%;
-    --primary: 0 0% 0%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 48 96% 53%;
+    --primary: 45 100% 51%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 96%;
     --secondary-foreground: 0 0% 0%;
     --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
-    --accent: 0 0% 96%;
+    --muted-foreground: 0 0% 40%;
+    --accent: 45 100% 51%;
     --accent-foreground: 0 0% 0%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     --border: 0 0% 0%;
-    --input: 0 0% 0%;
-    --ring: 0 0% 0%;
-    --radius: 0;
+    --input: 0 0% 96%;
+    --ring: 45 100% 51%;
+    --radius: 0.5rem;
   }
 
   .dark {
     --background: 0 0% 0%;
     --foreground: 0 0% 100%;
-    --card: 0 0% 0%;
+    --card: 0 0% 10%;
     --card-foreground: 0 0% 100%;
-    --primary: 0 0% 100%;
+    --primary: 45 100% 51%;
     --primary-foreground: 0 0% 0%;
-    --secondary: 48 96% 53%;
-    --secondary-foreground: 0 0% 0%;
-    --muted: 0 0% 20%;
-    --muted-foreground: 0 0% 80%;
-    --accent: 0 0% 20%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 70%;
+    --accent: 45 100% 51%;
+    --accent-foreground: 0 0% 0%;
+    --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
     --border: 0 0% 100%;
-    --input: 0 0% 100%;
-    --ring: 0 0% 100%;
-    --radius: 0;
+    --input: 0 0% 15%;
+    --ring: 45 100% 51%;
+    --radius: 0.5rem;
   }
-}
 
-/* Neobrutalism Base Styles */
-@layer base {
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+
+  * {
+    border-color: hsl(var(--border));
+  }
 }
 
-/* Custom Animations */
-@keyframes fade-in {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
-
-@keyframes fade-in-up {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes gradient {
-    0%, 100% {
-        background-position: 0% 50%;
-    }
-    50% {
-        background-position: 100% 50%;
-    }
-}
-
-@keyframes ping {
-    75%, 100% {
-        transform: scale(2);
-        opacity: 0;
-    }
-}
-
-.animate-fade-in {
-    animation: fade-in 0.6s ease-out forwards;
-}
-
-.animate-fade-in-up {
-    animation: fade-in-up 0.8s ease-out forwards;
-    opacity: 0;
-}
-
-.animate-gradient {
-    background-size: 200% 200%;
-    animation: gradient 3s ease infinite;
-}
-
-.animate-ping {
-    animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
-}
-
-/* Grid Pattern Background */
-.bg-grid-pattern {
-    background-image: 
-        linear-gradient(to right, currentColor 1px, transparent 1px),
-        linear-gradient(to bottom, currentColor 1px, transparent 1px);
-    background-size: 20px 20px;
-}
-
-/* Neobrutalism Overrides for Fumadocs */
+/* Fumadocs Overrides */
 @layer components {
-  /* Navigation Bar - Sticky */
+  /* Hide duplicate sidebar logos */
+  aside[data-fumadocs-sidebar] > *:not(:has([role="search"])):not(:has(nav)):has(img),
+  aside[data-fumadocs-sidebar] > a:first-child,
+  aside[data-fumadocs-sidebar] > div:not(.sidebar-logo-banner):first-child,
+  aside[data-fumadocs-sidebar] > div:nth-child(2):not(.sidebar-logo-banner):not(:has([role="search"])) {
+    display: none !important;
+  }
+
+  /* ===== NEOBRUTALISM HEADER + SIDEBAR ===== */
+  
+  /* Header (Navbar) - Neobrutalism Style */
   nav[data-fumadocs-navbar],
-  [data-fumadocs-navbar],
-  header nav,
   header[data-fumadocs-navbar] {
-    @apply border-b-4 border-black bg-white sticky top-0 z-50;
+    background-color: #ffffff !important;
+    border-bottom: 4px solid #000000 !important;
+    box-shadow: none !important;
   }
 
   .dark nav[data-fumadocs-navbar],
-  .dark [data-fumadocs-navbar],
-  .dark header nav,
-  .dark header[data-fumadocs-navbar],
-  [data-theme="dark"] nav[data-fumadocs-navbar],
-  [data-theme="dark"] [data-fumadocs-navbar],
-  [data-theme="dark"] header nav,
-  [data-theme="dark"] header[data-fumadocs-navbar] {
-    @apply border-b-4 border-white bg-black;
+  .dark header[data-fumadocs-navbar] {
+    background-color: #000000 !important;
+    border-bottom: 4px solid #ffffff !important;
   }
 
-  nav[data-fumadocs-navbar] a,
-  [data-fumadocs-navbar] a,
-  header nav a {
-    @apply font-black text-black border-4 border-transparent hover:border-black transition-all px-4 py-2;
+  nav[data-fumadocs-navbar] *,
+  header[data-fumadocs-navbar] * {
+    color: #000000 !important;
+    font-weight: 700 !important;
   }
 
-  .dark nav[data-fumadocs-navbar] a,
-  .dark [data-fumadocs-navbar] a,
-  .dark header nav a,
-  [data-theme="dark"] nav[data-fumadocs-navbar] a,
-  [data-theme="dark"] [data-fumadocs-navbar] a,
-  [data-theme="dark"] header nav a {
-    @apply text-white hover:border-white;
+  .dark nav[data-fumadocs-navbar] *,
+  .dark header[data-fumadocs-navbar] * {
+    color: #ffffff !important;
   }
 
-  nav[data-fumadocs-navbar] button,
-  [data-fumadocs-navbar] button,
-  header nav button {
-    @apply font-black text-black border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all;
+  nav[data-fumadocs-navbar] a:hover,
+  header[data-fumadocs-navbar] a:hover {
+    background-color: #ffd60a !important;
+    color: #000000 !important;
+    border: 2px solid #000000 !important;
+    box-shadow: 2px 2px 0px 0px rgba(0,0,0,1) !important;
+    transform: translate(-1px, -1px);
   }
 
-  .dark nav[data-fumadocs-navbar] button,
-  .dark [data-fumadocs-navbar] button,
-  .dark header nav button,
-  [data-theme="dark"] nav[data-fumadocs-navbar] button,
-  [data-theme="dark"] [data-fumadocs-navbar] button,
-  [data-theme="dark"] header nav button {
-    @apply text-white border-white shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)];
+  .dark nav[data-fumadocs-navbar] a:hover,
+  .dark header[data-fumadocs-navbar] a:hover {
+    background-color: #ffd60a !important;
+    color: #000000 !important;
+    border: 2px solid #ffffff !important;
+    box-shadow: 2px 2px 0px 0px rgba(255,255,255,1) !important;
   }
 
-  /* Sidebar - Dark Theme Support - Sticky */
-  aside[data-fumadocs-sidebar],
-  [data-fumadocs-sidebar],
-  nav[data-fumadocs-sidebar],
-  aside[class*="dark"],
-  nav[class*="dark"] {
-    @apply border-r-4 border-black sticky top-0 h-screen overflow-y-auto z-40 relative;
+  /* Sidebar - Neobrutalism Style */
+  aside[data-fumadocs-sidebar] {
+    display: flex;
+    flex-direction: column;
+    background-color: #ffffff !important;
+    border-right: 4px solid #000000 !important;
   }
 
-  /* Sidebar Navigation Line - Vertical line */
-  aside[data-fumadocs-sidebar]::before,
-  [data-fumadocs-sidebar]::before,
-  nav[data-fumadocs-sidebar]::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 2px;
-    height: 100%;
-    background: black;
-    z-index: 1;
+  .dark aside[data-fumadocs-sidebar] {
+    background-color: #000000 !important;
+    border-right: 4px solid #ffffff !important;
+  }
+  
+  aside[data-fumadocs-sidebar] > :where(div, header):has(button[aria-label*="Toggle"], [role="search"]) {
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
   }
 
-  /* Zigzag line connecting menu items */
+  aside[data-fumadocs-sidebar] [role="search"],
+  aside[data-fumadocs-sidebar] form {
+    flex: 1;
+  }
+
+  aside[data-fumadocs-sidebar] *,
   aside[data-fumadocs-sidebar] a,
-  [data-fumadocs-sidebar] a,
-  nav[data-fumadocs-sidebar] a {
-    @apply relative pl-6;
+  aside[data-fumadocs-sidebar] button,
+  aside[data-fumadocs-sidebar] input,
+  aside[data-fumadocs-sidebar] span,
+  aside[data-fumadocs-sidebar] div {
+    color: #000000 !important;
+    font-weight: 700 !important;
   }
 
-  /* Horizontal line from vertical line to menu item */
-  aside[data-fumadocs-sidebar] a::before,
-  [data-fumadocs-sidebar] a::before,
-  nav[data-fumadocs-sidebar] a::before {
-    content: '';
-    position: absolute;
-    left: -2px;
-    top: 50%;
-    width: 10px;
-    height: 2px;
-    background: black;
-    transform: translateY(-50%);
-    z-index: 2;
+  .dark aside[data-fumadocs-sidebar] *,
+  .dark aside[data-fumadocs-sidebar] a,
+  .dark aside[data-fumadocs-sidebar] button,
+  .dark aside[data-fumadocs-sidebar] input,
+  .dark aside[data-fumadocs-sidebar] span,
+  .dark aside[data-fumadocs-sidebar] div {
+    color: #ffffff !important;
   }
 
-  /* Zigzag pattern - diagonal line down */
-  aside[data-fumadocs-sidebar] a::after,
-  [data-fumadocs-sidebar] a::after,
-  nav[data-fumadocs-sidebar] a::after {
-    content: '';
-    position: absolute;
-    left: 8px;
-    top: calc(50% + 1px);
-    width: 2px;
-    height: 20px;
-    background: black;
-    transform: translateY(-50%) rotate(45deg);
-    transform-origin: top center;
-    z-index: 2;
+  aside[data-fumadocs-sidebar] a {
+    padding: 0.5rem 0.75rem;
+    border-radius: 0px !important;
+    transition: all 0.15s;
+    border: 2px solid transparent !important;
+    font-weight: 700 !important;
   }
 
-  /* Active item with thicker and colored line */
-  aside[data-fumadocs-sidebar] a[data-active="true"]::before,
-  [data-fumadocs-sidebar] a[data-active="true"]::before,
-  nav[data-fumadocs-sidebar] a[data-active="true"]::before {
-    width: 14px;
-    height: 3px;
-    background: white;
+  aside[data-fumadocs-sidebar] a:hover {
+    background-color: #ffd60a !important;
+    color: #000000 !important;
+    border: 2px solid #000000 !important;
+    box-shadow: 3px 3px 0px 0px rgba(0,0,0,1) !important;
+    transform: translate(-1px, -1px);
   }
 
-  aside[data-fumadocs-sidebar] a[data-active="true"]::after,
-  [data-fumadocs-sidebar] a[data-active="true"]::after,
-  nav[data-fumadocs-sidebar] a[data-active="true"]::after {
-    width: 3px;
-    height: 24px;
-    background: white;
+  .dark aside[data-fumadocs-sidebar] a:hover {
+    background-color: #ffd60a !important;
+    color: #000000 !important;
+    border: 2px solid #ffffff !important;
+    box-shadow: 3px 3px 0px 0px rgba(255,255,255,1) !important;
   }
 
-  /* Dark Sidebar */
-  aside[data-fumadocs-sidebar][class*="dark"],
-  [data-fumadocs-sidebar][class*="dark"],
-  nav[data-fumadocs-sidebar][class*="dark"],
-  aside.bg-fd-sidebar,
-  nav.bg-fd-sidebar {
-    @apply bg-black border-r-4 border-white;
+  aside[data-fumadocs-sidebar] a[data-active="true"] {
+    background-color: #ffd60a !important;
+    color: #000000 !important;
+    border: 2px solid #000000 !important;
+    font-weight: 900 !important;
+    box-shadow: 4px 4px 0px 0px rgba(0,0,0,1) !important;
   }
 
-  /* Dark Sidebar Navigation Line - Vertical line */
-  aside[data-fumadocs-sidebar][class*="dark"]::before,
-  [data-fumadocs-sidebar][class*="dark"]::before,
-  nav[data-fumadocs-sidebar][class*="dark"]::before,
-  aside.bg-fd-sidebar::before,
-  nav.bg-fd-sidebar::before {
-    background: white;
+  .dark aside[data-fumadocs-sidebar] a[data-active="true"] {
+    background-color: #ffd60a !important;
+    color: #000000 !important;
+    border: 2px solid #ffffff !important;
+    box-shadow: 4px 4px 0px 0px rgba(255,255,255,1) !important;
   }
 
-  /* Dark Sidebar horizontal lines */
-  aside[data-fumadocs-sidebar][class*="dark"] a::before,
-  [data-fumadocs-sidebar][class*="dark"] a::before,
-  nav[data-fumadocs-sidebar][class*="dark"] a::before,
-  aside.bg-fd-sidebar a::before,
-  nav.bg-fd-sidebar a::before {
-    background: white;
+  /* Sidebar search input styling */
+  aside[data-fumadocs-sidebar] input[type="search"],
+  aside[data-fumadocs-sidebar] [role="search"] input {
+    background-color: #ffffff !important;
+    border: 2px solid #000000 !important;
+    border-radius: 0px !important;
+    font-weight: 600 !important;
   }
 
-  /* Dark Sidebar diagonal lines */
-  aside[data-fumadocs-sidebar][class*="dark"] a::after,
-  [data-fumadocs-sidebar][class*="dark"] a::after,
-  nav[data-fumadocs-sidebar][class*="dark"] a::after,
-  aside.bg-fd-sidebar a::after,
-  nav.bg-fd-sidebar a::after {
-    background: white;
+  .dark aside[data-fumadocs-sidebar] input[type="search"],
+  .dark aside[data-fumadocs-sidebar] [role="search"] input {
+    background-color: #000000 !important;
+    border: 2px solid #ffffff !important;
   }
 
-  /* Dark Sidebar active item line */
-  aside[data-fumadocs-sidebar][class*="dark"] a[data-active="true"]::before,
-  [data-fumadocs-sidebar][class*="dark"] a[data-active="true"]::before,
-  nav[data-fumadocs-sidebar][class*="dark"] a[data-active="true"]::before,
-  aside.bg-fd-sidebar a[data-active="true"]::before,
-  nav.bg-fd-sidebar a[data-active="true"]::before {
-    background: #fbbf24;
-    width: 16px;
-    height: 4px;
+  aside[data-fumadocs-sidebar] input[type="search"]:focus,
+  aside[data-fumadocs-sidebar] [role="search"] input:focus {
+    outline: none !important;
+    box-shadow: 3px 3px 0px 0px rgba(0,0,0,1) !important;
   }
 
-  aside[data-fumadocs-sidebar][class*="dark"] a[data-active="true"]::after,
-  [data-fumadocs-sidebar][class*="dark"] a[data-active="true"]::after,
-  nav[data-fumadocs-sidebar][class*="dark"] a[data-active="true"]::after,
-  aside.bg-fd-sidebar a[data-active="true"]::after,
-  nav.bg-fd-sidebar a[data-active="true"]::after {
-    background: #fbbf24;
-    width: 4px;
-    height: 28px;
+  .dark aside[data-fumadocs-sidebar] input[type="search"]:focus,
+  .dark aside[data-fumadocs-sidebar] [role="search"] input:focus {
+    box-shadow: 3px 3px 0px 0px rgba(255,255,255,1) !important;
   }
 
-  aside[data-fumadocs-sidebar] a,
-  [data-fumadocs-sidebar] a,
-  nav[data-fumadocs-sidebar] a {
-    @apply font-bold border-2 border-transparent hover:border-black hover:bg-yellow-400 transition-all px-3 py-2 block;
+  /* ===== NEOBRUTALISM CONTENT AREA ===== */
+  
+  /* Main content background and text */
+  main,
+  article[data-fumadocs-content],
+  div[data-fumadocs-content] {
+    background-color: hsl(var(--background)) !important;
+    color: hsl(var(--foreground)) !important;
   }
 
-  /* Dark Sidebar Links */
-  aside[data-fumadocs-sidebar][class*="dark"] a,
-  [data-fumadocs-sidebar][class*="dark"] a,
-  nav[data-fumadocs-sidebar][class*="dark"] a,
-  aside.bg-fd-sidebar a,
-  nav.bg-fd-sidebar a {
-    @apply text-white font-bold border-2 border-transparent hover:border-white hover:bg-yellow-400 hover:text-black transition-all;
-  }
-
-  aside[data-fumadocs-sidebar] a[data-active="true"],
-  [data-fumadocs-sidebar] a[data-active="true"],
-  nav[data-fumadocs-sidebar] a[data-active="true"],
-  aside[data-fumadocs-sidebar] [data-active="true"],
-  [data-fumadocs-sidebar] [data-active="true"] {
-    @apply bg-yellow-400 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] font-black text-black;
-  }
-
-  /* Dark Sidebar Active */
-  aside[data-fumadocs-sidebar][class*="dark"] a[data-active="true"],
-  [data-fumadocs-sidebar][class*="dark"] a[data-active="true"],
-  nav[data-fumadocs-sidebar][class*="dark"] a[data-active="true"],
-  aside.bg-fd-sidebar a[data-active="true"],
-  nav.bg-fd-sidebar a[data-active="true"] {
-    @apply bg-yellow-400 border-4 border-white shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] font-black text-black;
-  }
-
-  /* Main Content */
-  main[data-fumadocs-main],
-  [data-fumadocs-main],
-  article {
-    @apply bg-white text-black;
-  }
-
-  .dark main[data-fumadocs-main],
-  .dark [data-fumadocs-main],
-  .dark article,
-  [data-theme="dark"] main[data-fumadocs-main],
-  [data-theme="dark"] [data-fumadocs-main],
-  [data-theme="dark"] article {
-    @apply bg-black text-white;
-  }
-
-  /* Headings */
-  main h1,
-  main h2,
-  main h3,
-  main h4,
+  /* Headings - Neobrutalism Style */
   article h1,
   article h2,
   article h3,
   article h4,
-  [data-fumadocs-main] h1,
-  [data-fumadocs-main] h2,
-  [data-fumadocs-main] h3,
-  [data-fumadocs-main] h4 {
-    @apply font-black text-black;
-  }
-
-  .dark main h1,
-  .dark main h2,
-  .dark main h3,
-  .dark main h4,
-  .dark article h1,
-  .dark article h2,
-  .dark article h3,
-  .dark article h4,
-  .dark [data-fumadocs-main] h1,
-  .dark [data-fumadocs-main] h2,
-  .dark [data-fumadocs-main] h3,
-  .dark [data-fumadocs-main] h4,
-  [data-theme="dark"] main h1,
-  [data-theme="dark"] main h2,
-  [data-theme="dark"] main h3,
-  [data-theme="dark"] main h4,
-  [data-theme="dark"] article h1,
-  [data-theme="dark"] article h2,
-  [data-theme="dark"] article h3,
-  [data-theme="dark"] article h4,
-  [data-theme="dark"] [data-fumadocs-main] h1,
-  [data-theme="dark"] [data-fumadocs-main] h2,
-  [data-theme="dark"] [data-fumadocs-main] h3,
-  [data-theme="dark"] [data-fumadocs-main] h4 {
-    @apply font-black text-white;
-  }
-
+  article h5,
+  article h6,
   main h1,
-  article h1,
-  [data-fumadocs-main] h1 {
-    @apply text-5xl md:text-6xl border-b-4 border-black pb-4 mb-6;
-  }
-
   main h2,
-  article h2,
-  [data-fumadocs-main] h2 {
-    @apply text-4xl md:text-5xl border-b-4 border-black pb-3 mb-4 mt-8;
-  }
-
   main h3,
-  article h3,
-  [data-fumadocs-main] h3 {
-    @apply text-3xl md:text-4xl border-b-2 border-black pb-2 mb-3 mt-6;
+  main h4,
+  main h5,
+  main h6 {
+    color: hsl(var(--foreground)) !important;
+    font-weight: 900 !important;
+    letter-spacing: -0.025em;
   }
 
-  .dark main h1,
-  .dark article h1,
-  .dark [data-fumadocs-main] h1,
-  [data-theme="dark"] main h1,
-  [data-theme="dark"] article h1,
-  [data-theme="dark"] [data-fumadocs-main] h1 {
-    @apply border-b-4 border-white;
+  article h1,
+  main h1 {
+    font-size: 2.5rem;
+    font-weight: 900;
+    text-transform: uppercase;
   }
 
-  .dark main h2,
+  article h2,
+  main h2 {
+    font-size: 2rem;
+    font-weight: 900;
+    margin-top: 2.5rem;
+    border-bottom: 4px solid #000000;
+    padding-bottom: 0.5rem;
+    text-transform: uppercase;
+  }
+
   .dark article h2,
-  .dark [data-fumadocs-main] h2,
-  [data-theme="dark"] main h2,
-  [data-theme="dark"] article h2,
-  [data-theme="dark"] [data-fumadocs-main] h2 {
-    @apply border-b-4 border-white;
+  .dark main h2 {
+    border-bottom: 4px solid #ffffff;
   }
 
-  .dark main h3,
-  .dark article h3,
-  .dark [data-fumadocs-main] h3,
-  [data-theme="dark"] main h3,
-  [data-theme="dark"] article h3,
-  [data-theme="dark"] [data-fumadocs-main] h3 {
-    @apply border-b-2 border-white;
-  }
-
-  /* Code Blocks */
-  main pre,
-  article pre,
-  [data-fumadocs-main] pre,
-  pre[class*="code"],
-  div[class*="code"] pre {
-    @apply bg-black text-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] p-6 font-mono font-bold rounded-none overflow-x-auto;
-  }
-
-  main code,
-  article code,
-  [data-fumadocs-main] code {
-    @apply font-mono font-bold;
-  }
-
-  main code:not(pre code),
-  article code:not(pre code),
-  [data-fumadocs-main] code:not(pre code),
-  code:not(pre code) {
-    @apply bg-yellow-400 text-black border-2 border-black px-2 py-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] rounded-none font-bold;
-  }
-
-  /* Code Block Header */
-  div[class*="code"] > div:first-child,
-  pre + div[class*="header"] {
-    @apply bg-black border-4 border-b-0 border-black px-4 py-2 font-black text-white;
-  }
-
-  /* Syntax Highlighting Overrides */
-  main pre code,
-  article pre code,
-  pre code {
-    @apply text-white bg-transparent border-0 shadow-none p-0;
-  }
-
-  main pre code .token,
-  article pre code .token {
-    @apply font-bold;
-  }
-
-  /* Links */
-  main a,
-  article a,
-  [data-fumadocs-main] a {
-    @apply text-black font-bold underline decoration-4 underline-offset-4 hover:bg-yellow-400 transition-all;
-  }
-
-  .dark main a,
-  .dark article a,
-  .dark [data-fumadocs-main] a,
-  [data-theme="dark"] main a,
-  [data-theme="dark"] article a,
-  [data-theme="dark"] [data-fumadocs-main] a {
-    @apply text-white hover:bg-yellow-400 hover:text-black;
-  }
-
-  /* Buttons */
-  [data-fumadocs-main] button,
-  [data-fumadocs-main] [role="button"] {
-    @apply bg-black text-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[4px] hover:translate-y-[4px] transition-all font-black px-6 py-3;
-  }
-
-  /* Cards/Blocks */
-  [data-fumadocs-main] blockquote {
-    @apply border-l-4 border-black bg-yellow-400 p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] font-bold;
-  }
-
-  /* Tables */
-  [data-fumadocs-main] table {
-    @apply border-4 border-black;
-  }
-
-  [data-fumadocs-main] th {
-    @apply bg-black text-white border-4 border-black p-4 font-black;
-  }
-
-  [data-fumadocs-main] td {
-    @apply border-4 border-black p-4 font-bold;
-  }
-
-  /* Lists */
-  [data-fumadocs-main] ul,
-  [data-fumadocs-main] ol {
-    @apply space-y-2;
-  }
-
-  [data-fumadocs-main] li {
-    @apply font-bold;
-  }
-
-  [data-fumadocs-main] ul li::marker {
-    @apply text-black font-black;
-  }
-
-  /* Search Dialog/Modal */
-  [data-fumadocs-search],
-  [role="dialog"][data-fumadocs-search] {
-    @apply border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] bg-white rounded-none;
-  }
-
-  [data-fumadocs-search] input {
-    @apply border-4 border-black font-bold bg-white text-black rounded-none;
-  }
-
-  /* Search Results */
-  [data-fumadocs-search] [role="listbox"],
-  [data-fumadocs-search] ul,
-  [data-fumadocs-search] [class*="result"],
-  [data-fumadocs-search] [class*="item"] {
-    @apply bg-white;
-  }
-
-  [data-fumadocs-search] [role="option"],
-  [data-fumadocs-search] li,
-  [data-fumadocs-search] a {
-    @apply text-black font-bold border-2 border-transparent hover:border-black hover:bg-yellow-400 transition-all px-4 py-2 block;
-  }
-
-  [data-fumadocs-search] [role="option"][aria-selected="true"],
-  [data-fumadocs-search] li[aria-selected="true"] {
-    @apply bg-yellow-400 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] font-black;
-  }
-
-  /* TOC - Additional styles */
-  [data-fumadocs-toc] {
-    @apply border-l-4 border-black;
-  }
-
-  [data-fumadocs-toc] a {
-    @apply font-bold text-black hover:bg-yellow-400 border-2 border-transparent hover:border-black transition-all;
-  }
-
-  /* Breadcrumbs */
-  [data-fumadocs-breadcrumb],
-  nav[aria-label="Breadcrumb"] {
-    @apply border-b-4 border-black pb-2 mb-4;
-  }
-
-  [data-fumadocs-breadcrumb] a,
-  nav[aria-label="Breadcrumb"] a {
-    @apply font-black text-black hover:bg-yellow-400 transition-all;
-  }
-
-  /* General Docs Styles */
-  .fd-docs-layout {
-    @apply bg-white;
+  article h3,
+  main h3 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-top: 2rem;
   }
 
   /* Paragraphs */
-  main p,
-  article p {
-    @apply font-bold text-black leading-relaxed mb-4;
+  article p,
+  main p {
+    color: hsl(var(--foreground)) !important;
+    line-height: 1.75;
+    font-weight: 600;
   }
 
-  .dark main p,
-  .dark article p,
-  [data-theme="dark"] main p,
-  [data-theme="dark"] article p {
-    @apply text-white;
+  /* Links - Yellow highlight on hover */
+  article a,
+  main a {
+    color: #000000 !important;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-decoration-color: #000000;
+    transition: all 0.15s;
+    font-weight: 700;
   }
 
-  /* Lists */
-  main ul,
-  main ol,
+  .dark article a,
+  .dark main a {
+    color: #ffffff !important;
+    text-decoration-color: #ffffff;
+  }
+
+  article a:hover,
+  main a:hover {
+    background-color: #ffd60a !important;
+    color: #000000 !important;
+    text-decoration-color: #000000 !important;
+    padding: 0 4px;
+    box-shadow: 2px 2px 0px 0px rgba(0,0,0,1);
+  }
+
+  .dark article a:hover,
+  .dark main a:hover {
+    background-color: #ffd60a !important;
+    color: #000000 !important;
+  }
+
+  /* Code blocks - Neobrutalism style */
+  article code,
+  main code {
+    color: #000000 !important;
+    background-color: #ffd60a !important;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0px !important;
+    font-size: 0.875rem;
+    font-family: ui-monospace, monospace;
+    font-weight: 700 !important;
+    border: 2px solid #000000 !important;
+  }
+
+  .dark article code,
+  .dark main code {
+    background-color: #2a2a2a !important;
+    color: #ffd60a !important;
+    border: 2px solid #666666 !important;
+  }
+
+  article pre,
+  main pre {
+    background-color: #000000 !important;
+    border: 4px solid #000000 !important;
+    border-radius: 0px !important;
+    padding: 1.5rem;
+    overflow-x: auto;
+    box-shadow: 6px 6px 0px 0px rgba(0,0,0,1);
+  }
+
+  .dark article pre,
+  .dark main pre {
+    background-color: #1a1a1a !important;
+    border: 4px solid #444444 !important;
+    box-shadow: 6px 6px 0px 0px rgba(255,255,255,0.1);
+  }
+
+  article pre code,
+  main pre code {
+    background-color: transparent !important;
+    border: 0 !important;
+    padding: 0;
+    color: #00ff00 !important;
+    font-weight: 600 !important;
+  }
+
+  /* Override syntax highlighting colors in light mode */
+  article pre code *,
+  main pre code * {
+    color: #00ff00 !important;
+  }
+
+  .dark article pre code,
+  .dark main pre code {
+    color: #ffd60a !important;
+  }
+
+  /* Override syntax highlighting colors in dark mode */
+  .dark article pre code *,
+  .dark main pre code * {
+    color: #ffd60a !important;
+  }
+
+  /* Lists - Neobrutalism style */
   article ul,
-  article ol {
-    @apply space-y-3 mb-4;
+  article ol,
+  main ul,
+  main ol {
+    color: hsl(var(--foreground)) !important;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    font-weight: 600;
   }
 
-  main li,
-  article li {
-    @apply font-bold text-black;
+  article li::marker,
+  main li::marker {
+    color: #ffd60a !important;
+    font-weight: 900;
   }
 
-  main ul li::marker,
-  article ul li::marker {
-    @apply text-black font-black text-xl;
+  article li,
+  main li {
+    font-weight: 600;
   }
 
-  .dark main li,
-  .dark article li,
-  [data-theme="dark"] main li,
-  [data-theme="dark"] article li {
-    @apply text-white;
+  /* Blockquotes - Neobrutalism style */
+  article blockquote,
+  main blockquote {
+    border-left: 6px solid #ffd60a !important;
+    background-color: #ffd60a !important;
+    color: #000000 !important;
+    padding: 1rem 1rem 1rem 1.5rem;
+    font-style: italic;
+    font-weight: 700;
+    border: 4px solid #000000 !important;
+    border-left-width: 6px !important;
+    box-shadow: 4px 4px 0px 0px rgba(0,0,0,1);
   }
 
-  .dark main ul li::marker,
-  .dark article ul li::marker,
-  [data-theme="dark"] main ul li::marker,
-  [data-theme="dark"] article ul li::marker {
-    @apply text-white;
-  }
-
-  /* List Items with Icons/Checkmarks */
-  main li svg,
-  article li svg,
-  main li [class*="icon"],
-  article li [class*="icon"] {
-    @apply border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] rounded-none;
-  }
-
-  /* Checkmarks in Lists */
-  main li [class*="check"],
-  article li [class*="check"],
-  main li [data-check],
-  article li [data-check] {
-    @apply bg-green-500 text-white border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] rounded-none;
-  }
-
-  /* Tables */
-  main table,
-  article table {
-    @apply border-4 border-black w-full mb-4;
-  }
-
-  main th,
-  article th {
-    @apply bg-black text-white border-4 border-black p-4 font-black text-left;
-  }
-
-  main td,
-  article td {
-    @apply border-4 border-black p-4 font-bold text-black;
-  }
-
-  .dark main table,
-  .dark article table,
-  [data-theme="dark"] main table,
-  [data-theme="dark"] article table {
-    @apply border-4 border-white;
-  }
-
-  .dark main th,
-  .dark article th,
-  [data-theme="dark"] main th,
-  [data-theme="dark"] article th {
-    @apply bg-white text-black border-4 border-white;
-  }
-
-  .dark main td,
-  .dark article td,
-  [data-theme="dark"] main td,
-  [data-theme="dark"] article td {
-    @apply border-4 border-white text-white;
-  }
-
-  /* Blockquotes */
-  main blockquote,
-  article blockquote {
-    @apply border-l-4 border-black bg-yellow-400 p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] font-bold my-4 text-black;
-  }
-
-  .dark main blockquote,
   .dark article blockquote,
-  [data-theme="dark"] main blockquote,
-  [data-theme="dark"] article blockquote {
-    @apply border-l-4 border-white bg-yellow-400 shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] text-black;
+  .dark main blockquote {
+    background-color: #2a2a2a !important;
+    color: #ffffff !important;
+    border: 4px solid #444444 !important;
+    border-left-width: 6px !important;
+    border-left-color: #ffd60a !important;
+    box-shadow: 4px 4px 0px 0px rgba(255,255,255,0.1);
   }
 
-  /* Buttons in content */
-  main button,
-  article button,
-  main [role="button"],
-  article [role="button"] {
-    @apply bg-black text-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[4px] hover:translate-y-[4px] transition-all font-black px-6 py-3 rounded-none;
+  /* Tables - Neobrutalism style */
+  article table,
+  main table {
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 4px solid #000000;
+    width: 100%;
   }
 
-  /* Search input */
-  input[type="search"],
-  input[data-fumadocs-search] {
-    @apply border-4 border-black font-bold rounded-none;
+  .dark article table,
+  .dark main table {
+    border: 4px solid #444444;
   }
 
-  /* TOC - Sticky */
-  nav[data-fumadocs-toc],
-  aside[data-fumadocs-toc],
-  [data-fumadocs-toc] {
-    @apply border-l-4 border-black pl-4 sticky top-0 h-[calc(100vh-0px)] overflow-y-auto z-30;
+  article th,
+  main th {
+    background-color: #ffd60a !important;
+    color: #000000 !important;
+    font-weight: 900 !important;
+    border: 2px solid #000000;
+    padding: 1rem;
+    text-transform: uppercase;
   }
 
-  .dark nav[data-fumadocs-toc],
-  .dark aside[data-fumadocs-toc],
-  .dark [data-fumadocs-toc],
-  [data-theme="dark"] nav[data-fumadocs-toc],
-  [data-theme="dark"] aside[data-fumadocs-toc],
-  [data-theme="dark"] [data-fumadocs-toc] {
-    @apply border-l-4 border-white;
+  .dark article th,
+  .dark main th {
+    background-color: #2a2a2a !important;
+    color: #ffffff !important;
+    border: 2px solid #444444;
   }
 
-  nav[data-fumadocs-toc] a,
-  aside[data-fumadocs-toc] a {
-    @apply font-bold text-black hover:bg-yellow-400 border-2 border-transparent hover:border-black transition-all block py-1;
+  article td,
+  main td {
+    border: 2px solid #000000;
+    color: hsl(var(--foreground)) !important;
+    padding: 1rem;
+    font-weight: 600;
   }
 
-  .dark nav[data-fumadocs-toc] a,
-  .dark aside[data-fumadocs-toc] a,
-  [data-theme="dark"] nav[data-fumadocs-toc] a,
-  [data-theme="dark"] aside[data-fumadocs-toc] a {
-    @apply text-white hover:bg-yellow-400 hover:text-black hover:border-white;
+  .dark article td,
+  .dark main td {
+    border: 2px solid #444444;
   }
 
-  /* Search Bar in Sidebar */
-  aside[data-fumadocs-sidebar] input,
-  [data-fumadocs-sidebar] input,
-  nav[data-fumadocs-sidebar] input {
-    @apply border-4 border-black bg-white text-black font-bold rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)];
+  /* Buttons - Neobrutalism style */
+  main button[data-fumadocs-button],
+  article button[data-fumadocs-button] {
+    background-color: #ffd60a !important;
+    color: #000000 !important;
+    border-radius: 0px !important;
+    border: 3px solid #000000 !important;
+    padding: 0.75rem 1.5rem;
+    font-weight: 900 !important;
+    text-transform: uppercase;
+    transition: all 0.15s;
+    box-shadow: 4px 4px 0px 0px rgba(0,0,0,1);
   }
 
-  aside[data-fumadocs-sidebar][class*="dark"] input,
-  [data-fumadocs-sidebar][class*="dark"] input,
-  nav[data-fumadocs-sidebar][class*="dark"] input,
-  aside.bg-fd-sidebar input,
-  nav.bg-fd-sidebar input {
-    @apply border-4 border-white bg-black text-white font-bold rounded-none shadow-[4px_4px_0px_0px_rgba(255,255,255,1)];
+  .dark main button[data-fumadocs-button],
+  .dark article button[data-fumadocs-button] {
+    border: 3px solid #000000 !important;
+    box-shadow: 4px 4px 0px 0px rgba(255,214,10,0.5);
   }
 
-  /* Description/Subtitle Text */
-  main p[class*="description"],
-  article p[class*="description"],
-  [data-fumadocs-description],
-  p[class*="muted"] {
-    @apply text-black font-bold;
+  main button[data-fumadocs-button]:hover,
+  article button[data-fumadocs-button]:hover {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px 0px rgba(0,0,0,1) !important;
   }
 
-  .dark main p[class*="description"],
-  .dark article p[class*="description"],
-  .dark [data-fumadocs-description],
-  .dark p[class*="muted"],
-  [data-theme="dark"] main p[class*="description"],
-  [data-theme="dark"] article p[class*="description"],
-  [data-theme="dark"] [data-fumadocs-description],
-  [data-theme="dark"] p[class*="muted"] {
-    @apply text-white;
+  .dark main button[data-fumadocs-button]:hover,
+  .dark article button[data-fumadocs-button]:hover {
+    box-shadow: 2px 2px 0px 0px rgba(255,214,10,0.5) !important;
   }
 
-  /* Badges/Tags */
-  main [class*="badge"],
-  article [class*="badge"],
-  main span[class*="tag"],
-  article span[class*="tag"] {
-    @apply bg-yellow-400 text-black border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] px-2 py-1 font-black rounded-none;
+  /* Cards - Neobrutalism style */
+  main [data-fumadocs-card],
+  article [data-fumadocs-card] {
+    background-color: hsl(var(--card)) !important;
+    color: hsl(var(--card-foreground)) !important;
+    border: 4px solid #000000 !important;
+    border-radius: 0px !important;
+    padding: 1.5rem;
+    transition: all 0.15s;
+    box-shadow: 6px 6px 0px 0px rgba(0,0,0,1);
   }
 
-  /* Divider/HR */
-  main hr,
-  article hr {
-    @apply border-t-4 border-black my-8;
+  .dark main [data-fumadocs-card],
+  .dark article [data-fumadocs-card] {
+    border: 4px solid #444444 !important;
+    box-shadow: 6px 6px 0px 0px rgba(255,255,255,0.1);
   }
 
-  .dark main hr,
-  .dark article hr,
-  [data-theme="dark"] main hr,
-  [data-theme="dark"] article hr {
-    @apply border-t-4 border-white;
+  main [data-fumadocs-card]:hover,
+  article [data-fumadocs-card]:hover {
+    transform: translate(2px, 2px);
+    box-shadow: 4px 4px 0px 0px rgba(0,0,0,1) !important;
   }
 
-  /* Images */
-  main img,
-  article img {
-    @apply border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] rounded-none;
+  .dark main [data-fumadocs-card]:hover,
+  .dark article [data-fumadocs-card]:hover {
+    box-shadow: 4px 4px 0px 0px rgba(255,255,255,0.15) !important;
   }
 
-  /* Alert/Note Boxes */
-  main [class*="alert"],
-  article [class*="alert"],
-  main [class*="note"],
-  article [class*="note"],
-  main [class*="warning"],
-  article [class*="warning"] {
-    @apply border-4 border-black bg-yellow-400 p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] font-bold rounded-none;
+  /* TOC (Table of Contents) - Neobrutalism style */
+  main nav[data-fumadocs-toc],
+  main aside[data-fumadocs-toc],
+  article nav[data-fumadocs-toc],
+  article aside[data-fumadocs-toc] {
+    color: hsl(var(--foreground)) !important;
+    border-left: 4px solid #ffd60a;
+    padding-left: 1rem;
   }
 
-  /* Admonitions */
-  main [class*="admonition"],
-  article [class*="admonition"] {
-    @apply border-4 border-black bg-yellow-400 p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] font-bold rounded-none;
+  main nav[data-fumadocs-toc] a,
+  main aside[data-fumadocs-toc] a,
+  article nav[data-fumadocs-toc] a,
+  article aside[data-fumadocs-toc] a {
+    color: hsl(var(--foreground)) !important;
+    display: block;
+    padding: 0.5rem 0;
+    transition: all 0.15s;
+    font-weight: 700;
+    border-left: 3px solid transparent;
+    padding-left: 0.5rem;
   }
 
-  /* Fumadocs Specific Classes */
-  .fd-navbar,
-  [class*="fd-navbar"] {
-    @apply border-b-4 border-black bg-white;
+  main nav[data-fumadocs-toc] a:hover,
+  main aside[data-fumadocs-toc] a:hover,
+  article nav[data-fumadocs-toc] a:hover,
+  article aside[data-fumadocs-toc] a:hover {
+    color: #000000 !important;
+    background-color: #ffd60a;
+    border-left: 3px solid #000000;
+    transform: translateX(2px);
   }
 
-  .fd-sidebar,
-  [class*="fd-sidebar"] {
-    @apply border-r-4 border-black;
+  .dark main nav[data-fumadocs-toc] a:hover,
+  .dark main aside[data-fumadocs-toc] a:hover,
+  .dark article nav[data-fumadocs-toc] a:hover,
+  .dark article aside[data-fumadocs-toc] a:hover {
+    border-left: 3px solid #ffffff;
   }
 
-  .fd-sidebar.dark,
-  [class*="fd-sidebar"][class*="dark"],
-  .fd-sidebar.bg-fd-sidebar {
-    @apply bg-black border-r-4 border-white;
+  main nav[data-fumadocs-toc] a[data-active="true"],
+  main aside[data-fumadocs-toc] a[data-active="true"],
+  article nav[data-fumadocs-toc] a[data-active="true"],
+  article aside[data-fumadocs-toc] a[data-active="true"] {
+    color: #000000 !important;
+    font-weight: 900;
+    background-color: #ffd60a;
+    border-left: 4px solid #000000;
   }
 
-  .fd-content,
-  [class*="fd-content"] {
-    @apply bg-white;
+  .dark main nav[data-fumadocs-toc] a[data-active="true"],
+  .dark main aside[data-fumadocs-toc] a[data-active="true"],
+  .dark article nav[data-fumadocs-toc] a[data-active="true"],
+  .dark article aside[data-fumadocs-toc] a[data-active="true"] {
+    border-left: 4px solid #ffffff;
   }
 
-  /* All text elements should be bold */
-  main,
-  article {
-    @apply font-bold text-black;
+  /* Scrollbar - Neobrutalism style */
+  aside[data-fumadocs-sidebar]::-webkit-scrollbar {
+    width: 0.75rem;
   }
 
-  .dark main,
-  .dark article,
-  [data-theme="dark"] main,
-  [data-theme="dark"] article {
-    @apply text-white;
+  aside[data-fumadocs-sidebar]::-webkit-scrollbar-track {
+    background-color: #ffffff;
+    border-left: 2px solid #000000;
   }
 
-  /* Strong/Bold text */
-  main strong,
-  article strong,
-  main b,
-  article b {
-    @apply font-black text-black;
+  .dark aside[data-fumadocs-sidebar]::-webkit-scrollbar-track {
+    background-color: #000000;
+    border-left: 2px solid #ffffff;
   }
 
-  .dark main strong,
-  .dark article strong,
-  .dark main b,
-  .dark article b,
-  [data-theme="dark"] main strong,
-  [data-theme="dark"] article strong,
-  [data-theme="dark"] main b,
-  [data-theme="dark"] article b {
-    @apply text-white;
+  aside[data-fumadocs-sidebar]::-webkit-scrollbar-thumb {
+    background-color: #ffd60a;
+    border: 2px solid #000000;
+    border-radius: 0px;
   }
 
-  /* Emphasis/Italic */
-  main em,
-  article em,
-  main i,
-  article i {
-    @apply font-bold italic text-black;
+  .dark aside[data-fumadocs-sidebar]::-webkit-scrollbar-thumb {
+    border: 2px solid #ffffff;
   }
 
-  .dark main em,
-  .dark article em,
-  .dark main i,
-  .dark article i,
-  [data-theme="dark"] main em,
-  [data-theme="dark"] article em,
-  [data-theme="dark"] main i,
-  [data-theme="dark"] article i {
-    @apply text-white;
+  aside[data-fumadocs-sidebar]::-webkit-scrollbar-thumb:hover {
+    background-color: #000000;
+    border: 2px solid #ffd60a;
   }
 
-  /* Inline code in paragraphs */
-  main p code,
-  article p code {
-    @apply bg-yellow-400 text-black border-2 border-black px-2 py-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] rounded-none font-bold;
+  .dark aside[data-fumadocs-sidebar]::-webkit-scrollbar-thumb:hover {
+    background-color: #ffffff;
+    border: 2px solid #ffd60a;
   }
+}
 
-  /* Definition lists */
-  main dl,
-  article dl {
-    @apply space-y-2 mb-4;
-  }
+/* Animations */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 
-  main dt,
-  article dt {
-    @apply font-black text-black border-b-2 border-black pb-1;
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
-  main dd,
-  article dd {
-    @apply font-bold text-black ml-4;
-  }
+.animate-fade-in {
+  animation: fade-in 0.6s ease-out forwards;
+}
 
-  /* Keyboard keys */
-  main kbd,
-  article kbd {
-    @apply bg-black text-white border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] px-2 py-1 font-black rounded-none;
-  }
-
-  /* Mark/Highlight */
-  main mark,
-  article mark {
-    @apply bg-yellow-400 text-black border-2 border-black px-1 font-black;
-  }
+.animate-fade-in-up {
+  animation: fade-in-up 0.8s ease-out forwards;
+  opacity: 0;
 }
