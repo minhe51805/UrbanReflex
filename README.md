@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://urbanreflex-882wzswzf-ttas-projects-6148b983.vercel.app/" rel="dofollow" target="blank"><strong>Explore the docs »</strong></a>
+  <a href="https://minhe51805.github.io/UrbanReflex/" rel="dofollow" target="blank"><strong>Explore the docs »</strong></a>
 	<br/>
 	<br/>
 	<a href="https://github.com/minhe51805/UrbanReflex/issues/new?template=bug_report.yml">🐛 Report Bug</a>
