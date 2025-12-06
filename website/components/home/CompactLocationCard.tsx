@@ -244,15 +244,15 @@ export default function CompactLocationCard({
             {isExpanded ? (
               <>
                 <ChevronUp className="h-4 w-4" />
-                <span>Thu gọn</span>
+                <span>Collapse</span>
               </>
             ) : (
               <>
                 <ChevronDown className="h-4 w-4" />
                 <span>
                   {sortedMeasurements.length > 5
-                    ? `Xem thêm ${sortedMeasurements.length - 5} readings`
-                    : 'Xem tất cả readings'}
+                    ? `View more ${sortedMeasurements.length - 5} readings`
+                    : 'View all readings'}
                 </span>
               </>
             )}

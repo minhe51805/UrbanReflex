@@ -44,16 +44,16 @@ const features = [
   },
   {
     icon: BarChart3,
-    title: 'Air Quality Index Hub',
-    description: 'Visit the UrbanReflex AQI Hub to learn about the methodologies different countries use to build their most important air quality communications tool.',
-    link: '/aqi-hub',
-    linkText: 'Visit the AQI Hub',
+    title: 'UrbanReflex Platform',
+    description: 'Visit UrbanReflex to discover how integrated smart city solutions combine environmental monitoring, infrastructure data, and citizen engagement tools to transform urban management and improve quality of life.',
+    link: '/explore',
+    linkText: 'Visit the UrbanReflex Platform',
   },
   {
     icon: Code,
     title: 'Direct API access',
     description: 'Our open API allows applications to connect directly to UrbanReflex data. One air quality API provides access to hundred of sources.',
-    link: '/developers',
+    link: '/docs',
     linkText: 'Learn about UrbanReflex API',
   },
 ];
