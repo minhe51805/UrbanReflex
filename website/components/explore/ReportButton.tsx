@@ -411,7 +411,7 @@ export default function ReportButton({ roadId, roadName, location }: ReportButto
                 {success && (
                   <div className="bg-gradient-to-r from-green-50 to-green-100 border-2 border-green-300 text-green-800 px-4 py-3 rounded-xl text-sm font-medium flex items-start gap-2">
                     <span className="text-lg">✅</span>
-                    <span>Báo cáo đã được gửi thành công! Admin sẽ xem xét trong thời gian sớm nhất.</span>
+                    <span>Report submitted successfully! Admin will review it as soon as possible.</span>
                   </div>
                 )}
 

@@ -83,10 +83,10 @@ interface RoadReport {
   reporterContact?: string;
 }
 
-// Simple in-memory cache cho dữ liệu chi tiết road trong phiên hiện tại
+// Simple in-memory cache for road detail data in current session
 // Key: roadId, Value: { data, timestamp }
 const ROAD_DETAIL_CACHE = new Map<string, { data: RoadDetailData; timestamp: number }>();
-const CACHE_TTL_MS = 15 * 60 * 1000; // 15 phút
+const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
 export default function RoadDetailModal({ road, onClose, onOpenAreaReports }: RoadDetailModalProps) {
   const [detailData, setDetailData] = useState<RoadDetailData | null>(null);
@@ -102,7 +102,7 @@ export default function RoadDetailModal({ road, onClose, onOpenAreaReports }: Ro
   }, [road]);
 
   const fetchRoadDetails = async (roadId: string) => {
-    // Nếu không có roadId thì bỏ qua
+    // If no roadId, skip
     if (!roadId) return;
 
     try {
@@ -111,7 +111,7 @@ export default function RoadDetailModal({ road, onClose, onOpenAreaReports }: Ro
       const now = Date.now();
       const cached = ROAD_DETAIL_CACHE.get(roadId);
 
-      // Nếu có cache còn hạn, dùng luôn để hiển thị nhanh, không cần spinner
+      // If cache is still valid, use it immediately for fast display, no spinner needed
       if (cached && now - cached.timestamp < CACHE_TTL_MS) {
         setDetailData(cached.data);
         setLoading(false);
@@ -531,7 +531,7 @@ export default function RoadDetailModal({ road, onClose, onOpenAreaReports }: Ro
                       </div>
                     ) : (
                       <div className="bg-rose-50 rounded-xl p-4 text-center">
-                        <p className="text-sm text-gray-600">(Không có report nào cho tuyến đường này)</p>
+                        <p className="text-sm text-gray-600">(No reports for this road segment)</p>
                       </div>
                     )}
                   </div>
@@ -567,7 +567,7 @@ export default function RoadDetailModal({ road, onClose, onOpenAreaReports }: Ro
                       </div>
                     ) : (
                       <div className="bg-purple-50 rounded-xl p-4 text-center">
-                        <p className="text-sm text-gray-600">(Không có POI nào gần tuyến đường trong bán kính đặt ra)</p>
+                        <p className="text-sm text-gray-600">(No POIs near this road segment within the specified radius)</p>
                       </div>
                     )}
                   </div>

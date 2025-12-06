@@ -182,7 +182,7 @@ function ExplorePageContent() {
     loadRoadSegments();
   }, []);
 
-  // Lấy vị trí hiện tại của người dùng (nếu được browser cho phép)
+  // Get current user location (if browser allows)
   useEffect(() => {
     if (typeof window === 'undefined' || !navigator.geolocation) return;
 

@@ -168,8 +168,8 @@ const extractCoordinates = (report: any, fallback: [number, number]): [number, n
 
 // Helper: Check if string looks like base64 (long alphanumeric string)
 const looksLikeBase64 = (str: string): boolean => {
-  // Base64 thường dài và chỉ chứa A-Z, a-z, 0-9, +, /, =
-  if (str.length < 100) return false; // Base64 image thường rất dài
+  // Base64 is usually long and only contains A-Z, a-z, 0-9, +, /, =
+  if (str.length < 100) return false; // Base64 images are usually very long
   const base64Regex = /^[A-Za-z0-9+/=]+$/;
   return base64Regex.test(str);
 };
@@ -178,15 +178,15 @@ const looksLikeBase64 = (str: string): boolean => {
 const normalizeImageUrl = (value: string): string => {
   const trimmed = value.trim();
   
-  // Nếu đã là URL hợp lệ, trả về nguyên
+  // If already a valid URL, return as is
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/') || trimmed.startsWith('data:image/')) {
     return trimmed;
   }
   
-  // Nếu là base64 thuần, convert thành data URL
+  // If pure base64, convert to data URL
   if (looksLikeBase64(trimmed)) {
-    // Thử detect image type từ đầu chuỗi hoặc mặc định là jpeg
-    // Base64 thường bắt đầu với một số pattern nhất định
+    // Try to detect image type from string start or default to jpeg
+    // Base64 usually starts with certain patterns
     return `data:image/jpeg;base64,${trimmed}`;
   }
   
@@ -198,18 +198,18 @@ const isValidImageUrl = (value: any): value is string => {
   if (typeof value !== 'string') return false;
   const url = value.trim();
   if (!url) return false;
-  // Chấp nhận http(s) tuyệt đối hoặc path tương đối bắt đầu bằng /
+  // Accept absolute http(s) or relative paths starting with /
   if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) return true;
-  // Chấp nhận base64 data URLs (data:image/...)
+  // Accept base64 data URLs (data:image/...)
   if (url.startsWith('data:image/')) return true;
-  // Chấp nhận base64 thuần (sẽ được normalize thành data URL)
+  // Accept pure base64 (will be normalized to data URL)
   if (looksLikeBase64(url)) return true;
   return false;
 };
 
-// Chuẩn hoá trường ảnh từ nhiều format backend khác nhau thành mảng string URL đơn giản
+// Normalize image field from various backend formats into simple string URL array
 const extractImages = (report: any): string[] => {
-  // Debug: log raw data để kiểm tra
+  // Debug: log raw data for checking
   console.log('[extractImages] Processing report:', report.id);
   console.log('[extractImages] report.images:', report.images);
   console.log('[extractImages] report.imageCount:', report.imageCount);
@@ -233,14 +233,14 @@ const extractImages = (report: any): string[] => {
 
   let result: string[] = [];
 
-  // Nếu là mảng
+  // If it's an array
   if (Array.isArray(raw)) {
     result = raw.filter(isValidImageUrl).map(normalizeImageUrl);
     console.log('[extractImages] Array result:', result.length, 'images');
     return result;
   }
 
-  // Nếu là string đơn
+  // If it's a single string
   if (typeof raw === 'string') {
     if (isValidImageUrl(raw)) {
       result = [normalizeImageUrl(raw)];
@@ -289,11 +289,11 @@ export default function ReportsListSidebar({ location, radius = 1, onClose, onAp
         const data = await response.json();
         const reportsList = data.reports || [];
 
-        // Map ALL reports cho sidebar, đồng thời chuẩn hoá ảnh
+        // Map ALL reports for sidebar, also normalize images
         const mappedReports: Report[] = reportsList.map((report: any) => {
           const imageArray = extractImages(report);
           
-          // Debug: log ra để kiểm tra dữ liệu ảnh từ API
+          // Debug: log to check image data from API
           if (imageArray.length > 0) {
             console.log(`[ReportsListSidebar] Report ${report.id} has ${imageArray.length} images:`, imageArray);
             console.log(`[ReportsListSidebar] Raw report.images:`, report.images);
@@ -329,7 +329,7 @@ export default function ReportsListSidebar({ location, radius = 1, onClose, onAp
           };
         });
 
-        // Filter thêm một lần phía client để chắc chắn chỉ lấy trong bán kính radius
+        // Filter once more on client side to ensure only reports within radius are included
         const reportsWithinRadius = mappedReports.filter((report) => {
           const coords = extractCoordinates(report, [lng, lat]);
           const distanceKm = calculateDistance(lat, lng, coords[1], coords[0]);
@@ -442,7 +442,7 @@ export default function ReportsListSidebar({ location, radius = 1, onClose, onAp
                     <AlertTriangle className="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900">Chi tiết báo cáo</h3>
+                    <h3 className="text-xl font-bold text-gray-900">Report Details</h3>
                     <p className="text-xs text-gray-500 mt-0.5">ID: {selectedReport.id.substring(0, 20)}...</p>
                   </div>
                 </div>
@@ -460,7 +460,7 @@ export default function ReportsListSidebar({ location, radius = 1, onClose, onAp
                   {/* Title */}
                   <div className="bg-gradient-to-br from-gray-50 to-white p-5 rounded-lg border border-gray-200">
                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                      Tiêu đề
+                      Title
                     </label>
                     <h4 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                       <span className="text-2xl">{getCategoryIcon(selectedReport.category.value)}</span>
@@ -472,7 +472,7 @@ export default function ReportsListSidebar({ location, radius = 1, onClose, onAp
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-lg border border-gray-200">
                       <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                        Trạng thái
+                        Status
                       </label>
                       {(() => {
                         const status =
@@ -491,7 +491,7 @@ export default function ReportsListSidebar({ location, radius = 1, onClose, onAp
                     </div>
                     <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-lg border border-gray-200">
                       <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                        Độ ưu tiên
+                        Priority
                       </label>
                       {(() => {
                         const priority =
@@ -512,12 +512,12 @@ export default function ReportsListSidebar({ location, radius = 1, onClose, onAp
                   {/* Description */}
                   <div className="bg-gradient-to-br from-gray-50 to-white p-5 rounded-lg border border-gray-200">
                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                      Mô tả chi tiết
+                      Detailed Description
                     </label>
                     <div className="prose prose-sm max-w-none">
                       <p className="text-sm text-gray-900 leading-relaxed whitespace-pre-wrap">
                         {selectedReport.description.value || (
-                          <span className="text-gray-400 italic">Không có mô tả</span>
+                          <span className="text-gray-400 italic">No description</span>
                         )}
                       </p>
                     </div>
@@ -542,7 +542,7 @@ export default function ReportsListSidebar({ location, radius = 1, onClose, onAp
                       <div className="bg-gradient-to-br from-gray-50 to-white p-5 rounded-lg border border-gray-200">
                         <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
                           <Camera className="w-4 h-4" />
-                          <span>Hình ảnh ({validImages.length})</span>
+                          <span>Images ({validImages.length})</span>
                         </label>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                           {validImages.map((img, idx) => {
@@ -574,11 +574,11 @@ export default function ReportsListSidebar({ location, radius = 1, onClose, onAp
                       <div className="bg-gradient-to-br from-green-50 to-white p-5 rounded-lg border border-green-100">
                         <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center space-x-2">
                           <MapPin className="w-4 h-4 text-green-600" />
-                          <span>Vị trí báo cáo</span>
+                          <span>Report Location</span>
                         </label>
                         <div className="space-y-2">
                           <div className="bg-white p-3 rounded border border-gray-200">
-                            <p className="text-xs text-gray-500 mb-1">Tọa độ</p>
+                            <p className="text-xs text-gray-500 mb-1">Coordinates</p>
                             <p className="text-sm font-mono text-gray-900">
                               [{selectedReport.location.value.coordinates.join(', ')}]
                             </p>
@@ -595,7 +595,7 @@ export default function ReportsListSidebar({ location, radius = 1, onClose, onAp
                               className="inline-flex items-center space-x-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
                             >
                               <MapPin className="w-4 h-4" />
-                              <span>Xem trên bản đồ</span>
+                              <span>View on map</span>
                             </button>
                           )}
                         </div>
@@ -606,7 +606,7 @@ export default function ReportsListSidebar({ location, radius = 1, onClose, onAp
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="bg-gradient-to-br from-blue-50 to-white p-4 rounded-lg border border-blue-100">
                       <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                        Danh mục
+                        Category
                       </label>
                       <p className="text-sm font-medium text-gray-900 capitalize">
                         {getCategoryLabel(selectedReport.category.value)}
@@ -615,7 +615,7 @@ export default function ReportsListSidebar({ location, radius = 1, onClose, onAp
                     <div className="bg-gradient-to-br from-purple-50 to-white p-4 rounded-lg border border-purple-100">
                       <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center space-x-1">
                         <Clock className="w-3 h-3" />
-                        <span>Ngày tạo</span>
+                        <span>Created Date</span>
                       </label>
                       <p className="text-sm font-medium text-gray-900">
                         {new Date(selectedReport.dateCreated.value['@value']).toLocaleDateString('vi-VN', {
@@ -630,7 +630,7 @@ export default function ReportsListSidebar({ location, radius = 1, onClose, onAp
                     <div className="bg-gradient-to-br from-indigo-50 to-white p-4 rounded-lg border border-indigo-100">
                       <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center space-x-1">
                         <User className="w-3 h-3" />
-                        <span>Người báo cáo</span>
+                        <span>Reporter</span>
                       </label>
                       <p className="text-sm font-medium text-gray-900">
                         {selectedReport.reporterName.value}
@@ -641,7 +641,7 @@ export default function ReportsListSidebar({ location, radius = 1, onClose, onAp
                   {/* Full Report ID */}
                   <div className="bg-gray-900 p-4 rounded-lg">
                     <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-                      ID đầy đủ
+                      Full ID
                     </label>
                     <p className="text-xs font-mono text-gray-300 break-all">{selectedReport.id}</p>
                   </div>
@@ -662,7 +662,7 @@ export default function ReportsListSidebar({ location, radius = 1, onClose, onAp
                         className="inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                       >
                         <MapPin className="w-4 h-4" />
-                        <span>Xem bản đồ</span>
+                        <span>View on map</span>
                         <ExternalLink className="w-3 h-3" />
                       </a>
                     )}
@@ -671,10 +671,10 @@ export default function ReportsListSidebar({ location, radius = 1, onClose, onAp
                       navigator.clipboard.writeText(selectedReport.id);
                     }}
                     className="inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                    title="Sao chép ID"
+                    title="Copy ID"
                   >
                     <Copy className="w-4 h-4" />
-                    <span>Sao chép ID</span>
+                    <span>Copy ID</span>
                   </button>
                   <button
                     onClick={() => {
@@ -689,17 +689,17 @@ export default function ReportsListSidebar({ location, radius = 1, onClose, onAp
                       }
                     }}
                     className="inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                    title="Chia sẻ"
+                    title="Share"
                   >
                     <Share2 className="w-4 h-4" />
-                    <span>Chia sẻ</span>
+                    <span>Share</span>
                   </button>
                 </div>
                 <button
                   onClick={() => setSelectedReport(null)}
                   className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
                 >
-                  Đóng
+                  Close
                 </button>
               </div>
             </div>

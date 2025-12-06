@@ -271,7 +271,7 @@ export default function FloatingReportButton({ selectedRoad }: FloatingReportBut
             return;
           }
           if (!selectedRoad) {
-            setError('Vui lòng chọn một đường trên bản đồ trước khi báo cáo');
+            setError('Please select a road on the map before reporting');
             setTimeout(() => setError(null), 4000);
             return;
           }
@@ -285,7 +285,7 @@ export default function FloatingReportButton({ selectedRoad }: FloatingReportBut
          </div>
          <div className="flex flex-col leading-tight text-left">
            <span className="text-xs uppercase tracking-wider text-slate-500 hidden sm:block">Gửi cảnh báo</span>
-           <span className="text-base font-bold text-slate-900">Báo cáo</span>
+           <span className="text-base font-bold text-slate-900">Report</span>
          </div>
       </button>
 
@@ -307,7 +307,7 @@ export default function FloatingReportButton({ selectedRoad }: FloatingReportBut
                   <Flag className="h-6 w-6 text-orange-600 stroke-2" />
                 </div>
                 <h3 className="text-xl font-extrabold text-slate-900">
-                  Báo cáo sự cố đường
+                  Report Road Issue
                 </h3>
               </div>
               <button
@@ -435,7 +435,7 @@ export default function FloatingReportButton({ selectedRoad }: FloatingReportBut
               {success && (
                 <div className="bg-gradient-to-r from-green-50 to-green-100 border-2 border-green-300 text-green-800 px-4 py-3 rounded-xl text-sm font-medium flex items-start gap-2">
                   <span className="text-lg">✅</span>
-                  <span>Báo cáo đã được gửi thành công! Admin sẽ xem xét trong thời gian sớm nhất.</span>
+                  <span>Report submitted successfully! Admin will review it as soon as possible.</span>
                 </div>
               )}
 
