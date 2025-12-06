@@ -71,6 +71,7 @@ interface UserForAdmin {
   email: string;
   username: string;
   full_name: string;
+  phone?: string;
   is_admin: boolean;
   created_at?: string;
 }
