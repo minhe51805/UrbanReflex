@@ -246,13 +246,13 @@ export default function ReportsManagement() {
       ) : filteredReports.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-lg border border-gray-200">
           <AlertTriangle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">Chưa có báo cáo nào</h3>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">No reports yet</h3>
           <p className="text-gray-600 mb-6">
             {filter === 'all'
-              ? 'Hiện tại chưa có báo cáo nào trong hệ thống.'
+              ? 'There are currently no reports in the system.'
               : filter === 'pending'
-                ? 'Không có báo cáo đang chờ xử lý.'
-                : 'Không có báo cáo về đường phố.'}
+                ? 'No reports pending review.'
+                : 'No road reports.'}
           </p>
         </div>
       ) : (
