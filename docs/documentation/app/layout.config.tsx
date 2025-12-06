@@ -21,14 +21,13 @@
  */
 
 import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
-import Image from "next/image";
 
 export const baseOptions: BaseLayoutProps = {
     nav: {
         title: (
             <div className="flex items-center gap-3">
                 <div className="w-20 h-20 bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center p-1.5">
-                    <Image
+                    <img
                         src="/img/logo.png"
                         alt="UrbanReflex Logo"
                         width={200}

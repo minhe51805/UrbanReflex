@@ -21,7 +21,6 @@
  */
 
 import Link from "next/link";
-import Image from "next/image";
 import { 
     Zap, 
     Bot, 
@@ -52,7 +51,7 @@ export function HomeContent() {
                     <div className="flex h-24 items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="w-20 h-20 bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center p-1.5">
-                                <Image
+                                <img
                                     src="/img/logo.png"
                                     alt="UrbanReflex Logo"
                                     width={200}
@@ -459,7 +458,7 @@ export function HomeContent() {
                         <div>
                             <div className="flex items-center justify-center md:justify-start gap-3 mb-4">
                                 <div className="w-20 h-20 bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center p-1.5">
-                                    <Image
+                                    <img
                                         src="/img/logo.png"
                                         alt="UrbanReflex Logo"
                                         width={200}
