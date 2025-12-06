@@ -42,6 +42,8 @@ import {
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 
+const basePath = process.env.GITHUB_PAGES === 'true' ? '/UrbanReflex' : '';
+
 export function HomeContent() {
     return (
         <>
@@ -52,7 +54,7 @@ export function HomeContent() {
                         <div className="flex items-center gap-3">
                             <div className="w-20 h-20 bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center p-1.5">
                                 <img
-                                    src="/img/logo.png"
+                                    src={`${basePath}/img/logo.png`}
                                     alt="UrbanReflex Logo"
                                     width={200}
                                     height={200}
@@ -459,7 +461,7 @@ export function HomeContent() {
                             <div className="flex items-center justify-center md:justify-start gap-3 mb-4">
                                 <div className="w-20 h-20 bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center p-1.5">
                                     <img
-                                        src="/img/logo.png"
+                                        src={`${basePath}/img/logo.png`}
                                         alt="UrbanReflex Logo"
                                         width={200}
                                         height={200}
