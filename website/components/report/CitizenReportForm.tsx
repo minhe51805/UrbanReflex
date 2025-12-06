@@ -55,42 +55,42 @@ const REPORT_CATEGORIES = [
     label: '🚧 Road Damage', 
     emoji: '🚧',
     ngsiType: 'RoadReport',
-    description: 'Đường hư hỏng, nứt, lún'
+    description: 'Damaged, cracked, or sunken road'
   },
   { 
     value: 'pothole', 
     label: '🕳️ Pothole', 
     emoji: '🕳️',
     ngsiType: 'PotholeReport',
-    description: 'Ổ gà, hố sâu trên đường'
+    description: 'Potholes and deep holes on road'
   },
   { 
     value: 'traffic_sign_issue', 
     label: '🚦 Traffic Sign Issue', 
     emoji: '🚦',
     ngsiType: 'TrafficSignReport',
-    description: 'Biển báo hỏng, mờ, thiếu'
+    description: 'Damaged, faded, or missing traffic signs'
   },
   { 
     value: 'streetlight_problem', 
     label: '💡 Streetlight Problem', 
     emoji: '💡',
     ngsiType: 'StreetlightReport',
-    description: 'Đèn đường không hoạt động'
+    description: 'Non-functioning streetlights'
   },
   { 
     value: 'drainage_issue', 
     label: '💧 Drainage Issue', 
     emoji: '💧',
     ngsiType: 'DrainageReport',
-    description: 'Cống thoát nước bị tắc'
+    description: 'Clogged drainage'
   },
   { 
     value: 'other', 
     label: '❓ Other', 
     emoji: '❓',
     ngsiType: 'CitizenReport',
-    description: 'Vấn đề khác'
+    description: 'Other issues'
   },
 ] as const;
 
@@ -342,14 +342,14 @@ export default function CitizenReportForm() {
     >
       <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
         <AlertCircle className="h-6 w-6 text-primary-600" />
-        Báo cáo vấn đề hạ tầng đường bộ
+        Report Road Infrastructure Issue
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Category Selection */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Loại vấn đề <span className="text-red-500">*</span>
+            Issue Type <span className="text-red-500">*</span>
           </label>
           <select
             name="category"
@@ -372,7 +372,7 @@ export default function CitizenReportForm() {
         {/* Title */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Tiêu đề <span className="text-red-500">*</span>
+            Title <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -381,14 +381,14 @@ export default function CitizenReportForm() {
             onChange={handleChange}
             required
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            placeholder="Mô tả ngắn gọn về vấn đề (VD: Đèn đường không hoạt động)"
+            placeholder="Brief description of the issue (e.g., Streetlight not working)"
           />
         </div>
 
         {/* Description */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Mô tả chi tiết <span className="text-red-500">*</span>
+            Detailed Description <span className="text-red-500">*</span>
           </label>
           <textarea
             name="description"
@@ -397,7 +397,7 @@ export default function CitizenReportForm() {
             required
             rows={4}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
-            placeholder="Mô tả chi tiết vấn đề, vị trí cụ thể, thời gian xảy ra..."
+            placeholder="Describe the issue in detail, specific location, time of occurrence..."
           />
         </div>
 
@@ -406,7 +406,7 @@ export default function CitizenReportForm() {
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
               <MapPin className="h-4 w-4" />
-              Vĩ độ (Latitude) <span className="text-red-500">*</span>
+              Latitude <span className="text-red-500">*</span>
             </label>
             <input
               type="number"
@@ -423,7 +423,7 @@ export default function CitizenReportForm() {
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
               <MapPin className="h-4 w-4" />
-              Kinh độ (Longitude) <span className="text-red-500">*</span>
+              Longitude <span className="text-red-500">*</span>
             </label>
             <input
               type="number"
@@ -442,7 +442,7 @@ export default function CitizenReportForm() {
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
             <ImageIcon className="h-4 w-4" />
-            URL hình ảnh (tùy chọn)
+            Image URL (optional)
           </label>
           <input
             type="url"
@@ -453,7 +453,7 @@ export default function CitizenReportForm() {
             placeholder="https://example.com/image.jpg"
           />
           <p className="text-xs text-gray-500 mt-1">
-            Cung cấp link ảnh minh họa vấn đề (nếu có)
+            Provide a link to an image illustrating the issue (if available)
           </p>
         </div>
 
@@ -461,7 +461,7 @@ export default function CitizenReportForm() {
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
             <LinkIcon className="h-4 w-4" />
-            Mã đoạn đường (tùy chọn)
+            Road Segment ID (optional)
           </label>
           <input
             type="text"
@@ -472,20 +472,20 @@ export default function CitizenReportForm() {
             placeholder="urn:ngsi-ld:RoadSegment:HCMC-32576911"
           />
           <p className="text-xs text-gray-500 mt-1">
-            ID đoạn đường trong hệ thống (nếu biết)
+            Road segment ID in the system (if known)
           </p>
         </div>
 
         {/* Reporter Info */}
         <div className="border-t pt-6">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            Thông tin người báo cáo (tùy chọn)
+            Reporter Information (optional)
           </h3>
           
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Họ và tên
+                Full Name
               </label>
               <input
                 type="text"
@@ -493,14 +493,14 @@ export default function CitizenReportForm() {
                 value={formData.reporterName}
                 onChange={handleChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="Nguyễn Văn A"
+                placeholder="John Doe"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Số điện thoại
+                  Phone Number
                 </label>
                 <input
                   type="tel"
@@ -533,7 +533,7 @@ export default function CitizenReportForm() {
         {classifying && (
           <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg flex items-center gap-2">
             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-            <span>🤖 Đang phân loại báo cáo bằng AI...</span>
+            <span>🤖 Classifying report with AI...</span>
           </div>
         )}
 
@@ -541,30 +541,30 @@ export default function CitizenReportForm() {
         {aiClassification && (
           <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4">
             <h4 className="font-semibold text-purple-900 mb-2 flex items-center gap-2">
-              🤖 Kết quả phân loại AI
+              🤖 AI Classification Result
             </h4>
             <div className="grid grid-cols-2 gap-2 text-sm">
               {aiClassification.category && (
                 <div>
-                  <span className="text-gray-600">Danh mục:</span>
+                  <span className="text-gray-600">Category:</span>
                   <span className="ml-2 font-medium text-purple-700">{aiClassification.category}</span>
                 </div>
               )}
               {aiClassification.priority && (
                 <div>
-                  <span className="text-gray-600">Mức độ ưu tiên:</span>
+                  <span className="text-gray-600">Priority Level:</span>
                   <span className="ml-2 font-medium text-purple-700">{aiClassification.priority}</span>
                 </div>
               )}
               {aiClassification.severity && (
                 <div>
-                  <span className="text-gray-600">Mức độ nghiêm trọng:</span>
+                  <span className="text-gray-600">Severity Level:</span>
                   <span className="ml-2 font-medium text-purple-700">{aiClassification.severity}</span>
                 </div>
               )}
               {aiClassification.categoryConfidence !== undefined && (
                 <div>
-                  <span className="text-gray-600">Độ tin cậy:</span>
+                  <span className="text-gray-600">Confidence:</span>
                   <span className="ml-2 font-medium text-purple-700">
                     {(aiClassification.categoryConfidence * 100).toFixed(1)}%
                   </span>
@@ -587,8 +587,8 @@ export default function CitizenReportForm() {
           <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2">
             <CheckCircle className="h-5 w-5 flex-shrink-0" />
             <span>
-              ✅ Báo cáo đã được gửi thành công! 
-              {aiClassification ? ' AI đã phân loại báo cáo.' : ''}
+              ✅ Report submitted successfully! 
+              {aiClassification ? ' AI has classified the report.' : ''}
             </span>
           </div>
         )}
@@ -602,12 +602,12 @@ export default function CitizenReportForm() {
           {submitting ? (
             <>
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-              Đang gửi báo cáo...
+              Submitting report...
             </>
           ) : (
             <>
               <Send className="h-5 w-5" />
-              Gửi báo cáo
+              Submit Report
             </>
           )}
         </button>
@@ -615,12 +615,12 @@ export default function CitizenReportForm() {
         {/* Info Footer */}
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-sm text-gray-600">
           <p className="mb-1">
-            ℹ️ Báo cáo của bạn sẽ được:
+            ℹ️ Your report will be:
           </p>
           <ul className="list-disc list-inside space-y-1 ml-2">
-            <li>Lưu trữ trong hệ thống NGSI-LD Context Broker</li>
-            <li>Tự động phân loại bằng AI để xác định mức độ ưu tiên</li>
-            <li>Chuyển đến bộ phận liên quan để xử lý</li>
+            <li>Stored in the NGSI-LD Context Broker system</li>
+            <li>Automatically classified by AI to determine priority level</li>
+            <li>Forwarded to the relevant department for processing</li>
           </ul>
         </div>
       </form>
