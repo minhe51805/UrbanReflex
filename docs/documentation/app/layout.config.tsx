@@ -52,8 +52,4 @@ export const baseOptions: BaseLayoutProps = {
             external: true,
         },
     ],
-    search: {
-        provider: "api",
-        api: "/api/search",
-    },
 };

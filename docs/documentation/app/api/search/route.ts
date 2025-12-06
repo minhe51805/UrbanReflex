@@ -20,32 +20,29 @@
  * ============================================================================
  */
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { source } from "@/app/source";
 
-export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const query = searchParams.get("query");
+export const dynamic = "force-static";
+export const revalidate = 3600; // Revalidate every hour
 
-  if (!query || query.trim().length === 0) {
-    return NextResponse.json([]);
-  }
-
+// Pre-generate search index at build time
+export async function GET() {
   try {
     // Get all pages from source using generateParams
     const params = await source.generateParams();
-    const queryLower = query.toLowerCase().trim();
-    const queryWords = queryLower.split(/\s+/).filter((w) => w.length > 0);
     
-    // Get all pages from params
-    const allPages = params
+    // Build search index
+    const searchIndex = params
       .map((param) => {
         try {
           const slug = param.slug || [];
           const page = source.getPage(slug);
           if (page) {
             return {
-              data: page.data,
+              id: page.url,
+              title: page.data.title || "",
+              description: page.data.description || "",
               url: page.url,
             };
           }
@@ -56,88 +53,10 @@ export async function GET(request: NextRequest) {
         return null;
       })
       .filter((page): page is NonNullable<typeof page> => page !== null);
-    
-    console.log("Total pages found:", allPages.length);
-    
-    // Search implementation - search in title, description, and headings
-    const results = allPages
-      .map((page) => {
-        const title = page.data.title || "";
-        const description = page.data.description || "";
-        const url = page.url;
-        
-        // Get headings from TOC if available
-        const headings = page.data.toc?.map((item: any) => item.title).join(" ") || "";
-        
-        // Combine all searchable text
-        const searchableText = `${title} ${description} ${headings}`.toLowerCase();
-        
-        // Calculate relevance score
-        let score = 0;
-        
-        // Exact title match gets highest score
-        if (title.toLowerCase() === queryLower) {
-          score += 100;
-        } else if (title.toLowerCase().startsWith(queryLower)) {
-          score += 50;
-        } else if (title.toLowerCase().includes(queryLower)) {
-          score += 30;
-        }
-        
-        // Word matching in title
-        queryWords.forEach((word) => {
-          if (title.toLowerCase().includes(word)) {
-            score += 10;
-          }
-        });
-        
-        // Description matching
-        if (description.toLowerCase().includes(queryLower)) {
-          score += 20;
-        }
-        queryWords.forEach((word) => {
-          if (description.toLowerCase().includes(word)) {
-            score += 5;
-          }
-        });
-        
-        // Heading matching
-        queryWords.forEach((word) => {
-          if (headings.toLowerCase().includes(word)) {
-            score += 8;
-          }
-        });
-        
-        // General text matching
-        if (searchableText.includes(queryLower)) {
-          score += 1;
-        }
-        
-        if (score > 0) {
-          return {
-            id: url, // Use URL as unique ID for React key
-            title,
-            description: description || "No description available",
-            url,
-          };
-        }
-        return null;
-      })
-      .filter((item): item is NonNullable<typeof item> => item !== null)
-      .sort((a, b) => {
-        // Sort by title alphabetically for same score
-        return a.title.localeCompare(b.title);
-      })
-      .slice(0, 10); // Limit to 10 results
 
-    console.log("Search results count:", results.length);
-    
-    // Return direct array - Fumadocs expects array directly
-    const response = Array.isArray(results) ? results : [];
-    console.log("Returning response:", response.length, "items");
-    return NextResponse.json(response);
+    return NextResponse.json(searchIndex);
   } catch (error) {
-    console.error("Search error:", error);
+    console.error("Search index generation error:", error);
     return NextResponse.json([]);
   }
 }
