@@ -27,6 +27,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { STATUS_CONFIG, formatStatus, getStatusBadgeClasses, getAllowedTransitions, type ReportStatus } from '@/lib/utils/reportStatus';
 import { retrieveImages } from '@/lib/utils/imageProcessor';
+import * as XLSX from 'xlsx';
 import {
   Shield,
   User,
@@ -97,6 +98,15 @@ interface Report {
   updated_at?: string;
   user_id?: string;
   road_id?: string;
+  reportedBy?: string;
+  locationName?: string;
+  dateCreated?: string;
+  metadata?: {
+    images?: string | string[];
+    categoryConfidence?: string;
+    severity?: string;
+    coordinates?: [number, number];
+  };
 }
 
 type TabType = 'overview' | 'reports' | 'users' | 'settings';
@@ -428,6 +438,73 @@ export default function AdminPage() {
     setUserRoleFilter('all');
   };
 
+  const exportToExcel = () => {
+    try {
+      // Chuẩn bị dữ liệu cho Excel
+      const excelData = filteredReports.map((report) => {
+        const dateStr = report.reportedAt || report.created_at;
+        let formattedDate = 'N/A';
+        if (dateStr) {
+          try {
+            const date = new Date(dateStr);
+            if (!isNaN(date.getTime())) {
+              formattedDate = date.toLocaleDateString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              });
+            }
+          } catch (e) {
+            formattedDate = dateStr;
+          }
+        }
+
+        return {
+          'ID': report.id,
+          'Danh mục': report.category || 'N/A',
+          'Mô tả': report.description || 'N/A',
+          'Trạng thái': formatStatus(report.status as ReportStatus),
+          'Độ ưu tiên': report.priority === 'urgent' ? 'Khẩn cấp' :
+                       report.priority === 'high' ? 'Cao' :
+                       report.priority === 'medium' ? 'Trung bình' : 'Thấp',
+          'Ngày tạo': formattedDate,
+          'Người báo cáo': report.reportedBy || 'N/A',
+          'Vị trí': report.locationName || 'N/A',
+        };
+      });
+
+      // Tạo workbook và worksheet
+      const worksheet = XLSX.utils.json_to_sheet(excelData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Báo cáo');
+
+      // Đặt độ rộng cột tự động
+      const columnWidths = [
+        { wch: 30 }, // ID
+        { wch: 15 }, // Danh mục
+        { wch: 50 }, // Mô tả
+        { wch: 20 }, // Trạng thái
+        { wch: 15 }, // Độ ưu tiên
+        { wch: 20 }, // Ngày tạo
+        { wch: 25 }, // Người báo cáo
+        { wch: 30 }, // Vị trí
+      ];
+      worksheet['!cols'] = columnWidths;
+
+      // Tạo tên file với timestamp
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+      const fileName = `BaoCao_${timestamp}.xlsx`;
+
+      // Xuất file
+      XLSX.writeFile(workbook, fileName);
+    } catch (error) {
+      console.error('Lỗi khi xuất Excel:', error);
+      setError('Có lỗi xảy ra khi xuất file Excel. Vui lòng thử lại.');
+    }
+  };
+
   const openEditUserModal = (user: UserForAdmin) => {
     setSelectedUser(user);
     setEditFormData({
@@ -542,6 +619,7 @@ export default function AdminPage() {
         hasToken: !!token,
       });
 
+      // Admin endpoint for changing user password (no old_password required)
       const response = await fetch(`http://163.61.183.90:8001/admin/users/${encodeURIComponent(userId)}/password`, {
         method: 'PUT',
         headers: {
@@ -553,10 +631,56 @@ export default function AdminPage() {
         }),
       });
 
-      const data = await response.json();
-
+      // Handle response - check if it's JSON or text
+      let errorMessage = 'Có lỗi xảy ra khi đổi mật khẩu';
+      
       if (!response.ok) {
-        throw new Error(data.detail || data.message || 'Failed to change password');
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const data = await response.json();
+            
+            // Handle 422 validation error format: { detail: [{ loc: [...], msg: "...", type: "..." }] }
+            if (response.status === 422 && Array.isArray(data.detail)) {
+              const validationErrors = data.detail.map((err: any) => {
+                const field = Array.isArray(err.loc) ? err.loc.slice(1).join('.') : 'field';
+                return `${field}: ${err.msg || err.message || 'Validation error'}`;
+              });
+              errorMessage = validationErrors.join('; ') || 'Lỗi xác thực dữ liệu';
+            } 
+            // Handle other error formats
+            else if (data.detail) {
+              // If detail is a string
+              if (typeof data.detail === 'string') {
+                errorMessage = data.detail;
+              } 
+              // If detail is an array (other format)
+              else if (Array.isArray(data.detail) && data.detail.length > 0) {
+                errorMessage = data.detail[0].msg || data.detail[0].message || String(data.detail[0]);
+              }
+            } else {
+              errorMessage = data.message || data.error || `HTTP ${response.status}: ${response.statusText}`;
+            }
+          } else {
+            const text = await response.text();
+            errorMessage = text || `HTTP ${response.status}: ${response.statusText}`;
+          }
+        } catch (parseError) {
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
+      }
+
+      // Success - try to parse JSON if available, otherwise just show success
+      try {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await response.json();
+          console.log('Password changed successfully:', data);
+        }
+      } catch (parseError) {
+        // Response might be empty on success, which is fine
+        console.log('Password changed successfully (empty response)');
       }
 
       setEditSuccess('Đổi mật khẩu thành công!');
@@ -566,7 +690,18 @@ export default function AdminPage() {
         setActiveEditTab('info');
       }, 1500);
     } catch (err: any) {
-      setEditError(err.message || 'Có lỗi xảy ra khi đổi mật khẩu');
+      // Better error handling
+      let errorMessage = 'Có lỗi xảy ra khi đổi mật khẩu';
+      
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      } else if (err && typeof err === 'object') {
+        errorMessage = err.message || err.detail || err.error || JSON.stringify(err);
+      }
+      
+      setEditError(errorMessage);
       console.error('Change password error:', err);
     }
   };
@@ -994,7 +1129,11 @@ export default function AdminPage() {
                   <h3 className="text-lg font-semibold text-gray-900">
                     Danh sách báo cáo ({filteredReports.length})
                   </h3>
-                  <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                  <button 
+                    onClick={exportToExcel}
+                    disabled={filteredReports.length === 0}
+                    className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
                     <Download className="w-4 h-4" />
                     <span>Xuất Excel</span>
                   </button>
