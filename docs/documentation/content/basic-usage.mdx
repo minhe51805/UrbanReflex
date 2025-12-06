@@ -1,0 +1,72 @@
+---
+title: Basic Usage
+description: Core concepts and patterns
+---
+
+# Basic Usage
+
+## Making API Requests
+
+### Python
+
+```python
+import httpx
+
+async def fetch_stations():
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            "http://localhost:8000/v1/aqi/stations",
+            headers={"X-API-Key": "your_api_key"}
+        )
+        return response.json()
+```
+
+### TypeScript
+
+```typescript
+const fetchStations = async (): Promise<StationResponse> => {
+  const response = await fetch("/api/aqi/stations", {
+    headers: { "X-API-Key": "your_api_key" },
+  });
+  return response.json();
+};
+```
+
+## Authentication Flow
+
+```bash
+# 1. Login
+curl -X POST "http://localhost:8000/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "user@example.com", "password": "password"}'
+
+# 2. Use token
+curl "http://localhost:8000/v1/users/me" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+## Response Format
+
+```json
+{
+  "results": [],
+  "meta": {
+    "found": 100,
+    "limit": 20,
+    "offset": 0
+  }
+}
+```
+
+## Error Handling
+
+```python
+async def get_user(user_id: str):
+    try:
+        user = await db.users.find_one({"_id": user_id})
+        if not user:
+            raise HTTPException(status_code=404, detail="Not found")
+        return user
+    except InvalidId:
+        raise HTTPException(status_code=400, detail="Invalid ID")
+```

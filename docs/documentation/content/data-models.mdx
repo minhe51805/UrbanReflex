@@ -1,0 +1,79 @@
+---
+title: Data Models
+description: NGSI-LD schemas and entities
+---
+
+# Data Models
+
+## NGSI-LD Entities
+
+### RoadSegment
+
+```json
+{
+  "id": "urn:ngsi-ld:RoadSegment:001",
+  "type": "RoadSegment",
+  "name": {"type": "Property", "value": "Nguyen Hue Blvd"},
+  "location": {
+    "type": "GeoProperty",
+    "value": {"type": "LineString", "coordinates": [[106.69, 10.77]]}
+  },
+  "trafficFlow": {"type": "Property", "value": "heavy"}
+}
+```
+
+### Streetlight
+
+```json
+{
+  "id": "urn:ngsi-ld:Streetlight:001",
+  "type": "Streetlight",
+  "status": {"type": "Property", "value": "on"},
+  "powerConsumption": {"type": "Property", "value": 25.5, "unitCode": "WTT"}
+}
+```
+
+## MongoDB Schemas
+
+### User
+
+```javascript
+// User Collection
+{
+  _id: "ObjectId",
+  email: "String",
+  hashed_password: "String",
+  role: "citizen | admin | city_official",
+  api_keys: []
+}
+```
+
+### Citizen Report
+
+```javascript
+// Citizen Report Collection
+{
+  _id: "ObjectId",
+  title: "String",
+  category: "streetlight | road | waste",
+  status: "open | in_progress | resolved",
+  location: { type: "Point", coordinates: [106.69, 10.77] }
+}
+```
+
+## TypeScript Types
+
+```typescript
+interface User {
+  id: string;
+  email: string;
+  role: "citizen" | "admin" | "city_official";
+}
+
+interface CitizenReport {
+  id: string;
+  title: string;
+  category: string;
+  status: "open" | "in_progress" | "resolved";
+}
+```

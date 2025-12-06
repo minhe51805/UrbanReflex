@@ -1,0 +1,76 @@
+---
+title: Authentication
+description: JWT tokens and API keys
+---
+
+# Authentication
+
+## JWT Authentication
+
+### Register
+
+```http
+POST /auth/register
+```
+
+```json
+{
+  "email": "user@example.com",
+  "username": "johndoe",
+  "password": "securepass123"
+}
+```
+
+### Login
+
+```http
+POST /auth/login
+```
+
+**Response:**
+
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIs...",
+  "token_type": "bearer",
+  "expires_in": 1800
+}
+```
+
+### Using Token
+
+```bash
+curl -H "Authorization: Bearer YOUR_TOKEN" "/users/me"
+```
+
+## API Keys
+
+### Create Key
+
+```http
+POST /users/api-keys
+```
+
+```json
+{"name": "My App", "description": "Mobile app"}
+```
+
+### Using API Key
+
+```bash
+curl -H "X-API-Key: ur_live_123abc" "/aqi/stations"
+```
+
+## Roles
+
+| Role | Permissions |
+|------|-------------|
+| `citizen` | Read, create reports |
+| `city_official` | Manage reports, analytics |
+| `admin` | Full access |
+
+## Security
+
+- Passwords: bcrypt hashed
+- Tokens: 30 min expiry
+- HTTPS required in production

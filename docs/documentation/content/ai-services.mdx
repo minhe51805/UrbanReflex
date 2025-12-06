@@ -1,0 +1,70 @@
+---
+title: AI Services
+description: Chatbot, classification, and RAG
+---
+
+# AI Services
+
+## RAG Chatbot
+
+Sử dụng Gemini AI + Pinecone vector database.
+
+### POST /ai-service/chatbot/chat
+
+```json
+{
+  "message": "Chất lượng không khí Quận 1?",
+  "session_id": "session_123"
+}
+```
+
+**Response:**
+
+```json
+{
+  "response": "Quận 1 có PM2.5 là 25.5 µg/m³...",
+  "sources": [{"type": "aqi_station", "id": 12345}],
+  "suggestions": ["Xem dự báo", "Đặt cảnh báo"]
+}
+```
+
+## Report Classification
+
+### POST /citizen-reports/classify
+
+```json
+{
+  "title": "Đèn đường không sáng",
+  "description": "Đèn ở góc đường đã tắt 3 ngày"
+}
+```
+
+**Response:**
+
+```json
+{
+  "category": "streetlight",
+  "confidence": 0.95,
+  "priority_suggestion": "medium"
+}
+```
+
+## Vector Search
+
+### POST /ai/search
+
+```json
+{
+  "query": "Tìm báo cáo đèn đường hỏng Quận 1",
+  "limit": 10
+}
+```
+
+## Configuration
+
+```bash
+# Required
+GEMINI_API_KEY="your-key"
+PINECONE_API_KEY="your-key"
+PINECONE_INDEX_NAME="urbanreflex-index"
+```

@@ -1,0 +1,24 @@
+{
+    "title": "Documentation",
+    "pages": [
+        "index",
+        "introduction",
+        "---Getting Started---",
+        "getting-started",
+        "basic-usage",
+        "---Reference---",
+        "api",
+        "data-models",
+        "ai-services",
+        "authentication",
+        "error-handling",
+        "---Resources---",
+        "ecosystem",
+        "configuration",
+        "---",
+        "faqs",
+        "sponsor",
+        "community-support",
+        "license"
+    ]
+}

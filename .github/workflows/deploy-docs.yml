@@ -1,0 +1,63 @@
+name: Deploy Documentation to GitHub Pages
+
+on:
+  push:
+    branches:
+      - docs
+    paths:
+      - "docs/documentation/**"
+      - ".github/workflows/deploy-docs.yml"
+  pull_request:
+    branches:
+      - develop
+    paths:
+      - "docs/documentation/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: "docs/documentation/package-lock.json"
+
+      - name: Install dependencies
+        run: cd docs/documentation && npm ci
+
+      - name: Build documentation
+        run: cd docs/documentation && npm run build
+        env:
+          GITHUB_PAGES: "true"
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "docs/documentation/out"
+
+  deploy:
+    if: github.ref == 'refs/heads/docs'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

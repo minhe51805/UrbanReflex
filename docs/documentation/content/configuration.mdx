@@ -1,0 +1,74 @@
+---
+title: Configuration
+description: Environment variables and settings
+---
+
+# Configuration
+
+## Required Variables
+
+```bash
+# Database
+MONGODB_URL="mongodb://localhost:27017"
+DATABASE_NAME="urbanreflex"
+
+# Authentication
+SECRET_KEY="your-secret-key"
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# Orion-LD
+ORION_LD_URL="http://localhost:1026"
+```
+
+## Optional Variables
+
+```bash
+# AI Services
+GEMINI_API_KEY="your-key"
+PINECONE_API_KEY="your-key"
+
+# External APIs
+OPENAQ_API_KEY="your-key"
+OWM_API_KEY="your-key"
+
+# Development
+DEBUG=true
+LOG_LEVEL="DEBUG"
+```
+
+## Docker
+
+```yaml
+services:
+  backend:
+    build: .
+    ports: ["8000:8000"]
+    depends_on: [mongo, orion]
+
+  mongo:
+    image: mongo:7.0
+    volumes: ["mongodb_data:/data/db"]
+
+  orion:
+    image: fiware/orion-ld
+    depends_on: [mongo]
+```
+
+## Commands
+
+```bash
+just dev          # Start all services
+just backend-dev  # FastAPI only
+just frontend-dev # Next.js only
+just test         # Run tests
+just format       # Format code
+```
+
+## Production
+
+```bash
+DEBUG=false
+LOG_LEVEL=WARNING
+```
+
+Enable HTTPS and strict CORS in production.

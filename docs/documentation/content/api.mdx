@@ -1,0 +1,78 @@
+---
+title: API Reference
+description: Complete REST API documentation
+---
+
+# API Reference
+
+**Base URL:** `http://localhost:8000/v1`
+
+## Air Quality
+
+### GET /aqi/stations
+
+```bash
+curl "/aqi/stations?limit=10&country=VN"
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `limit` | int | Max results (default: 100) |
+| `country` | string | Country code (ISO) |
+| `city` | string | City name |
+
+### GET /aqi/stations/:id
+
+```json
+{
+  "id": 12345,
+  "name": "District 1",
+  "measurements": [
+    {"parameter": "pm25", "value": 25.5}
+  ]
+}
+```
+
+## NGSI-LD
+
+### GET /ngsi-ld/entities
+
+```bash
+curl "/ngsi-ld/entities?type=RoadSegment&limit=50"
+```
+
+## Users
+
+### GET /users/me
+
+```bash
+curl -H "Authorization: Bearer TOKEN" "/users/me"
+```
+
+### POST /users/api-keys
+
+```json
+{"name": "My Key", "description": "For app"}
+```
+
+## Citizen Reports
+
+### POST /citizen-reports
+
+```bash
+curl -X POST "/citizen-reports" \
+  -H "Authorization: Bearer TOKEN" \
+  -F "title=Broken light" \
+  -F "category=streetlight"
+```
+
+## AI Services
+
+### POST /ai/chat
+
+```json
+{
+  "message": "Air quality today?",
+  "context": {"location": {"lat": 10.77, "lon": 106.69}}
+}
+```

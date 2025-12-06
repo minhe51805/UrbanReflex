@@ -1,0 +1,69 @@
+---
+title: Ecosystem
+description: External integrations
+---
+
+# Ecosystem
+
+## OpenAQ
+
+Air quality data platform.
+
+```bash
+OPENAQ_API_KEY="your-key"
+```
+
+```python
+stations = await openaq_client.get_locations(country="VN")
+```
+
+## Orion-LD
+
+NGSI-LD Context Broker.
+
+```bash
+ORION_LD_URL="http://localhost:1026"
+```
+
+```python
+await orion_client.create_entity({
+    "id": "urn:ngsi-ld:Streetlight:001",
+    "type": "Streetlight",
+    "status": {"type": "Property", "value": "on"}
+})
+```
+
+## Pinecone
+
+Vector database for AI search.
+
+```bash
+PINECONE_API_KEY="your-key"
+PINECONE_INDEX_NAME="urbanreflex-index"
+```
+
+## Gemini AI
+
+LLM for chatbot.
+
+```python
+import google.generativeai as genai
+
+model = genai.GenerativeModel('gemini-2.5-flash')
+response = model.generate_content(prompt)
+```
+
+## OpenWeatherMap
+
+Weather data API.
+
+```bash
+OWM_API_KEY="your-key"
+```
+
+## Community Tools
+
+- **Pandas** - Data manipulation
+- **Docker** - Containerization
+- **Prometheus** - Monitoring
+- **Grafana** - Visualization

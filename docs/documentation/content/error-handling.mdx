@@ -1,0 +1,65 @@
+---
+title: Error Handling
+description: Error codes and debugging
+---
+
+# Error Handling
+
+## HTTP Status Codes
+
+| Code | Description |
+|------|-------------|
+| `200` | Success |
+| `400` | Bad Request |
+| `401` | Unauthorized |
+| `403` | Forbidden |
+| `404` | Not Found |
+| `429` | Rate Limited |
+| `500` | Server Error |
+
+## Error Format
+
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid parameters",
+    "details": {"field": "email", "issue": "Invalid format"},
+    "request_id": "req_abc123"
+  }
+}
+```
+
+## Error Codes
+
+| Code | Description |
+|------|-------------|
+| `VALIDATION_ERROR` | Input validation failed |
+| `AUTHENTICATION_ERROR` | Auth failed |
+| `NOT_FOUND` | Resource not found |
+| `RATE_LIMIT_EXCEEDED` | Too many requests |
+
+## Handling Errors
+
+```python
+try:
+    data = await api_call("/users/me")
+except APIError as e:
+    if e.code == "AUTHENTICATION_ERROR":
+        # Redirect to login
+        pass
+    elif e.code == "RATE_LIMIT_EXCEEDED":
+        # Wait and retry
+        pass
+```
+
+## Debugging
+
+```bash
+# Check health
+curl http://localhost:8000/health
+
+# Enable debug mode in .env
+DEBUG=true
+LOG_LEVEL=DEBUG
+```

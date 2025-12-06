@@ -1,0 +1,75 @@
+---
+title: Getting Started
+description: Installation and setup guide
+---
+
+# Getting Started
+
+## Prerequisites
+
+```bash
+Python 3.10+          # Backend
+Node.js 18+           # Frontend
+Docker & Compose      # Containers
+uv package manager    # Python deps
+```
+
+## Installation
+
+### 1. Clone Repository
+
+```bash
+git clone https://github.com/minhe51805/UrbanReflex.git
+cd UrbanReflex
+```
+
+### 2. Environment Setup
+
+```bash
+cp .env.example .env
+```
+
+### 3. Install Dependencies
+
+```bash
+just setup  # Or: uv sync && cd website && npm install
+```
+
+### 4. Start Development
+
+```bash
+just dev    # Backend: 8000, Frontend: 3000
+```
+
+## Environment Variables
+
+```bash
+# Database
+MONGODB_URL="mongodb://localhost:27017"
+DATABASE_NAME="urbanreflex"
+
+# Authentication
+SECRET_KEY="your-secret-key"
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# Orion-LD
+ORION_LD_URL="http://localhost:1026"
+```
+
+## Verify Installation
+
+```bash
+curl http://localhost:8000/health
+# {"status": "healthy"}
+```
+
+## Project Structure
+
+```
+UrbanReflex/
+├── app/              # FastAPI Backend
+├── website/          # Next.js Frontend
+├── config/           # Configuration
+├── scripts/          # Automation
+└── docker-compose.yml
+```
