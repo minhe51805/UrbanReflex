@@ -472,8 +472,11 @@ export default function RoadDetailModal({ road, onClose, onOpenAreaReports }: Ro
                       {onOpenAreaReports && (
                         <button
                           type="button"
-                          onClick={onOpenAreaReports}
-                          className="text-xs font-semibold px-3 py-1.5 rounded-full border border-rose-200 text-rose-700 hover:bg-rose-50 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenAreaReports();
+                          }}
+                          className="text-xs font-semibold px-3 py-1.5 rounded-full border border-rose-200 text-rose-700 hover:bg-rose-50 transition-colors cursor-pointer"
                         >
                           View area reports
                         </button>
