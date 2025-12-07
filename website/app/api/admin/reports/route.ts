@@ -199,8 +199,48 @@ export async function GET(request: NextRequest) {
           severity: getValue(report.severity) || '',
           coordinates: report.location?.coordinates || null,
           reportId: report.id,
-          images: getValue(report.images) || [],
-          imageCount: getValue(report.imageCount) || 0,
+          // Extract images from multiple sources (same as ReportsListSidebar)
+          images: (() => {
+            // Try multiple sources
+            let raw = 
+              report?.images?.value ||
+              report?.images ||
+              report?.metadata?.images ||
+              report?.imageUrls ||
+              report?.image_urls ||
+              report?.photos ||
+              report?.photo;
+            
+            // Normalize to array
+            if (!raw) return [];
+            if (Array.isArray(raw)) return raw;
+            if (typeof raw === 'string') return [raw];
+            // NGSI-LD format: { "@list": [...] }
+            if (raw && typeof raw === 'object' && Array.isArray(raw['@list'])) return raw['@list'];
+            // Object with value array: { value: [...] }
+            if (raw && typeof raw === 'object' && Array.isArray(raw.value)) return raw.value;
+            return [];
+          })(),
+          imageCount: getValue(report.imageCount) || (() => {
+            // Calculate from images array if imageCount not available
+            const imgArray = (() => {
+              let raw = 
+                report?.images?.value ||
+                report?.images ||
+                report?.metadata?.images ||
+                report?.imageUrls ||
+                report?.image_urls ||
+                report?.photos ||
+                report?.photo;
+              if (!raw) return [];
+              if (Array.isArray(raw)) return raw;
+              if (typeof raw === 'string') return [raw];
+              if (raw && typeof raw === 'object' && Array.isArray(raw['@list'])) return raw['@list'];
+              if (raw && typeof raw === 'object' && Array.isArray(raw.value)) return raw.value;
+              return [];
+            })();
+            return imgArray.length;
+          })(),
         }
       };
     });

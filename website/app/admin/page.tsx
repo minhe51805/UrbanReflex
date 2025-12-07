@@ -22,11 +22,11 @@
 
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { STATUS_CONFIG, formatStatus, getStatusBadgeClasses, getAllowedTransitions, type ReportStatus } from '@/lib/utils/reportStatus';
-import { retrieveImages } from '@/lib/utils/imageProcessor';
+import Image from 'next/image';
 import * as XLSX from 'xlsx';
 import {
   Shield,
@@ -56,6 +56,17 @@ import {
   ExternalLink,
   ChevronLeft,
   ChevronRight,
+  Bot,
+  CircleDot,
+  Route,
+  TrafficCone,
+  Lightbulb,
+  Droplets,
+  HelpCircle,
+  Circle,
+  CheckCircle2,
+  ClipboardList,
+  Sparkles,
 } from 'lucide-react';
 
 interface UserForAdmin {
@@ -68,11 +79,128 @@ interface UserForAdmin {
   created_at?: string;
 }
 
-// Helper function to normalize images to array
-const normalizeImages = (images: string | string[] | undefined): string[] => {
-  if (!images) return [];
-  if (typeof images === 'string') return [images];
-  if (Array.isArray(images)) return images;
+// Helper: Check if string looks like base64 (long alphanumeric string)
+const looksLikeBase64 = (str: string): boolean => {
+  // Base64 is usually long and only contains A-Z, a-z, 0-9, +, /, =
+  if (str.length < 100) return false; // Base64 images are usually very long
+  const base64Regex = /^[A-Za-z0-9+/=]+$/;
+  return base64Regex.test(str);
+};
+
+// Convert base64 string to data URL if needed
+const normalizeImageUrl = (value: string): string => {
+  const trimmed = value.trim();
+  
+  // If already a valid URL, return as is
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/') || trimmed.startsWith('data:image/')) {
+    return trimmed;
+  }
+  
+  // If pure base64, convert to data URL
+  if (looksLikeBase64(trimmed)) {
+    // Try to detect image type from string start or default to jpeg
+    // Base64 usually starts with certain patterns
+    return `data:image/jpeg;base64,${trimmed}`;
+  }
+  
+  return trimmed;
+};
+
+// Validate that a string looks like a usable image URL for next/image
+const isValidImageUrl = (value: any): value is string => {
+  if (typeof value !== 'string') return false;
+  const url = value.trim();
+  if (!url) return false;
+  
+  // Reject common error messages or invalid strings
+  const invalidStrings = [
+    'too big string',
+    'too big',
+    'error',
+    'null',
+    'undefined',
+    'none',
+    'n/a',
+    'na',
+  ];
+  const lower = url.toLowerCase();
+  if (invalidStrings.some(invalid => lower.includes(invalid))) {
+    return false;
+  }
+  
+  // Accept hashes (64 char hex) - they will be handled by retrieveImages if needed
+  // But for now, we accept them so extractImages can find them
+  if (/^[a-f0-9]{64}$/i.test(url)) {
+    return true; // Accept hashes - they might be in metadata.images from API
+  }
+  
+  // Accept absolute http(s) or relative paths starting with /
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) return true;
+  // Accept base64 data URLs (data:image/...)
+  if (url.startsWith('data:image/')) return true;
+  // Accept pure base64 (will be normalized to data URL)
+  if (looksLikeBase64(url)) return true;
+  return false;
+};
+
+// Normalize image field from various backend formats into simple string URL array
+// Same as ReportsListSidebar
+const extractImages = (report: any): string[] => {
+  // Debug: log raw data for checking
+  console.log('[extractImages] Processing report:', report.id);
+  console.log('[extractImages] report.images:', report.images);
+  console.log('[extractImages] report.metadata?.images:', report.metadata?.images);
+  
+  // Một số kiểu thường gặp: NGSI-LD images.value, metadata.images, imageUrls, photos...
+  let raw =
+    report?.images?.value ||
+    report?.images ||
+    report?.metadata?.images ||
+    report?.imageUrls ||
+    report?.image_urls ||
+    report?.photos ||
+    report?.photo;
+
+  console.log('[extractImages] Extracted raw:', raw, 'type:', typeof raw, 'isArray:', Array.isArray(raw));
+
+  if (!raw) {
+    console.log('[extractImages] No images found');
+    return [];
+  }
+
+  let result: string[] = [];
+
+  // If it's an array
+  if (Array.isArray(raw)) {
+    result = raw.filter(isValidImageUrl).map(normalizeImageUrl);
+    console.log('[extractImages] Array result:', result.length, 'images');
+    return result;
+  }
+
+  // If it's a single string
+  if (typeof raw === 'string') {
+    if (isValidImageUrl(raw)) {
+      result = [normalizeImageUrl(raw)];
+    }
+    console.log('[extractImages] String result:', result.length, 'images');
+    return result;
+  }
+
+  // Kiểu NGSI-LD: { "@list": [ ... ] }
+  if (raw && typeof raw === 'object' && Array.isArray(raw['@list'])) {
+    result = raw['@list'].filter(isValidImageUrl).map(normalizeImageUrl);
+    console.log('[extractImages] @list result:', result.length, 'images');
+    return result;
+  }
+
+  // Kiểu object có value là array: { value: [...] }
+  if (raw && typeof raw === 'object' && Array.isArray(raw.value)) {
+    result = raw.value.filter(isValidImageUrl).map(normalizeImageUrl);
+    console.log('[extractImages] object.value result:', result.length, 'images');
+    return result;
+  }
+
+  console.log('[extractImages] No valid format found, returning empty');
   return [];
 };
 
@@ -167,6 +295,9 @@ export default function AdminPage() {
   const [updateSuccess, setUpdateSuccess] = useState('');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [loadedImages, setLoadedImages] = useState<(string | null)[]>([]);
+  const [imageLoadFailed, setImageLoadFailed] = useState(false);
+  const [retrievedImages, setRetrievedImages] = useState<string[]>([]);
+  const [loadingHashes, setLoadingHashes] = useState(false);
 
   // Stats
   const stats = useMemo(() => {
@@ -313,46 +444,98 @@ export default function AdminPage() {
     }
   }, [isAdmin]);
 
-  // Load images from hashes when modal opens
+  // Reset image state and retrieve images from hashes when modal opens
   useEffect(() => {
     if (selectedReport && showReportModal) {
-      const imageHashes = normalizeImages(selectedReport.metadata?.images);
+      // Reset states when modal opens
+      setCurrentImageIndex(0);
+      setRetrievedImages([]);
+      setLoadingHashes(false);
       
-      // Check if images are hashes (64 char hex) or data URLs
-      const areHashes = imageHashes.every(img => 
-        typeof img === 'string' && /^[a-f0-9]{64}$/i.test(img)
-      );
+      // Extract images and check for hashes
+      const allImages = extractImages(selectedReport);
+      const hashes = allImages.filter(img => /^[a-f0-9]{64}$/i.test(img));
       
-      if (areHashes && imageHashes.length > 0) {
-        console.log(`📸 Loading ${imageHashes.length} images from hashes...`);
-        retrieveImages(imageHashes).then(images => {
-          setLoadedImages(images);
-          console.log(`✅ Loaded ${images.filter(img => img !== null).length}/${images.length} images`);
+      console.log('[Admin Modal] useEffect - Extracted images:', {
+        total: allImages.length,
+        hashes: hashes.length,
+        hashesList: hashes
+      });
+      
+      if (hashes.length > 0) {
+        setLoadingHashes(true);
+        // Try to retrieve from local storage first
+        import('@/lib/utils/imageProcessor').then(({ retrieveImages }) => {
+          retrieveImages(hashes).then(images => {
+            const validRetrieved = images.filter(img => img !== null) as string[];
+            
+            // If not all images found locally, try to fetch from API
+            if (validRetrieved.length < hashes.length) {
+              const missingHashes = hashes.filter((hash, idx) => images[idx] === null);
+              console.log(`[Admin Modal] ${missingHashes.length} images not found locally, trying API...`);
+              
+              // Try to fetch from API endpoint (if exists)
+              Promise.all(
+                missingHashes.map(hash => 
+                  fetch(`/api/images/${hash}`)
+                    .then(res => res.ok ? res.text() : null)
+                    .catch(() => null)
+                )
+              ).then(apiImages => {
+                const allRetrieved = [...validRetrieved, ...apiImages.filter(img => img !== null) as string[]];
+                setRetrievedImages(allRetrieved);
+                setLoadingHashes(false);
+                console.log(`[Admin Modal] Retrieved ${allRetrieved.length}/${hashes.length} images (${validRetrieved.length} local, ${apiImages.filter(img => img !== null).length} from API)`);
+              }).catch(err => {
+                console.error('[Admin Modal] Error fetching from API:', err);
+                setRetrievedImages(validRetrieved);
+                setLoadingHashes(false);
+              });
+            } else {
+              setRetrievedImages(validRetrieved);
+              setLoadingHashes(false);
+              console.log(`[Admin Modal] Retrieved ${validRetrieved.length}/${hashes.length} images from storage`);
+            }
+          }).catch(err => {
+            console.error('[Admin Modal] Error retrieving images:', err);
+            setRetrievedImages([]);
+            setLoadingHashes(false);
+          });
         });
-      } else {
-        // Already data URLs or old format
-        setLoadedImages(imageHashes);
       }
     } else {
-      setLoadedImages([]);
+      // Clear states when modal closes
       setCurrentImageIndex(0);
+      setRetrievedImages([]);
+      setLoadingHashes(false);
     }
-  }, [selectedReport, showReportModal]);
+  }, [selectedReport?.id, showReportModal]);
 
   const loadData = async () => {
         setLoading(true);
     setError('');
         try {
-          const token = localStorage.getItem('auth_token');
+          // Get token from localStorage or useAuth context
+          const token = typeof window !== 'undefined' 
+            ? localStorage.getItem('auth_token') 
+            : null;
+      
       if (!token) {
-        throw new Error('No authentication token');
+        console.warn('No authentication token found');
+        setError('Vui lòng đăng nhập lại');
+        setLoading(false);
+        return;
       }
 
       // Load users
       try {
         const usersRes = await fetch('http://163.61.183.90:8001/admin/users', {
-          headers: { 'Authorization': `Bearer ${token}` },
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
         });
+        
         if (usersRes.ok) {
           const usersData = await usersRes.json();
           let usersArray = Array.isArray(usersData) ? usersData : usersData.users || [];
@@ -365,14 +548,31 @@ export default function AdminPage() {
           
           console.log('Loaded users:', usersArray.length, usersArray);
           setUsers(usersArray);
+        } else if (usersRes.status === 401) {
+          // Unauthorized - token expired or invalid
+          console.error('Failed to load users: 401 Unauthorized');
+          setError('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+          // Clear invalid token
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('auth_token');
+          }
+          // Redirect to login after a delay
+          setTimeout(() => {
+            router.push('/login');
+          }, 2000);
+          setUsers([]);
         } else if (usersRes.status === 404) {
           console.warn('Admin users endpoint not found, using empty array');
           setUsers([]);
         } else {
-          console.error('Failed to load users:', usersRes.status);
+          const errorData = await usersRes.json().catch(() => ({}));
+          console.error('Failed to load users:', usersRes.status, errorData);
+          setError(`Lỗi khi tải danh sách người dùng: ${usersRes.status}`);
+          setUsers([]);
         }
       } catch (usersErr) {
         console.error('Error loading users:', usersErr);
+        setError('Lỗi kết nối khi tải danh sách người dùng');
         setUsers([]);
       }
 
@@ -1621,7 +1821,7 @@ export default function AdminPage() {
           onClick={() => setShowReportModal(false)}
         >
           <div 
-            className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] flex flex-col"
+            className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -1658,8 +1858,8 @@ export default function AdminPage() {
                 </div>
 
                 {/* Status and Priority Row - Editable */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="bg-gradient-to-br from-gray-50 to-white p-3 rounded-lg border border-gray-200">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-xl border border-gray-200">
                     <div className="flex items-center justify-between mb-1.5">
                       <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
                         Trạng thái
@@ -1671,7 +1871,7 @@ export default function AdminPage() {
                     <select
                       value={editingStatus}
                       onChange={(e) => setEditingStatus(e.target.value)}
-                      className={`w-full px-3 py-2 text-sm border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white font-medium ${
+                      className={`w-full px-3 py-2 text-sm border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white font-medium ${
                         editingStatus !== selectedReport.status ? 'border-orange-400' : 'border-gray-300'
                       }`}
                     >
@@ -1690,7 +1890,7 @@ export default function AdminPage() {
                       </p>
                     )}
                   </div>
-                  <div className="bg-gradient-to-br from-gray-50 to-white p-3 rounded-lg border border-gray-200">
+                  <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-xl border border-gray-200">
                     <div className="flex items-center justify-between mb-1.5">
                       <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
                         Độ ưu tiên
@@ -1702,18 +1902,14 @@ export default function AdminPage() {
                     <select
                       value={editingPriority}
                       onChange={(e) => setEditingPriority(e.target.value)}
-                      className={`w-full px-3 py-2 text-sm border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white font-medium ${
+                      className={`w-full px-3 py-2 text-sm border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white font-medium ${
                         editingPriority !== selectedReport.priority ? 'border-orange-400' : 'border-gray-300'
                       }`}
                     >
-                      <option value="low">⚪ Thấp</option>
-                      <option value="medium">🟡 Trung bình</option>
-                      <option value="high">🟠 Cao</option>
-                      <option value="urgent">🔴 Khẩn cấp</option>
-                      <option value="low">Low</option>
-                      <option value="medium">Medium</option>
-                      <option value="high">High</option>
-                      <option value="urgent">Urgent</option>
+                      <option value="low">Thấp</option>
+                      <option value="medium">Trung bình</option>
+                      <option value="high">Cao</option>
+                      <option value="urgent">Khẩn cấp</option>
                     </select>
                   </div>
                 </div>
@@ -1731,141 +1927,141 @@ export default function AdminPage() {
                 )}
 
                 {/* Description */}
-                <div className="bg-gradient-to-br from-gray-50 to-white p-2 rounded-lg border border-gray-200">
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-xl border border-gray-200">
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
                     Mô tả chi tiết
                   </label>
                   <div className="prose prose-sm max-w-none">
-                    <p className="text-xs text-gray-900 leading-relaxed whitespace-pre-wrap max-h-24 overflow-y-auto">
+                    <p className="text-sm text-gray-900 leading-relaxed whitespace-pre-wrap max-h-32 overflow-y-auto">
                       {selectedReport.description || (
-                        <span className="text-gray-400 italic">No description</span>
+                        <span className="text-gray-400 italic">Không có mô tả</span>
                       )}
                     </p>
                   </div>
                 </div>
 
-                {/* Images Gallery - Carousel Style */}
+                {/* Images Gallery - Same logic as ReportsListSidebar */}
                 {(() => {
-                  // Use loadedImages if available, otherwise fall back to raw images
-                  const displayImages = loadedImages.length > 0 
-                    ? loadedImages.filter(img => img !== null) as string[]
-                    : normalizeImages(selectedReport.metadata?.images);
-                    
-                  if (displayImages.length === 0) return null;
+                  // Use extractImages function (same as ReportsListSidebar)
+                  const allImages = extractImages(selectedReport);
+                  
+                  // Separate hashes from valid image URLs
+                  const hashes = allImages.filter(img => /^[a-f0-9]{64}$/i.test(img));
+                  const validImageUrls = allImages.filter(img => !/^[a-f0-9]{64}$/i.test(img));
+                  
+                  // Combine valid URLs with retrieved images
+                  const finalImages = [...validImageUrls, ...retrievedImages];
+                  
+                  console.log('[Admin Modal] extractImages result:', {
+                    total: allImages.length,
+                    hashes: hashes.length,
+                    validUrls: validImageUrls.length,
+                    retrieved: retrievedImages.length,
+                    final: finalImages.length,
+                    loadingHashes
+                  });
+                  
+                  // Show section if we have images OR if we're loading hashes OR if we have hashes (even if not retrieved yet)
+                  if (allImages.length === 0) return null;
                   
                   return (
-                  <div className="bg-gradient-to-br from-gray-50 to-white p-3 rounded-lg border border-gray-200">
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-2">
-                      <Camera className="w-3 h-3" />
-                      <span>Images ({displayImages.length})</span>
-                    </label>
-                    
-                    {/* Main Image Display */}
-                    <div className="relative w-full rounded-lg overflow-hidden border-2 border-gray-300 bg-gray-100 mb-2" style={{ aspectRatio: '16/9' }}>
-                      {loadedImages.length === 0 ? (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400">
+                    <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-xl border border-gray-200">
+                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+                        <Camera className="w-4 h-4" />
+                        <span>Images ({finalImages.length > 0 ? finalImages.length : allImages.length})</span>
+                        {loadingHashes && hashes.length > 0 && (
+                          <span className="text-xs text-gray-400">(Loading {hashes.length} from storage...)</span>
+                        )}
+                      </label>
+                      
+                      {loadingHashes && finalImages.length === 0 ? (
+                        <div className="flex items-center justify-center py-8">
                           <div className="text-center">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400 mx-auto mb-2"></div>
-                            <p className="text-xs">Loading images...</p>
+                            <p className="text-xs text-gray-500">Loading images from storage...</p>
+                            <p className="text-xs text-gray-400 mt-1">Hash: {hashes[0]?.substring(0, 16)}...</p>
                           </div>
                         </div>
-                      ) : (
-                        <img
-                          src={displayImages[currentImageIndex]}
-                          alt={`Report image ${currentImageIndex + 1}`}
-                          className="w-full h-full object-contain bg-gray-50"
-                        />
-                      )}
-                      
-                      {/* Navigation Arrows */}
-                      {displayImages.length > 1 && loadedImages.length > 0 && (
-                        <>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setCurrentImageIndex((prev) => 
-                                prev === 0 ? displayImages.length - 1 : prev - 1
-                              );
-                            }}
-                            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-all backdrop-blur-sm"
-                          >
-                            <ChevronLeft className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setCurrentImageIndex((prev) => 
-                                prev === displayImages.length - 1 ? 0 : prev + 1
-                              );
-                            }}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-all backdrop-blur-sm"
-                          >
-                            <ChevronRight className="w-4 h-4" />
-                          </button>
-                        </>
-                      )}
-                      
-                      {/* Image Counter */}
-                      <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded backdrop-blur-sm">
-                        {currentImageIndex + 1} / {displayImages.length}
-                      </div>
+                      ) : finalImages.length > 0 ? (
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                          {finalImages.map((img, idx) => {
+                            const normalizedUrl = normalizeImageUrl(img);
+                            return (
+                              <div
+                                key={idx}
+                                className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 bg-gray-50 group cursor-pointer"
+                              >
+                                <Image
+                                  src={normalizedUrl}
+                                  alt={`Report image ${idx + 1}`}
+                                  fill
+                                  className="object-cover group-hover:scale-105 transition-transform"
+                                  unoptimized={normalizedUrl.startsWith('data:')} // Disable optimization for data URLs
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : hashes.length > 0 && !loadingHashes && finalImages.length === 0 ? (
+                        <div className="flex items-center justify-center py-8">
+                          <div className="text-center max-w-md">
+                            <p className="text-xs font-semibold text-gray-700 mb-2">⚠️ Không thể tải ảnh</p>
+                            <p className="text-xs text-gray-600 mb-3">Ảnh được lưu trong browser của người báo cáo</p>
+                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-left">
+                              <p className="text-xs font-semibold text-yellow-800 mb-2">Để xem ảnh:</p>
+                              <ul className="text-xs text-yellow-700 space-y-1 list-disc list-inside">
+                                <li>Yêu cầu người báo cáo gửi ảnh trực tiếp</li>
+                                <li>Hoặc truy cập từ browser đã upload ảnh</li>
+                                <li>Hoặc yêu cầu backend lưu images thay vì chỉ hash</li>
+                              </ul>
+                            </div>
+                            <p className="text-xs text-gray-400 mt-3 font-mono break-all">Hash: {hashes[0]?.substring(0, 32)}...</p>
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
-                    
-                    {/* Thumbnail Strip */}
-                    {displayImages.length > 1 && loadedImages.length > 0 && (
-                      <div className="flex gap-2 overflow-x-auto pb-1">
-                        {displayImages.map((img: string, idx: number) => (
-                          <button
-                            key={idx}
-                            onClick={() => setCurrentImageIndex(idx)}
-                            className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
-                              currentImageIndex === idx
-                                ? 'border-blue-500 ring-2 ring-blue-200'
-                                : 'border-gray-200 hover:border-gray-300'
-                            }`}
-                          >
-                            <img
-                              src={img}
-                              alt={`Thumbnail ${idx + 1}`}
-                              className="w-full h-full object-cover"
-                            />
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
                   );
                 })()}
 
                 {/* AI Classification Metrics */}
                 {(selectedReport.category || selectedReport.metadata?.categoryConfidence || selectedReport.metadata?.severity) && (
-                  <div className="bg-gradient-to-br from-purple-50 to-white p-3 rounded-lg border border-purple-200">
-                    <label className="block text-xs font-semibold text-purple-700 uppercase tracking-wide mb-2 flex items-center gap-2">
-                      <span className="text-lg">🤖</span>
+                  <div className="bg-gradient-to-br from-purple-50 to-white p-4 rounded-xl border border-purple-200">
+                    <label className="block text-xs font-semibold text-purple-700 uppercase tracking-wide mb-3 flex items-center gap-2">
+                      <div className="p-1.5 bg-purple-100 rounded-lg">
+                        <Bot className="w-4 h-4 text-purple-600" />
+                      </div>
                       <span>Phân loại AI</span>
                     </label>
                     <div className="grid grid-cols-2 gap-3">
                       {/* Category */}
-                      <div className="bg-white p-2.5 rounded-lg border border-purple-100">
-                        <p className="text-xs text-gray-500 mb-1">Danh mục</p>
-                        <p className="text-sm font-bold text-gray-900">
-                          {selectedReport.category === 'pothole' && '🕳️ Ổ gà'}
-                          {selectedReport.category === 'road_damage' && '🛣️ Hư hỏng đường'}
-                          {selectedReport.category === 'traffic_sign' && '🚦 Biển báo'}
-                          {selectedReport.category === 'streetlight' && '💡 Đèn đường'}
-                          {selectedReport.category === 'drainage' && '💧 Thoát nước'}
-                          {(!selectedReport.category || selectedReport.category === 'unknown') && '❓ Chưa xác định'}
-                        </p>
+                      <div className="bg-white p-3 rounded-xl border border-purple-100">
+                        <p className="text-xs text-gray-500 mb-2">Danh mục</p>
+                        <div className="flex items-center gap-2">
+                          {selectedReport.category === 'pothole' && <CircleDot className="w-4 h-4 text-gray-600" />}
+                          {selectedReport.category === 'road_damage' && <Route className="w-4 h-4 text-gray-600" />}
+                          {selectedReport.category === 'traffic_sign' && <TrafficCone className="w-4 h-4 text-orange-600" />}
+                          {selectedReport.category === 'streetlight' && <Lightbulb className="w-4 h-4 text-yellow-600" />}
+                          {selectedReport.category === 'drainage' && <Droplets className="w-4 h-4 text-blue-600" />}
+                          {(!selectedReport.category || selectedReport.category === 'unknown') && <HelpCircle className="w-4 h-4 text-gray-400" />}
+                          <p className="text-sm font-bold text-gray-900">
+                            {selectedReport.category === 'pothole' && 'Ổ gà'}
+                            {selectedReport.category === 'road_damage' && 'Hư hỏng đường'}
+                            {selectedReport.category === 'traffic_sign' && 'Biển báo'}
+                            {selectedReport.category === 'streetlight' && 'Đèn đường'}
+                            {selectedReport.category === 'drainage' && 'Thoát nước'}
+                            {(!selectedReport.category || selectedReport.category === 'unknown') && 'Chưa xác định'}
+                          </p>
+                        </div>
                       </div>
                       
                       {/* Confidence */}
                       {selectedReport.metadata?.categoryConfidence && (
-                        <div className="bg-white p-2.5 rounded-lg border border-purple-100">
-                          <p className="text-xs text-gray-500 mb-1">Độ tin cậy</p>
+                        <div className="bg-white p-3 rounded-xl border border-purple-100">
+                          <p className="text-xs text-gray-500 mb-2">Độ tin cậy</p>
                           <div className="flex items-center gap-2">
-                            <div className="flex-1 bg-gray-200 rounded-full h-2">
+                            <div className="flex-1 bg-gray-200 rounded-full h-2.5">
                               <div 
-                                className={`h-2 rounded-full ${
+                                className={`h-2.5 rounded-full ${
                                   parseFloat(selectedReport.metadata.categoryConfidence) >= 0.7 
                                     ? 'bg-green-500' 
                                     : parseFloat(selectedReport.metadata.categoryConfidence) >= 0.5
@@ -1883,40 +2079,52 @@ export default function AdminPage() {
                       )}
                       
                       {/* Priority */}
-                      <div className="bg-white p-2.5 rounded-lg border border-purple-100">
-                        <p className="text-xs text-gray-500 mb-1">Mức độ ưu tiên AI</p>
-                        <p className="text-sm font-bold text-gray-900">
-                          {selectedReport.priority === 'low' && '⚪ Thấp'}
-                          {selectedReport.priority === 'medium' && '🟡 Trung bình'}
-                          {selectedReport.priority === 'high' && '🟠 Cao'}
-                          {selectedReport.priority === 'urgent' && '🔴 Khẩn cấp'}
-                        </p>
+                      <div className="bg-white p-3 rounded-xl border border-purple-100">
+                        <p className="text-xs text-gray-500 mb-2">Mức độ ưu tiên AI</p>
+                        <div className="flex items-center gap-2">
+                          {selectedReport.priority === 'low' && <Circle className="w-4 h-4 text-gray-400 fill-gray-400" />}
+                          {selectedReport.priority === 'medium' && <Circle className="w-4 h-4 text-yellow-500 fill-yellow-500" />}
+                          {selectedReport.priority === 'high' && <Circle className="w-4 h-4 text-orange-500 fill-orange-500" />}
+                          {selectedReport.priority === 'urgent' && <Circle className="w-4 h-4 text-red-500 fill-red-500" />}
+                          <p className="text-sm font-bold text-gray-900">
+                            {selectedReport.priority === 'low' && 'Thấp'}
+                            {selectedReport.priority === 'medium' && 'Trung bình'}
+                            {selectedReport.priority === 'high' && 'Cao'}
+                            {selectedReport.priority === 'urgent' && 'Khẩn cấp'}
+                          </p>
+                        </div>
                       </div>
                       
                       {/* Severity */}
                       {selectedReport.metadata?.severity && (
-                        <div className="bg-white p-2.5 rounded-lg border border-purple-100">
-                          <p className="text-xs text-gray-500 mb-1">Mức độ nghiêm trọng</p>
-                          <p className="text-sm font-bold text-gray-900 capitalize">
-                            {selectedReport.metadata.severity === 'low' && '⚪ Nhẹ'}
-                            {selectedReport.metadata.severity === 'medium' && '🟡 Vừa'}
-                            {selectedReport.metadata.severity === 'high' && '🟠 Nặng'}
-                            {selectedReport.metadata.severity === 'critical' && '🔴 Nghiêm trọng'}
-                          </p>
+                        <div className="bg-white p-3 rounded-xl border border-purple-100">
+                          <p className="text-xs text-gray-500 mb-2">Mức độ nghiêm trọng</p>
+                          <div className="flex items-center gap-2">
+                            {selectedReport.metadata.severity === 'low' && <Circle className="w-4 h-4 text-gray-400 fill-gray-400" />}
+                            {selectedReport.metadata.severity === 'medium' && <Circle className="w-4 h-4 text-yellow-500 fill-yellow-500" />}
+                            {selectedReport.metadata.severity === 'high' && <Circle className="w-4 h-4 text-orange-500 fill-orange-500" />}
+                            {selectedReport.metadata.severity === 'critical' && <Circle className="w-4 h-4 text-red-500 fill-red-500" />}
+                            <p className="text-sm font-bold text-gray-900 capitalize">
+                              {selectedReport.metadata.severity === 'low' && 'Nhẹ'}
+                              {selectedReport.metadata.severity === 'medium' && 'Vừa'}
+                              {selectedReport.metadata.severity === 'high' && 'Nặng'}
+                              {selectedReport.metadata.severity === 'critical' && 'Nghiêm trọng'}
+                            </p>
+                          </div>
                         </div>
                       )}
                     </div>
                     
                     {/* Auto-approval conditions check */}
                     {selectedReport.metadata?.categoryConfidence && (
-                      <div className="mt-3 p-2.5 bg-white rounded-lg border border-purple-100">
-                        <p className="text-xs font-semibold text-gray-700 mb-2">Điều kiện tự động duyệt:</p>
-                        <div className="space-y-1.5">
+                      <div className="mt-3 p-3 bg-white rounded-xl border border-purple-100">
+                        <p className="text-xs font-semibold text-gray-700 mb-3">Điều kiện tự động duyệt:</p>
+                        <div className="space-y-2">
                           <div className="flex items-center gap-2 text-xs">
                             {parseFloat(selectedReport.metadata.categoryConfidence) >= 0.7 ? (
-                              <span className="text-green-600">✅</span>
+                              <CheckCircle2 className="w-4 h-4 text-green-600" />
                             ) : (
-                              <span className="text-red-600">❌</span>
+                              <XCircle className="w-4 h-4 text-red-600" />
                             )}
                             <span className="text-gray-700">
                               Độ tin cậy ≥ 70% ({(parseFloat(selectedReport.metadata.categoryConfidence) * 100).toFixed(0)}%)
@@ -1924,9 +2132,9 @@ export default function AdminPage() {
                           </div>
                           <div className="flex items-center gap-2 text-xs">
                             {['low', 'medium'].includes(selectedReport.priority) ? (
-                              <span className="text-green-600">✅</span>
+                              <CheckCircle2 className="w-4 h-4 text-green-600" />
                             ) : (
-                              <span className="text-red-600">❌</span>
+                              <XCircle className="w-4 h-4 text-red-600" />
                             )}
                             <span className="text-gray-700">
                               Ưu tiên thấp/trung bình ({selectedReport.priority})
@@ -1934,23 +2142,22 @@ export default function AdminPage() {
                           </div>
                           <div className="flex items-center gap-2 text-xs">
                             {selectedReport.metadata?.severity && ['low', 'medium'].includes(selectedReport.metadata.severity) ? (
-                              <span className="text-green-600">✅</span>
+                              <CheckCircle2 className="w-4 h-4 text-green-600" />
                             ) : (
-                              <span className="text-red-600">❌</span>
+                              <XCircle className="w-4 h-4 text-red-600" />
                             )}
                             <span className="text-gray-700">
                               Mức độ nhẹ/vừa ({selectedReport.metadata?.severity || 'N/A'})
                             </span>
                           </div>
                           <div className="flex items-center gap-2 text-xs">
-                            {normalizeImages(selectedReport.metadata?.images).length > 0 ? (
-                              <span className="text-green-600">✅</span>
+                            {extractImages(selectedReport).length > 0 ? (
+                              <CheckCircle2 className="w-4 h-4 text-green-600" />
                             ) : (
-                              <span className="text-red-600">❌</span>
+                              <XCircle className="w-4 h-4 text-red-600" />
                             )}
                             <span className="text-gray-700">
-                              Has images ({normalizeImages(selectedReport.metadata?.images).length} images)
-                              Có hình ảnh ({normalizeImages(selectedReport.metadata?.images).length} ảnh)
+                              Có hình ảnh ({extractImages(selectedReport).length} ảnh)
                             </span>
                           </div>
                         </div>
@@ -1960,11 +2167,12 @@ export default function AdminPage() {
                 )}
 
                 {/* Workflow Timeline */}
-                <div className="bg-gradient-to-br from-blue-50 to-white p-3 rounded-lg border border-blue-200">
-                  <label className="block text-xs font-semibold text-blue-700 uppercase tracking-wide mb-3 flex items-center gap-2">
-                    <span className="text-lg">📋</span>
+                <div className="bg-gradient-to-br from-blue-50 to-white p-4 rounded-xl border border-blue-200">
+                  <label className="block text-xs font-semibold text-blue-700 uppercase tracking-wide mb-4 flex items-center gap-2">
+                    <div className="p-1.5 bg-blue-100 rounded-lg">
+                      <ClipboardList className="w-4 h-4 text-blue-600" />
+                    </div>
                     <span>Quy trình xử lý</span>
-                    <span>PROCESSING WORKFLOW</span>
                   </label>
                   
                   <div className="relative">
@@ -2033,15 +2241,34 @@ export default function AdminPage() {
                             {selectedReport.status === 'rejected' && 'Rejected'}
                             {!['auto_approved', 'pending_review', 'approved', 'rejected', 'resolved'].includes(selectedReport.status) && 'Pending Review'}
                           </p>
-                          <p className="text-xs text-gray-500 mt-0.5">
-                            {selectedReport.status === 'auto_approved' && 'Meets auto-approval conditions'}
-                            {selectedReport.status === 'pending_review' && 'Requires manual review'}
-                            {selectedReport.status === 'approved' && 'Administrator approved'}
-                            {selectedReport.status === 'rejected' && 'Administrator rejected'}
-                            {selectedReport.status === 'auto_approved' && '✨ Đáp ứng điều kiện tự động duyệt'}
-                            {selectedReport.status === 'pending_review' && '⏳ Cần kiểm tra thủ công'}
-                            {selectedReport.status === 'approved' && '✅ Quản trị viên đã duyệt'}
-                            {selectedReport.status === 'rejected' && '❌ Quản trị viên đã từ chối'}
+                          <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1.5">
+                            {selectedReport.status === 'auto_approved' && (
+                              <>
+                                <Sparkles className="w-3 h-3" />
+                                <span>Đáp ứng điều kiện tự động duyệt</span>
+                              </>
+                            )}
+                            {selectedReport.status === 'pending_review' && (
+                              <>
+                                <Clock className="w-3 h-3" />
+                                <span>Cần kiểm tra thủ công</span>
+                              </>
+                            )}
+                            {selectedReport.status === 'approved' && (
+                              <>
+                                <CheckCircle2 className="w-3 h-3" />
+                                <span>Quản trị viên đã duyệt</span>
+                              </>
+                            )}
+                            {selectedReport.status === 'rejected' && (
+                              <>
+                                <XCircle className="w-3 h-3" />
+                                <span>Quản trị viên đã từ chối</span>
+                              </>
+                            )}
+                            {!['auto_approved', 'pending_review', 'approved', 'rejected'].includes(selectedReport.status) && (
+                              <span>Đang chờ xử lý</span>
+                            )}
                           </p>
                         </div>
                       </div>
@@ -2053,17 +2280,23 @@ export default function AdminPage() {
                             ? 'bg-green-500 text-white'
                             : 'bg-gray-300 text-gray-500'
                         }`}>
-                          {selectedReport.status === 'resolved' ? '✓' : '4'}
+                          {selectedReport.status === 'resolved' ? (
+                            <CheckCircle className="w-5 h-5" />
+                          ) : (
+                            '4'
+                          )}
                         </div>
                         <div className="flex-1">
-                          <p className="text-sm font-bold text-gray-900">Resolved</p>
-                          <p className="text-xs text-gray-500 mt-0.5">
-                            {selectedReport.status === 'resolved'
-                              ? 'Issue has been resolved'
-                              : 'Pending resolution'
-                              ? '🎉 Vấn đề đã được xử lý'
-                              : 'Chờ xử lý'
-                            }
+                          <p className="text-sm font-bold text-gray-900">Đã xử lý</p>
+                          <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1.5">
+                            {selectedReport.status === 'resolved' ? (
+                              <>
+                                <CheckCircle2 className="w-3 h-3 text-green-600" />
+                                <span>Vấn đề đã được xử lý</span>
+                              </>
+                            ) : (
+                              <span>Chờ xử lý</span>
+                            )}
                           </p>
                         </div>
                       </div>
@@ -2073,15 +2306,15 @@ export default function AdminPage() {
 
                 {/* Location */}
                 {selectedReport.locationName && (
-                  <div className="bg-gradient-to-br from-green-50 to-white p-3 rounded-lg border border-green-100">
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center space-x-2">
-                      <MapPin className="w-3 h-3 text-green-600" />
+                  <div className="bg-gradient-to-br from-green-50 to-white p-4 rounded-xl border border-green-100">
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center space-x-2">
+                      <MapPin className="w-4 h-4 text-green-600" />
                       <span>Vị trí báo cáo</span>
                     </label>
-                    <div className="space-y-2">
-                      <div className="bg-white p-2 rounded border border-gray-200">
-                        <p className="text-xs text-gray-500 mb-1">Tọa độ</p>
-                        <p className="text-xs font-mono text-gray-900">
+                    <div className="space-y-3">
+                      <div className="bg-white p-3 rounded-xl border border-gray-200">
+                        <p className="text-xs text-gray-500 mb-1.5">Tọa độ</p>
+                        <p className="text-sm font-mono text-gray-900">
                           {selectedReport.locationName}
                         </p>
                       </div>
@@ -2090,11 +2323,11 @@ export default function AdminPage() {
                           href={`https://www.google.com/maps?q=${selectedReport.metadata.coordinates[1]},${selectedReport.metadata.coordinates[0]}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center space-x-2 px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 transition-colors"
+                          className="inline-flex items-center space-x-2 px-4 py-2 bg-green-600 text-white text-xs font-medium rounded-xl hover:bg-green-700 transition-colors"
                         >
-                          <MapPin className="w-3 h-3" />
+                          <MapPin className="w-4 h-4" />
                           <span>Xem trên Google Maps</span>
-                          <ExternalLink className="w-2.5 h-2.5" />
+                          <ExternalLink className="w-3 h-3" />
                         </a>
                       )}
                     </div>
@@ -2102,21 +2335,21 @@ export default function AdminPage() {
                 )}
 
                 {/* Category and Dates Row */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                  <div className="bg-gradient-to-br from-blue-50 to-white p-2 rounded-lg border border-blue-100">
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                      Category
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="bg-gradient-to-br from-blue-50 to-white p-3 rounded-xl border border-blue-100">
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      Danh mục
                     </label>
-                    <p className="text-xs font-medium text-gray-900 capitalize">
-                      {selectedReport.category || 'Other'}
+                    <p className="text-sm font-medium text-gray-900 capitalize">
+                      {selectedReport.category || 'Khác'}
                     </p>
                   </div>
-                  <div className="bg-gradient-to-br from-purple-50 to-white p-2 rounded-lg border border-purple-100">
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 flex items-center space-x-1">
-                      <Clock className="w-2.5 h-2.5" />
-                      <span>Created Date</span>
+                  <div className="bg-gradient-to-br from-purple-50 to-white p-3 rounded-xl border border-purple-100">
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center space-x-1.5">
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>Ngày tạo</span>
                     </label>
-                    <p className="text-xs font-medium text-gray-900">
+                    <p className="text-sm font-medium text-gray-900">
                       {(() => {
                         const dateStr = selectedReport.reportedAt || selectedReport.created_at;
                         if (!dateStr) return 'N/A';
@@ -2136,21 +2369,21 @@ export default function AdminPage() {
                       })()}
                     </p>
                   </div>
-                  <div className="bg-gradient-to-br from-indigo-50 to-white p-2 rounded-lg border border-indigo-100">
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 flex items-center space-x-1">
-                      <User className="w-2.5 h-2.5" />
-                      <span>Reporter</span>
+                  <div className="bg-gradient-to-br from-indigo-50 to-white p-3 rounded-xl border border-indigo-100">
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center space-x-1.5">
+                      <User className="w-3.5 h-3.5" />
+                      <span>Người báo cáo</span>
                     </label>
-                    <p className="text-xs font-medium text-gray-900 truncate">
-                      {selectedReport.reportedBy || 'Unknown'}
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {selectedReport.reportedBy || 'Không xác định'}
                     </p>
                   </div>
                 </div>
 
                 {/* Full Report ID */}
-                <div className="bg-gray-900 p-2 rounded-lg">
-                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
-                    Full ID
+                <div className="bg-gray-900 p-4 rounded-xl">
+                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                    ID đầy đủ
                   </label>
                   <p className="text-xs font-mono text-gray-300 break-all">{selectedReport.id}</p>
                 </div>
@@ -2158,28 +2391,26 @@ export default function AdminPage() {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50">
+            <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
               <button
                 onClick={() => setShowReportModal(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors"
               >
-                Close
+                Đóng
               </button>
               <button
                 onClick={handleUpdateReport}
                 disabled={updateLoading || (editingStatus === selectedReport.status && editingPriority === selectedReport.priority)}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
               >
                 {updateLoading ? (
                   <>
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>Saving...</span>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
                     <span>Đang lưu...</span>
                   </>
                 ) : (
                   <>
-                    <CheckCircle className="w-3.5 h-3.5" />
-                    <span>Save Changes</span>
+                    <CheckCircle className="w-4 h-4" />
                     <span>Lưu thay đổi</span>
                   </>
                 )}
@@ -2191,4 +2422,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
