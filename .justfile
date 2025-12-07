@@ -84,10 +84,8 @@ install: frontend-install
 # Setup environment files
 setup-env:
     @echo "Setting up environment files..."
-    @if (-not (Test-Path .env)) { Copy-Item .env.example .env }
-    @if (-not (Test-Path .env.local)) { Copy-Item .env.local.example .env.local }
-    @echo "Environment files created!"
-    @echo "Please edit .env and .env.local with your API keys"
+    @powershell -Command "if (-not (Test-Path .env)) { Copy-Item .env.example .env; Write-Host '.env created from .env.example' }"
+    @echo "Please edit .env with your configuration"
 
 # ============================================================================
 # DEVELOPMENT HELPERS
@@ -116,7 +114,3 @@ info:
 # Check all services health
 health: backend-health
     @echo "Health check complete!"
-
-# Restart everything
-restart: stop dev
-    @echo "Everything restarted!"

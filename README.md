@@ -408,12 +408,10 @@ just backend-stop         # Stop backend
 # Frontend Development
 just frontend-dev         # Start dev server (http://localhost:3000)
 just frontend-install     # Install npm dependencies
-just frontend-lint        # Lint code
-just frontend-stop        # Stop frontend
-
-# Frontend Production
 just frontend-build       # Build for production
 just frontend-start       # Run production build
+just frontend-lint        # Lint code
+just frontend-stop        # Stop frontend
 
 # Utilities
 just health               # Check all services
@@ -455,23 +453,7 @@ just frontend-start    # Run production
 
 ## Development Workflow
 
-### Code Quality with Just (Recommended)
-
-```bash
-# Format all code (Python + JavaScript)
-just format
-
-# Lint all code (ESLint + Flake8)
-just lint
-
-# Run backend tests
-just backend-test
-
-# Check both
-just lint && just format
-```
-
-### Code Quality Manual Commands
+### Code Quality
 
 All checks run automatically via Git hooks. To run manually:
 
@@ -483,8 +465,11 @@ flake8 src/backend/         # Lint
 
 # JavaScript (Frontend)
 cd src/frontend
-npm run format              # Prettier
+npm run format              # Prettier format
 npm run lint                # ESLint
+
+# Run backend tests
+just backend-test
 ```
 
 ### Git Workflow
