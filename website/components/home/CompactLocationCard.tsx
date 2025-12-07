@@ -121,6 +121,37 @@ export default function CompactLocationCard({
     hour12: false
   });
 
+  // Format city and country to short codes
+  const formatCityCountry = (city: string, country: string): string => {
+    const cityMap: { [key: string]: string } = {
+      'Ho Chi Minh City': 'HCM',
+      'Hanoi': 'HN',
+      'Da Nang': 'DN',
+    };
+    const countryMap: { [key: string]: string } = {
+      'Vietnam': 'VN',
+      'Viet Nam': 'VN',
+    };
+    
+    const cityCode = cityMap[city] || city.substring(0, 3).toUpperCase();
+    const countryCode = countryMap[country] || country.substring(0, 2).toUpperCase();
+    
+    return `${cityCode}, ${countryCode}`;
+  };
+
+  // Format datetime from lastUpdated and since
+  const formatDateTime = (lastUpdated: string, since: string): string => {
+    // Extract time from lastUpdated (e.g., "22:15" or "Updated 22:15")
+    const timeMatch = lastUpdated.match(/(\d{1,2}):(\d{2})/);
+    const time = timeMatch ? `${timeMatch[1]}:${timeMatch[2]}` : lastUpdated.replace(/Updated\s*/i, '').trim();
+    
+    // Extract date from since (e.g., "12/6/2025" or "Since 12/6/2025")
+    const dateMatch = since.match(/(\d{1,2}\/\d{1,2}\/\d{4})/);
+    const date = dateMatch ? dateMatch[1] : since.replace(/Since\s*/i, '').trim();
+    
+    return `${time} ${date}`;
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -130,17 +161,11 @@ export default function CompactLocationCard({
     >
       {/* Header - UrbanReflex Teal banner */}
       <div className="bg-gradient-to-r from-[#008EA0] to-[#64BABE] px-4 py-3">
-        <h2 className="text-lg font-semibold text-white">{name}</h2>
-      </div>
-
-      {/* Location below header */}
-      <div className="px-4 py-2 bg-white border-b border-[#64BABE]/30">
-        <p className="text-sm text-gray-900 font-medium">{city}, {country}</p>
-        {type && (
-          <p className="text-xs text-gray-600 mt-0.5">
-            <span className="font-medium">Type:</span> {type}
-          </p>
-        )}
+        <div className="text-white">
+          <p className="text-xl font-semibold mb-1">{formatCityCountry(city, country)}</p>
+          <h2 className="text-lg font-semibold">{name}</h2>
+          <p className="text-sm font-medium mt-1">{formatDateTime(lastUpdated, since)}</p>
+        </div>
       </div>
 
       {/* Body - White background with sections */}
@@ -157,48 +182,19 @@ export default function CompactLocationCard({
           </div>
         )}
 
-        {/* Provider Section */}
-        <div className="px-4 py-3 border-b border-[#64BABE]/30">
-          <p className="text-sm text-gray-800">
-            <span className="font-bold text-[#008EA0]">Provider:</span> <span className="text-gray-700">{provider}</span>
-          </p>
-        </div>
-
-        {/* Reporting Section */}
-        <div className="px-4 py-3 border-b border-[#64BABE]/30 bg-gradient-to-br from-white to-[#64BABE]/5">
-          <p className="text-sm text-gray-800">
-            <span className="font-bold text-[#008EA0]">Reporting:</span> <span className="text-gray-700">{lastUpdated}</span>
-          </p>
-          <p className="text-xs text-[#008EA0] mt-0.5 font-medium">Since {since}</p>
-        </div>
-
         {/* Latest Readings Section */}
         <div className="px-4 py-3 border-b border-[#64BABE]/30">
-          <p className="text-sm font-bold text-[#008EA0] mb-3 flex items-center gap-2">
-            <span>Latest readings {localTime} (local time)</span>
+          <p className="text-xs font-semibold text-[#008EA0] mb-2.5">
+            Latest readings {localTime} (local time)
           </p>
-          <div className="space-y-2.5">
+          <div className="grid grid-cols-2 gap-2">
             {latestReadings.map((measurement, index) => (
-              <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-gradient-to-r from-white to-[#64BABE]/5 border border-[#64BABE]/20 hover:border-[#008EA0]/40 transition-colors">
-                <span className="text-sm font-semibold text-gray-800">
+              <div key={index} className="p-2 rounded-lg bg-gradient-to-br from-[#64BABE]/5 to-white border border-[#64BABE]/20 hover:border-[#008EA0]/40 transition-all hover:shadow-sm">
+                <div className="text-[10px] font-medium text-gray-600 mb-0.5 uppercase tracking-wide">
                   {getParameterDisplayName(measurement.parameter)}
-                </span>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-bold text-[#008EA0]">
-                    {measurement.value} {measurement.unit}
-                  </span>
-                  {/* Small trend indicator - UrbanReflex style */}
-                  <div className="w-8 h-4 flex items-end justify-center">
-                    <svg width="24" height="12" viewBox="0 0 24 12" className="text-[#64BABE]">
-                      <path
-                        d="M0,10 Q6,6 12,7 T24,5"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        fill="none"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </div>
+                </div>
+                <div className="text-sm font-bold text-[#008EA0]">
+                  {measurement.value} <span className="text-xs font-semibold text-gray-600">{measurement.unit}</span>
                 </div>
               </div>
             ))}
