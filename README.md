@@ -2,150 +2,589 @@
 
 **Smart City Platform - Air Quality Monitoring & Urban Infrastructure Management**
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/minhe51805/UrbanReflex/releases)
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.121-009688?logo=fastapi)](https://fastapi.tiangolo.com/)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/minhe51805/UrbanReflex/releases/tag/v0.2.0)
+[![License](https://img.shields.io/badge/License-GPL_3.0-blue.svg)](LICENSE)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.121+-009688?logo=fastapi)](https://fastapi.tiangolo.com/)
 [![Next.js](https://img.shields.io/badge/Next.js-16.0-black?logo=next.js)](https://nextjs.org/)
+[![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python)](https://www.python.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-green?logo=node.js)](https://nodejs.org/)
 
-## Quick Start
+---
 
-### Prerequisites
+## Table of Contents
 
-```bash
-Python 3.10+          # Backend
-Node.js 18+           # Frontend
-Docker & Docker Compose
-uv package manager    # Python dependencies
-```
+- [Overview](#overview)
+- [Key Features](#key-features)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Prerequisites](#prerequisites)
+- [Setup Guide](#setup-guide)
+- [Running the Project](#running-the-project)
+- [Development Workflow](#development-workflow)
+- [Code Quality & Standards](#code-quality--standards)
+- [Testing](#testing)
+- [API Documentation](#api-documentation)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
 
-### Setup (5 minutes)
+---
 
-```bash
-# 1. Clone and setup
-git clone https://github.com/minhe51805/UrbanReflex.git
-cd UrbanReflex
+## Overview
 
-# 2. Environment setup
-cp .env.example .env
-# Edit .env with your API keys
+UrbanReflex is a comprehensive smart city platform that monitors air quality, manages urban infrastructure, and engages citizens in reporting and resolving infrastructure issues. Built with modern async architecture, real-time data processing, and AI-powered intelligence.
 
-# 3. Install dependencies
-npm install --prefix src/frontend
+**Current Version**: 0.2.0  
+**Status**: Active Development (Develop Branch)  
+**Branch**: `develop`
 
-# 4. Start services (2 terminal windows)
-# Terminal 1: Backend
-just backend-dev          # http://localhost:8000
+---
 
-# Terminal 2: Frontend
-just frontend-dev         # http://localhost:3000
-```
-
-### Database Setup (Docker)
-
-```bash
-docker-compose up -d    # Starts MongoDB + Orion-LD
-docker-compose ps       # Verify services
-```
-
-## Features
+## Key Features
 
 ### 🌍 Air Quality Monitoring
 
-- Real-time AQI data from OpenAQ API
-- Interactive map with 10,000+ stations
-- Historical trends and health recommendations
+- Real-time AQI (Air Quality Index) data from OpenAQ API
+- Interactive map with 10,000+ monitoring stations
+- Historical trends with 12-month data
+- Health recommendations based on current AQI levels
+- **12-language support** (en, vi, es, fr, de, zh, ja, ko, ar, ru, pt, hi)
 
 ### 🏙️ Smart City Infrastructure
 
-- NGSI-LD compliant data model
-- Orion Context Broker integration
-- Road, streetlight, and weather data
+- NGSI-LD compliant data model for semantic interoperability
+- Orion Context Broker integration for real-time data
+- Streetlight management with status tracking
+- Road segment analysis and traffic patterns
+- Weather data integration
+- Geographic data visualization with clustering
 
-### 👥 User Management
+### 👥 User Management & Authentication
 
-- JWT authentication
-- Role-based access (Citizen, Admin, Official)
-- API key management
+- JWT-based authentication with refresh tokens
+- Role-based access control (Citizen, Official, Admin)
+- API key management for third-party integrations
+- User profile management with preferences
+- Session management and security
 
-### 📝 Citizen Reporting
+### 📝 Citizen Reporting System
 
-- Submit infrastructure issues with photos
-- Status tracking (Open → In Progress → Resolved)
-- Priority assignment and voting
+- Submit infrastructure issues with photos and GPS location
+- Real-time status tracking (Open → In Progress → Resolved)
+- Priority assignment based on impact
+- Community voting and engagement
+- Official response tracking
+- Report history and analytics
 
-### 🤖 AI Services
+### 🤖 AI & Machine Learning
 
-- Gemini-powered chatbot for air quality queries
-- NLP report classification
-- Vector search with Pinecone
+- Gemini 2.5 Flash-powered chatbot for air quality queries
+- NLP-based report classification and priority detection
+- Vector search with Pinecone for semantic similarity
+- Sentence embeddings for intelligent matching
+- RAG (Retrieval-Augmented Generation) for contextual responses
+- Async processing for non-blocking operations
+
+### 📊 Admin Dashboard
+
+- Real-time analytics and KPIs
+- Report management and filtering
+- User statistics
+- System health monitoring
+- Data export functionality (XLSX)
+
+---
+
+## Tech Stack
+
+### Backend
+
+| Component              | Technology       | Version  | Purpose               |
+| ---------------------- | ---------------- | -------- | --------------------- |
+| **Framework**          | FastAPI          | 0.121+   | Async web framework   |
+| **Runtime**            | Python           | 3.10+    | Programming language  |
+| **ASGI Server**        | Uvicorn          | 0.38+    | Production server     |
+| **Database (Primary)** | MongoDB          | Latest   | Document database     |
+| **Async Driver**       | Motor            | 3.7+     | Async MongoDB driver  |
+| **ORM/Validator**      | Pydantic         | Built-in | Data validation       |
+| **Authentication**     | python-jose      | 3.5+     | JWT tokens            |
+| **Password Hashing**   | passlib + bcrypt | 1.7+     | Secure hashing        |
+| **Semantic Web**       | NGSI-LD          | Standard | Smart city data model |
+
+### Frontend
+
+| Component      | Technology     | Version | Purpose              |
+| -------------- | -------------- | ------- | -------------------- |
+| **Framework**  | Next.js        | 16.0    | React framework      |
+| **React**      | React          | 19.2    | UI library           |
+| **Language**   | TypeScript     | 5+      | Type-safe JavaScript |
+| **Styling**    | Tailwind CSS   | 3.4+    | Utility-first CSS    |
+| **Maps**       | Maplibre-GL    | 5.12+   | Interactive maps     |
+| **Charts**     | Chart.js       | 4.5+    | Data visualization   |
+| **Markdown**   | react-markdown | 10.1+   | Markdown rendering   |
+| **Animations** | Framer Motion  | 12.23+  | Motion library       |
+| **Icons**      | Lucide React   | 0.553+  | Icon set             |
+
+### AI & Data Processing
+
+| Component                | Technology            | Version | Purpose                 |
+| ------------------------ | --------------------- | ------- | ----------------------- |
+| **LLM**                  | Gemini 2.5 Flash      | Latest  | AI chatbot              |
+| **Embeddings**           | Sentence Transformers | 3.3+    | Vector embeddings       |
+| **Vector DB**            | Pinecone              | 5.0+    | Vector search           |
+| **Numeric Computing**    | NumPy                 | 1.26+   | Array operations        |
+| **Data Processing**      | Pandas                | 2.1+    | Data manipulation       |
+| **Embeddings Framework** | embed-anything        | 0.3+    | Multi-format embeddings |
+
+### DevOps & Infrastructure
+
+| Component            | Technology      | Purpose                      |
+| -------------------- | --------------- | ---------------------------- |
+| **Containerization** | Docker          | Container images             |
+| **Orchestration**    | Docker Compose  | Service orchestration        |
+| **Package Manager**  | UV              | Python dependency management |
+| **Task Runner**      | Just (justfile) | Automation tasks             |
+
+### Code Quality & Development
+
+| Component              | Technology | Purpose                      |
+| ---------------------- | ---------- | ---------------------------- |
+| **Python Formatter**   | Black      | Code formatting              |
+| **Python Linter**      | Flake8     | Code linting                 |
+| **Import Sorter**      | isort      | Import organization          |
+| **Git Hooks**          | Husky      | Pre-commit automation        |
+| **Git Hooks (Python)** | pre-commit | Python hook management       |
+| **JS Linter**          | ESLint     | JavaScript linting           |
+| **JS Formatter**       | Prettier   | Code formatting              |
+| **Biome**              | Biome      | Unified formatter (optional) |
+
+---
 
 ## Project Structure
 
 ```
 UrbanReflex/
 ├── src/
-│   ├── backend/                # FastAPI app
-│   │   ├── routers/           # API endpoints
-│   │   ├── ai_service/        # AI/ML services
-│   │   ├── config/            # Configuration
-│   │   └── ...
-│   └── frontend/              # Next.js app
-│       ├── app/               # Pages & routes
-│       ├── components/        # React components
-│       └── ...
-├── docs/                       # Documentation
-├── scripts/                    # Automation scripts
-├── docker-compose.yml          # Service orchestration
-└── .justfile                   # Task commands
+│   ├── backend/                    # FastAPI Backend
+│   │   ├── app.py                 # Main application
+│   │   ├── dependencies.py        # Dependency injection
+│   │   ├── config/
+│   │   │   ├── config.py         # Configuration management
+│   │   │   └── data_model.py     # Data models
+│   │   ├── routers/              # API endpoints
+│   │   │   ├── auth.py          # Authentication
+│   │   │   ├── chatbot.py       # Chat API
+│   │   │   ├── citizen_reports.py # Reports API
+│   │   │   ├── users.py         # Users API
+│   │   │   └── ...
+│   │   ├── models/               # Database models
+│   │   ├── schemas/              # Pydantic schemas
+│   │   ├── ai_service/           # AI services
+│   │   │   ├── chatbot/         # Chatbot logic
+│   │   │   └── classifier_report/ # Report classification
+│   │   ├── utils/                # Utilities
+│   │   ├── internal/             # Admin endpoints
+│   │   └── __init__.py
+│   │
+│   └── frontend/                  # Next.js Frontend
+│       ├── app/                  # Routes & pages
+│       ├── components/           # React components
+│       ├── contexts/             # Context API
+│       ├── lib/                  # Utilities
+│       ├── types/                # TypeScript types
+│       ├── public/               # Static assets
+│       ├── tailwind.config.ts
+│       ├── tsconfig.json
+│       ├── eslint.config.mjs
+│       └── package.json
+│
+├── docs/                          # Documentation
+│   ├── ARCHITECTURE.md
+│   ├── API_REFERENCE.md
+│   ├── CODE_STYLE_GUIDE.md
+│   ├── PRE_COMMIT_SETUP.md
+│   ├── UV_SETUP.md
+│   └── ...
+│
+├── scripts/                       # Automation scripts
+├── schemas/                       # JSON schemas
+├── open_data/                     # Sample data
+├── examples/                      # Example files
+│
+├── pyproject.toml                 # Python project config
+├── uv.lock                        # Dependency lock file
+├── docker-compose.yml             # Service orchestration
+├── .justfile                      # Task automation
+├── .husky/                        # Git hooks (Husky)
+├── .pre-commit-config.yaml        # Git hooks (pre-commit)
+├── .prettierrc.json               # Prettier config
+├── .env.example                   # Environment template
+├── README.md                      # This file
+├── CHANGELOG.md
+├── LICENSE
+└── SECURITY.md
 ```
 
-## Development
+---
 
-### Available Commands
+## Prerequisites
+
+### Required
+
+**Python 3.10+**
 
 ```bash
-just backend-dev       # Start backend (port 8000)
-just frontend-dev      # Start frontend (port 3000)
-just backend-test      # Run backend tests
-just lint             # Lint code
-just format           # Format code
+python --version  # Check version
 ```
 
-### Code Standards
+**Node.js 18+**
 
-**Backend (Python):**
+```bash
+node --version
+npm --version
+```
 
-- Follow PEP 8 (enforced by `black`)
-- Use type hints for all functions
-- Async/await for all I/O operations
+**Docker & Docker Compose**
 
-**Frontend (TypeScript):**
+```bash
+docker --version
+docker-compose --version
+```
 
-- ESLint enforced style
-- No `any` types - strict TypeScript
-- Functional components with hooks
+**UV Package Manager**
+
+```bash
+# Install globally
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Or via pip
+pip install uv
+```
+
+### Optional but Recommended
+
+- Git for version control
+- VS Code with Python/TypeScript extensions
+- Postman/Insomnia for API testing
+
+---
+
+## Setup Guide
+
+### Step 1: Clone Repository
+
+```bash
+git clone https://github.com/minhe51805/UrbanReflex.git
+cd UrbanReflex
+```
+
+### Step 2: Environment Configuration
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` with your configuration:
+
+```bash
+# MongoDB
+MONGO_HOST=mongo
+MONGO_PORT=27017
+MONGO_ROOT_USERNAME=urbanreflex_admin
+MONGO_ROOT_PASSWORD=WAG_team_2025_secure
+MONGO_DATABASE=urbanreflex_db
+
+# Orion-LD
+ORION_LD_HOST=localhost
+ORION_LD_PORT=1026
+
+# JWT
+SECRET_KEY=your_secret_key_min_32_chars
+
+# AI Services (Optional)
+GEMINI_API_KEY=your_gemini_api_key
+PINECONE_API_KEY=your_pinecone_api_key
+
+# External APIs (Optional)
+OPENAQ_API_KEY=your_api_key
+OWM_API_KEY=your_api_key
+```
+
+### Step 3: Install Backend Dependencies
+
+```bash
+# All dependencies (production + dev)
+uv sync --all-extras
+
+# Or production only
+uv sync --no-dev
+```
+
+### Step 4: Install Frontend Dependencies
+
+```bash
+npm install --prefix src/frontend
+```
+
+### Step 5: Start Services
+
+**Option A: Docker Compose** (Recommended)
+
+```bash
+docker-compose up -d
+docker-compose ps
+```
+
+**Option B: Manual (if services already running)**
+
+Skip Docker and use existing MongoDB/Orion-LD.
+
+### Step 6: Verify Setup
+
+```bash
+python --version      # 3.10+
+node --version        # 18+
+uv pip list          # Check packages
+```
+
+---
+
+## Running the Project
+
+### Quick Start (2-3 Terminal Windows)
+
+**Terminal 1: Backend**
+
+```bash
+just backend-dev
+# Runs: uv run uvicorn src.backend.app:app --reload
+# Access: http://localhost:8000
+```
+
+**Terminal 2: Frontend**
+
+```bash
+cd src/frontend
+npm run dev
+# Access: http://localhost:3000
+```
+
+**Terminal 3: Database** (if needed)
+
+```bash
+docker-compose up -d
+docker-compose ps
+```
+
+### Manual Startup
+
+**Backend:**
+
+```bash
+# Using uv run
+uv run uvicorn src.backend.app:app --reload --host 0.0.0.0 --port 8000
+
+# Or with virtual environment
+source .venv/bin/activate  # macOS/Linux
+.venv\Scripts\activate     # Windows
+uvicorn src.backend.app:app --reload
+```
+
+**Frontend:**
+
+```bash
+cd src/frontend
+npm run dev -- -p 3000
+```
+
+### Production Build
+
+**Backend:**
+
+```bash
+docker build -f Dockerfile.scheduler -t urbanreflex .
+docker run -p 8000:8000 urbanreflex
+```
+
+**Frontend:**
+
+```bash
+cd src/frontend
+npm run build
+npm start
+```
+
+---
+
+## Development Workflow
+
+### Code Quality (Automatic on Commit)
+
+All checks run via Git hooks. To run manually:
+
+```bash
+# Format code
+npm run format              # Prettier + Black + isort
+
+# Check formatting
+npm run format:check        # Dry-run
+
+# Lint code
+npm run lint                # ESLint + Flake8
+
+# All at once
+just lint && just format
+```
+
+### Using Just Commands
+
+```bash
+just backend-dev            # Start backend
+just frontend-dev           # Start frontend
+just backend-test           # Run backend tests
+just lint                   # Lint all
+just format                 # Format all
+```
+
+### Git Workflow
+
+1. **Create branch**
+
+   ```bash
+   git checkout -b feature/your-feature
+   ```
+
+2. **Make changes and commit**
+
+   ```bash
+   git add .
+   git commit -m "feat(scope): description"
+   # Hooks run automatically
+   ```
+
+3. **Push and create PR**
+   ```bash
+   git push origin feature/your-feature
+   ```
+
+---
+
+## Code Quality & Standards
+
+### Commit Message Format
+
+Follow **Conventional Commits**:
+
+```
+<type>(<scope>): <subject>
+
+Examples:
+feat(auth): add JWT token refresh
+fix(map): resolve clustering lag
+docs: update API documentation
+chore(deps): upgrade FastAPI
+```
+
+**Valid types**: feat, fix, docs, style, refactor, perf, test, chore, ci, build
+
+### Python Standards
+
+**Line Length**: 100 chars (Black)
+
+```bash
+black src/backend/          # Format
+isort src/backend/          # Sort imports
+flake8 src/backend/         # Lint
+```
+
+**Type Hints**: Required
+
+```python
+def get_user(user_id: int) -> dict:
+    """Get user by ID."""
+    return {"id": user_id}
+```
+
+### TypeScript Standards
+
+**Linting**: ESLint
+
+```bash
+npm run lint --prefix src/frontend
+```
+
+**Formatting**: Prettier
+
+```bash
+npm run format --prefix src/frontend
+```
+
+**No `any` types**: Strict mode enforced
+
+```typescript
+// Good
+interface User {
+  id: number;
+  name: string;
+}
+
+// Bad (error)
+const user: any = {};
+```
+
+---
 
 ## Testing
 
-```bash
-# Backend tests
-pytest tests/
+### Backend Tests
 
-# Frontend tests
+```bash
+# Run all tests
+uv run pytest tests/
+
+# With coverage
+uv run pytest tests/ --cov=src/backend
+
+# Specific file
+uv run pytest tests/test_auth.py
+```
+
+### Frontend Tests
+
+```bash
+# Jest tests
 npm test --prefix src/frontend
 
-# All quality checks
-just lint && just format && just type-check
+# Watch mode
+npm test -- --watch --prefix src/frontend
+
+# Coverage
+npm test -- --coverage --prefix src/frontend
 ```
+
+### Manual API Testing
+
+```bash
+# Interactive docs
+curl http://localhost:8000/docs
+
+# Health check
+curl http://localhost:8000/health
+
+# API call
+curl -X POST http://localhost:8000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"citizen@urbanreflex.dev","password":"Citizen@123456"}'
+```
+
+---
 
 ## API Documentation
 
-Once backend is running:
+**Swagger UI**: http://localhost:8000/docs  
+**ReDoc**: http://localhost:8000/redoc  
+**OpenAPI**: http://localhost:8000/openapi.json
 
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-
-## Demo Credentials
+### Demo Credentials
 
 ```
 Admin:    admin@urbanreflex.dev / Admin@123456
@@ -153,126 +592,185 @@ Official: official@urbanreflex.dev / Official@123456
 Citizen:  citizen@urbanreflex.dev / Citizen@123456
 ```
 
-## Environment Variables
-
-**Required:**
-
-```bash
-MONGO_ROOT_USERNAME=urbanreflex_admin
-MONGO_ROOT_PASSWORD=your_password
-MONGO_DATABASE=urbanreflex_db
-SECRET_KEY=your_secret_key
-```
-
-**Optional (for features):**
-
-```bash
-GEMINI_API_KEY=            # Chatbot
-PINECONE_API_KEY=          # Vector search
-OPENAQ_API_KEY=            # Air quality (fallback to mock)
-OWM_API_KEY=               # Weather (fallback to mock)
-```
-
-## Contributing
-
-1. Create feature branch: `git checkout -b feature/your-feature`
-2. Follow [Conventional Commits](https://www.conventionalcommits.org/)
-3. Submit PR to `develop` branch
-
-**Commit format:**
+### Key Endpoints
 
 ```
-feat: add user profile endpoint
-fix: resolve auth token expiry issue
-docs: update setup guide
+POST   /api/auth/login
+GET    /api/air-quality/current
+GET    /api/air-quality/stations
+POST   /api/reports
+GET    /api/reports/{id}
+POST   /api/chat
+GET    /api/users/me
 ```
+
+See [docs/API_REFERENCE.md](docs/API_REFERENCE.md) for complete API documentation.
+
+---
 
 ## Troubleshooting
 
-**Backend won't start?**
+### Backend Won't Start
 
 ```bash
-# Check Python environment
+# Check Python version
 python --version  # Should be 3.10+
 
 # Reinstall dependencies
-uv sync
+uv sync --all-extras
 
 # Check MongoDB
 docker-compose logs mongo
 ```
 
-**Frontend build fails?**
+### Frontend Build Fails
 
 ```bash
 # Clear cache
 rm -rf src/frontend/.next
 
-# Reinstall deps
-npm install --prefix src/frontend
+# Reinstall
+npm install --prefix src/frontend --force
 ```
 
-**Port conflicts?**
+### Port Conflicts
 
 ```bash
-# Change ports in .justfile (backend) or package.json (frontend)
-# Or kill existing processes:
-lsof -i :8000  # Backend
-lsof -i :3000  # Frontend
+# Find process
+lsof -i :8000    # Backend
+lsof -i :3000    # Frontend
+
+# Kill it
+kill -9 <PID>
+
+# Or use different port
+uvicorn src.backend.app:app --port 8001
 ```
+
+### Git Hooks Not Running
+
+```bash
+# Reinstall Husky
+npm install --prefix src/frontend
+
+# Reinstall pre-commit
+pre-commit install
+
+# Verify
+cat .git/hooks/pre-commit
+```
+
+---
+
+## Contributing
+
+### Getting Started
+
+1. Fork repository
+2. Create feature branch: `git checkout -b feature/your-feature`
+3. Follow code standards
+4. Commit with conventional message
+5. Create pull request to `develop`
+
+### Code Review
+
+- All PRs require review
+- Tests must pass
+- Follow style guidelines
+- Update documentation
+
+### Report Issues
+
+[GitHub Issues](https://github.com/minhe51805/UrbanReflex/issues)
+
+Include:
+
+- Clear title
+- Detailed description
+- Steps to reproduce
+- Environment info
+- Error logs
+
+---
 
 ## Architecture
 
+### Backend Architecture
+
 ```
-┌─────────────────────────────────┐
-│   Frontend (Next.js + React)    │
-└────────────┬────────────────────┘
-             │ HTTP/REST + JWT
-┌────────────▼────────────────────┐
-│   Backend (FastAPI + Async)     │
-│   ├─ Auth & User Management     │
-│   ├─ AI Services (RAG, NLP)     │
-│   └─ Data Processing            │
-└─┬──────────┬──────────┬─────────┘
-  │          │          │
-┌─▼──┐  ┌────▼─┐  ┌────▼──┐
-│ MongoDB │Orion-LD│Pinecone│
-└────┘  └──────┘  └───────┘
+FastAPI Application (Async)
+├─ Routers (Auth, Chat, Reports, Users)
+├─ AI Service (Gemini, Embeddings, RAG)
+└─ Database Layer (MongoDB + Motor)
+   ├─ MongoDB (Primary Storage)
+   ├─ Orion-LD (NGSI-LD Data)
+   ├─ Pinecone (Vector Search)
+   └─ Gemini API (AI)
 ```
 
-## Tech Stack
+### Frontend Architecture
 
-| Layer             | Technology                                     |
-| ----------------- | ---------------------------------------------- |
-| **Frontend**      | Next.js 16, React 19, TypeScript, Tailwind CSS |
-| **Backend**       | FastAPI, Python 3.10+, async/await             |
-| **Database**      | MongoDB (primary), Orion-LD (NGSI-LD)          |
-| **Vector Search** | Pinecone                                       |
-| **AI**            | Gemini 2.5 Flash, Sentence Transformers        |
-| **DevOps**        | Docker, Docker Compose                         |
+```
+Next.js 16 (React 19 + TypeScript)
+├─ Pages & Routes
+├─ Components (Maps, Charts, Forms)
+└─ API Client Layer
+   ├─ FastAPI Backend
+   ├─ Map Services (Maplibre)
+   └─ External APIs
+```
+
+---
 
 ## Performance
 
-- **Backend**: ~200ms avg response time
-- **Frontend**: Lighthouse score 85+
-- **Database**: <50ms for indexed queries
-- **Map**: Handles 1000+ markers with clustering
+- **Backend**: ~200ms avg response
+- **Frontend**: Lighthouse 85+
+- **Database**: <50ms indexed queries
+- **Map**: 1000+ markers with clustering
+
+---
 
 ## Support
 
-- 📖 [Documentation](./docs/)
+- 📖 [Docs](./docs/)
 - 💬 [Discussions](https://github.com/minhe51805/UrbanReflex/discussions)
-- 🐛 [Report Issues](https://github.com/minhe51805/UrbanReflex/issues)
+- 🐛 [Issues](https://github.com/minhe51805/UrbanReflex/issues)
+
+---
 
 ## License
 
-Licensed under Apache License 2.0 - see [LICENSE](LICENSE) file
+**GNU General Public License v3.0** - see [LICENSE](LICENSE)
+
+---
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for version history.
+
+**v0.2.0** (Current)
+
+- 12-language support
+- GPL-3.0 headers
+- Husky + pre-commit framework
+- Black + Flake8 + isort standards
+- UV package manager consolidation
+
+**v0.1.0**
+
+- Initial beta release
+- Air quality monitoring
+- User authentication
+- Citizen reporting
+
+---
 
 ## Acknowledgments
 
-Built with ❤️ for Vietnam Open Source Software Competition
+Built for Vietnam Open Source Software Competition
 
-Supported by:
+**Supported by:**
 
 - [Hutech University](https://hutech.edu.vn/)
 - [VFOSSA](https://vfossa.vn/)
@@ -282,6 +780,8 @@ Supported by:
 
 <div align="center">
 
-**[Website](https://urbanreflex.dev) • [Docs](./docs/) • [Issues](https://github.com/minhe51805/UrbanReflex/issues) • [Discussions](https://github.com/minhe51805/UrbanReflex/discussions)**
+**[Docs](./docs/) • [Issues](https://github.com/minhe51805/UrbanReflex/issues) • [Discussions](https://github.com/minhe51805/UrbanReflex/discussions)**
+
+_v0.2.0 - Active Development_
 
 </div>
