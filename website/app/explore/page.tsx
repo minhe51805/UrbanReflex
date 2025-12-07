@@ -172,6 +172,7 @@ function ExplorePageContent() {
   const [highlightLabel, setHighlightLabel] = useState<string>('');
   const [areaReports, setAreaReports] = useState<ReportMarker[]>([]);
   const [streetlightMarkers, setStreetlightMarkers] = useState<Array<{id: string; coordinates: [number, number]; powerState?: string; status?: string}>>([]);
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const totalRoadCount = filteredRoadSegments.length;
 
   const displayedRoadSegments = useMemo(
@@ -511,6 +512,7 @@ function ExplorePageContent() {
           highlightLabel={highlightLabel}
           reportMarkers={areaReports}
           streetlightMarkers={streetlightMarkers}
+          userLocation={userLocation}
         />
       </div>
 
@@ -682,6 +684,16 @@ function ExplorePageContent() {
       <RoadDetailModal
         road={selectedRoad}
         onClose={() => setSelectedRoad(null)}
+        onOpenAreaReports={() => {
+          if (selectedRoad) {
+            const centerIndex = Math.floor(selectedRoad.location.coordinates.length / 2);
+            const rawCenter = selectedRoad.location.coordinates[centerIndex] || [0, 0];
+            const [lng, lat] = normalizeLngLat(rawCenter);
+            const centerLocation: [number, number] = [lng, lat];
+            setReportsLocation(centerLocation);
+            setShowReportsSidebar(true);
+          }
+        }}
       />
 
       {/*Reports List Sidebar*/}
@@ -694,6 +706,11 @@ function ExplorePageContent() {
             setAreaReports([]);
           }}
           onApprovedReportsUpdate={setAreaReports}
+          attachToRoadDetail={!!selectedRoad}
+          onFocusLocation={(coords, label) => {
+            setHighlightLocation(coords);
+            setHighlightLabel(label || 'Report Location');
+          }}
         />
       )}
 
