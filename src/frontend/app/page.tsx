@@ -1,0 +1,94 @@
+/**
+ * ============================================================================
+ * UrbanReflex — Smart City Intelligence Platform
+ * Copyright (C) 2025  WAG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ * For more information, visit: https://github.com/minhe51805/UrbanReflex
+ * ============================================================================
+ */
+
+import HeroSection from '@/components/home/HeroSection';
+import FeatureSection from '@/components/home/FeatureSection';
+import AQIHubIllustration from '@/components/home/AQIHubIllustration';
+import DataSourceIllustration from '@/components/home/DataSourceIllustration';
+import CodeExample from '@/components/home/CodeExample';
+import MapSection from '@/components/home/MapSection';
+
+export default function Home() {
+  return (
+    <main>
+      {/* 1. Hero Section with Compact Location Card */}
+      <HeroSection />
+
+      {/* 2. One-stop data source */}
+      <FeatureSection
+        title="One-stop data source"
+        description="UrbanReflex aggregates data from hundreds of sources worldwide, harmonizing and sharing them on our centralized, trusted, open-source data platform."
+        buttonText="Learn how UrbanReflex works"
+        buttonHref="/about"
+        imageSide="right"
+        bgColor="bg-gradient-to-br from-primary-50 to-primary-100"
+        illustration={<DataSourceIllustration />}
+      />
+
+      {/* 4. Search for local data - with real map (3/4 width map, 1/4 width text) */}
+      <FeatureSection
+        title="Search for local data"
+        description="Hundreds of people use UrbanReflex every day. Our interactive map makes it easy to explore and understand global air quality data."
+        buttonText="Explore the data"
+        buttonHref="/explore"
+        imageSide="left"
+        bgColor="bg-gradient-to-br from-accent-50 to-accent-100"
+        illustration={<MapSection />}
+        customLayout="map-large"
+      />
+
+      {/* 5. AQI Hub Section */}
+      <FeatureSection
+        title="UrbanReflex Platform"
+        description="Visit UrbanReflex to discover how integrated smart city solutions combine environmental monitoring, infrastructure data, and citizen engagement tools to transform urban management and improve quality of life."
+        buttonText="Visit the AQI Hub"
+        buttonHref="/aqi-hub"
+        imageSide="right"
+        bgColor="bg-gradient-to-br from-neutral-soft-100 to-neutral-soft-200"
+        illustration={<AQIHubIllustration />}
+      />
+
+      {/* 6. Direct API access */}
+      <section className="bg-white py-16 lg:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <CodeExample />
+
+            <div className="bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl p-8 lg:p-12 text-white shadow-large">
+              <h2 className="text-3xl font-bold mb-4">Direct API access</h2>
+              <p className="text-lg mb-6 opacity-90">
+                Our open API allows applications to connect directly to UrbanReflex data. One air quality API provides access to hundred of sources.
+              </p>
+              <a
+                href="/developers"
+                className="inline-flex items-center justify-center px-8 py-3 rounded-full bg-white text-primary-600 font-semibold hover:bg-neutral-soft-50 transition-all duration-200 shadow-medium hover:shadow-large transform hover:scale-105"
+              >
+                Learn about UrbanReflex API
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}
+

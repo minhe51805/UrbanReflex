@@ -13,20 +13,6 @@ default:
 # FULL PROJECT COMMANDS
 # ============================================================================
 
-# Run the entire project (backend + frontend)
-dev: backend-dev frontend-dev
-    @echo "UrbanReflex is running!"
-    @echo "Frontend: http://localhost:3000"
-    @echo "Backend: http://localhost:8000"
-
-# Stop all services
-stop: backend-stop frontend-stop
-    @echo "All services stopped!"
-
-# Full setup from scratch
-setup: install setup-env
-    @echo "Project setup complete!"
-
 # ============================================================================
 # BACKEND COMMANDS (FastAPI)
 # ============================================================================
@@ -34,7 +20,7 @@ setup: install setup-env
 # Run backend in development mode
 backend-dev:
     @echo "Starting backend development server..."
-    uv run uvicorn app.app:app --reload --host 0.0.0.0 --port 8000
+    uv run uvicorn src.backend.app:app --reload --host 0.0.0.0 --port 8000
 
 # Stop backend (for Windows)
 backend-stop:
@@ -58,24 +44,24 @@ backend-health:
 # Install frontend dependencies
 frontend-install:
     @echo "Installing frontend dependencies..."
-    cd website; npm install
+    cd src/frontend; npm install
     @echo "Frontend dependencies installed!"
 
 # Run frontend in development mode
 frontend-dev:
     @echo "Starting frontend development server..."
-    cd website; npm run dev
+    cd src/frontend; npm run dev
 
 # Build frontend for production
 frontend-build:
     @echo "Building frontend..."
-    cd website; npm run build
+    cd src/frontend; npm run build
     @echo "Frontend built!"
 
 # Run frontend in production mode
 frontend-start:
     @echo "Starting frontend production server..."
-    cd website; npm start
+    cd src/frontend; npm start
 
 # Stop frontend (for Windows)
 frontend-stop:
@@ -85,23 +71,30 @@ frontend-stop:
 # Lint frontend code
 frontend-lint:
     @echo "Linting frontend code..."
-    cd website; npm run lint
+    cd src/frontend; npm run lint
 
 # ============================================================================
 # INSTALLATION & SETUP
 # ============================================================================
 
-# Install all dependencies
-install: frontend-install
+# Install all dependencies (UV + backend + frontend)
+install:
+    @echo "Installing all dependencies..."
+    @echo "1. Installing UV package manager..."
+    @powershell -Command "irm https://astral.sh/uv/install.ps1 | iex"
+    @echo "2. Installing Python backend dependencies..."
+    uv sync --all-extras
+    @echo "3. Installing frontend dependencies..."
+    cd src/frontend; npm install
     @echo "All dependencies installed!"
 
 # Setup environment files
 setup-env:
     @echo "Setting up environment files..."
-    @if (-not (Test-Path .env)) { Copy-Item .env.example .env }
-    @if (-not (Test-Path .env.local)) { Copy-Item .env.local.example .env.local }
+    @powershell -Command "if (-not (Test-Path .env)) { Copy-Item .env.example .env; Write-Host '.env created from .env.example' }"
+    @powershell -Command "if (-not (Test-Path src/frontend/.env.local)) { Copy-Item src/frontend/.env.local.example src/frontend/.env.local; Write-Host 'src/frontend/.env.local created from .env.local.example' }"
     @echo "Environment files created!"
-    @echo "Please edit .env and .env.local with your API keys"
+    @echo "Please edit .env and src/frontend/.env.local with your configuration"
 
 # ============================================================================
 # DEVELOPMENT HELPERS
@@ -130,7 +123,3 @@ info:
 # Check all services health
 health: backend-health
     @echo "Health check complete!"
-
-# Restart everything
-restart: stop dev
-    @echo "Everything restarted!"

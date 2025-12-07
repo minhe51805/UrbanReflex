@@ -22,20 +22,23 @@
 </p>
 
 <p align="center">
+	<a href="https://github.com/minhe51805/UrbanReflex/releases" target="blank">
+		<img loading="lazy" src="https://img.shields.io/badge/version-0.2.0-blue.svg" alt="UrbanReflex version"/>
+	</a>
+	<a href="https://github.com/minhe51805/UrbanReflex/releases" target="blank">
+		<img loading="lazy" src="https://img.shields.io/badge/release-Stable-green.svg" alt="Release Status"/>
+	</a>
 	<a href="https://github.com/minhe51805/UrbanReflex/issues" target="blank">
 		<img loading="lazy" src="https://img.shields.io/github/issues/minhe51805/UrbanReflex?label=Issues" alt="UrbanReflex issues"/>
 	</a>
 	<a href="https://github.com/minhe51805/UrbanReflex/blob/main/LICENSE" target="blank">
 		<img loading="lazy" src="https://img.shields.io/github/license/minhe51805/UrbanReflex?label=License" alt="UrbanReflex license"/>
 	</a>
-	<a href="https://github.com/minhe51805/UrbanReflex/releases" target="blank">
-		<img loading="lazy" src="https://img.shields.io/github/v/release/minhe51805/UrbanReflex?label=Version" alt="UrbanReflex version"/>
-	</a>
 	<a href="https://fastapi.tiangolo.com/" target="blank">
-		<img loading="lazy" src="https://img.shields.io/badge/FastAPI-0.121-009688?logo=fastapi" alt="FastAPI"/>
+		<img loading="lazy" src="https://img.shields.io/badge/FastAPI-0.121-009688?logo=fastapi&logoColor=white" alt="FastAPI"/>
 	</a>
 	<a href="https://nextjs.org/" target="blank">
-		<img loading="lazy" src="https://img.shields.io/badge/Next.js-16-black?logo=next.js" alt="Next.js"/>
+		<img loading="lazy" src="https://img.shields.io/badge/Next.js-16.0.7-black?logo=next.js&logoColor=white" alt="Next.js"/>
 	</a>
 	<a href="https://www.etsi.org/deliver/etsi_gs/CIM/001_099/009/01.08.01_60/gs_CIM009v010801p.pdf" target="blank">
 		<img loading="lazy" src="https://img.shields.io/badge/NGSI--LD-Compliant-00A3E0" alt="NGSI-LD"/>
@@ -46,42 +49,43 @@
 
 ---
 
-## Features
+## ✨ Highlights
 
-- 🌍 Real-time Air Quality Monitoring from 10,000+ global stations
-- 📝 Citizen-Powered Infrastructure Issue Reporting
-- 🤖 AI-Powered Chatbot with Natural Language Processing
-- 🏛️ NGSI-LD Compliant Smart City Data Models
-- 📊 Interactive Dashboards and Analytics
-- 🔐 Role-Based Access Control
+- 🌍 **Real-time Air Quality Monitoring** from 10,000+ global stations
+- 📝 **Citizen-Powered Infrastructure Reporting** with photo uploads & geolocation
+- 🤖 **AI-Powered Chatbot** with Gemini 2.5 Flash & RAG system
+- 🏛️ **NGSI-LD Compliant** Smart City Data Models (ETSI standard)
+- 🌐 **12-Language Support** with Google Translate integration
+- ⚡ **One-Command Setup** with Just task runner & UV package manager
+- 🔐 **Role-Based Access Control** (Citizen, City Official, Admin)
 
-## Table of Contents
+---
+
+## 📋 Table of Contents
 
 <details>
 <summary>Expand contents</summary>
 
 - [What is UrbanReflex?](#what-is-urbanreflex)
+- [What's New in v0.2.0](#-whats-new-in-v020)
 - [Key Features](#-key-features)
-- [Getting Started](#-getting-started)
-  - [Prerequisites](#️-prerequisites)
-    - [Infrastructure](#infrastructure)
-    - [Services & API Keys](#services--api-keys)
-  - [Setup](#-setup)
-  - [Running](#-running)
-  - [Testing](#-testing)
-  - [Demo Credentials](#-demo-credentials)
+- [Quick Start](#-quick-start)
+- [Demo Credentials](#-demo-credentials)
 - [Technology Stack](#️-technology-stack)
 - [System Architecture](#-system-architecture)
 - [Project Structure](#-project-structure)
+- [Just Commands Reference](#-just-commands-reference)
+- [Documentation](#-documentation)
 - [Project Status](#-project-status)
-- [Use Cases](#-use-cases)
 - [Contributing](#-contributing)
-- [Support and Organization](#support-and-organization)
+- [Support and Organization](#-support-and-organization)
 - [License](#-license)
 
 </details>
 
-# What is UrbanReflex?
+---
+
+## What is UrbanReflex?
 
 <p align="justify">
 UrbanReflex is an open-source smart city platform that addresses modern urban challenges through integrated, data-driven solutions. It combines real-time environmental monitoring with citizen engagement features to enable transparent, efficient, and responsive urban governance.
@@ -95,191 +99,240 @@ UrbanReflex is an open-source smart city platform that addresses modern urban ch
 
 ---
 
+## 🆕 What's New in v0.2.0
+
+This release focuses on **developer experience improvements**, **automation**, and **production readiness**.
+
+### ⚡ One-Command Setup
+
+- **Just Task Runner**: 16+ pre-configured recipes for all development tasks
+- **UV Auto-Installation**: `just install` automatically installs UV + all dependencies
+- **Dual Environment Setup**: Separate configuration for backend (`.env`) and frontend (`.env.local`)
+- **Zero Configuration**: No manual dependency installation required
+
+### 🌐 Multi-Language Support
+
+- **12 Languages**: English, Vietnamese, Spanish, French, German, Chinese, Japanese, Korean, Arabic, Russian, Portuguese, Hindi
+- **Google Translate Integration**: Real-time UI translation without page reload
+- **Language Persistence**: Selected preference stored in browser
+
+### 🔧 Developer Experience
+
+- **Updated Dependencies**: Next.js 16.0.7, Prettier 3.2.5
+- **Code Quality Tools**: Black, Flake8, isort, ESLint, Prettier pre-configured
+- **Pre-commit Hooks**: Automatic code quality checks with Husky
+- **Comprehensive Documentation**: Complete setup guide with troubleshooting
+
+### 🐛 Bug Fixes
+
+- Fixed `ModuleNotFoundError` for backend models package
+- Fixed Just command PowerShell syntax errors on Windows
+- Fixed frontend environment file location
+
+See [CHANGELOG.md](./CHANGELOG.md) for full release notes.
+
+---
+
 ## ✨ Key Features
 
-### **Air Quality Intelligence**
+### 🌍 Air Quality Intelligence
 
 - Real-time AQI from 10,000+ global monitoring stations
 - Interactive map with heatmaps and clustering
 - Health advisories based on pollution levels
-- Historical trend analysis with charts
+- Historical trend analysis (12-month data)
 - Location-based search for any city or region
 
-### **Citizen Engagement**
+### 📝 Citizen Engagement
 
-- Report urban issues (streetlights, potholes, waste, etc.)
-- Photo uploads with automatic geolocation
-- Real-time status tracking for issue resolution
+- Report urban issues (streetlights, potholes, waste, traffic)
+- Photo uploads with automatic GPS geolocation
+- Real-time status tracking (Open → In Progress → Resolved)
 - Community voting for prioritization
-- Automated severity classification
+- Automated severity classification with AI
 
-### **AI Intelligence**
+### 🤖 AI Intelligence
 
-- Natural language chatbot powered by Gemini
+- Natural language chatbot powered by Gemini 2.5 Flash
 - Semantic vector search using Pinecone
-- Automatic report classification
-- Predictive analytics and hotspot forecasting (planned v1.1)
+- RAG (Retrieval-Augmented Generation) system
+- Context-aware responses with data citations
+- Intelligent report classification with NLP
 
-### **Smart City Infrastructure**
+### 🏛️ Smart City Infrastructure
 
 - NGSI-LD compliant data models (ETSI standard)
-- Orion-LD for real-time context management
-- IoT sensor integration for urban monitoring
+- Orion Context Broker for real-time context management
+- Road segment & streetlight monitoring
 - Open data export (GeoJSON, NDJSON)
 
-### **Role-Based Access Control**
+### 🔐 Role-Based Access Control
 
-- **Citizen**: submit reports, view air quality, access chatbot
-- **City Official**: manage reports, assign tasks, analytics dashboard
-- **Admin**: system and user management
-- **Developer**: REST API with full OpenAPI documentation
-
----
-
-## 🚀 Getting Started
-
-## 🛠️ Prerequisites
-
-### Infrastructure Requirements
-
-- **Docker Desktop** (Windows/macOS) or **Docker Engine** (Linux) — container platform used to run UrbanReflex services in isolated, reproducible environments.
-- **Docker Compose** — orchestrates backend, frontend, and supporting services.
-- **Node.js (v18+)** — required for building and running the Next.js frontend.
-- **Python (v3.10+)** — runtime for the FastAPI backend and AI service modules.
-- **MongoDB** (optional) — document database for storing user data and report information.
-- **Redis** (optional) — in‑memory cache used for session handling and performance optimization.
-
-### Services & API Keys
-
-- **Google Gemini API Key** — powers AI chatbot interactions and automated classification.
-- **Pinecone API Key** — enables vector search and semantic similarity indexing.
-- **OpenAQ API** — source of global air quality data (no key required).
+| Role              | Permissions                                       |
+| ----------------- | ------------------------------------------------- |
+| **Citizen**       | Submit reports, view air quality, access chatbot  |
+| **City Official** | Manage reports, assign tasks, analytics dashboard |
+| **Admin**         | Full system access, user management               |
+| **Developer**     | REST API with OpenAPI documentation               |
 
 ---
 
-## 🚀 Quick Setup
+## 🚀 Quick Start
 
 ### Prerequisites
 
-**Runtimes**
+```bash
+# Required
+✅ Just task runner         # https://just.systems/
+✅ Git                       # Version control
+✅ 8GB RAM minimum
+✅ 10GB free disk space
 
-- [Python 3.10+](https://www.python.org/downloads/)
-- [Node.js 18+](https://nodejs.org/en/download)
+# Auto-installed by `just install`
+📦 UV package manager
+📦 Node.js 18+
+📦 Python 3.10+
+```
 
-**Containers**
-
-- [Docker](https://www.docker.com/)
-- [Docker Compose](https://docs.docker.com/compose/)
-
-**Developer Tooling**
-
-- [uv](https://docs.astral.sh/uv/getting-started/features/)
-- [Just](https://just.systems/)
-
-**Databases (Optional)**
-
-- [MongoDB](https://www.mongodb.com/try/download/community)
-- [Redis](https://redis.io/download)
-
-**API & External Services**
-
-- [Google Gemini API Key](https://makersuite.google.com/app/apikey)
-- [Pinecone API Key](https://www.pinecone.io/)
-- [OpenAQ API](https://openaq.org/)
-
----
-
-## 🏃‍♂️ One‑Command Development Setup
-
-UrbanReflex supports a streamlined workflow via a `justfile`:
+### ⚡ 3-Command Setup
 
 ```bash
-# Clone repository
+# 1. Clone repository
 git clone https://github.com/minhe51805/UrbanReflex.git
 cd UrbanReflex
 
-# Setup development environment
-just setup
+# 2. Install everything (UV + backend + frontend)
+just install
+# Automatically:
+# - Installs UV package manager (if not present)
+# - Installs 175 Python packages
+# - Installs 632 npm packages
 
-# Start all services
+# 3. Setup environment files
+just setup-env
+# Creates:
+# - .env (backend configuration)
+# - src/frontend/.env.local (frontend configuration)
+
+# 4. Start development servers
 just dev
+# Starts:
+# - Backend API (http://localhost:8000)
+# - Frontend App (http://localhost:3000)
+# - MongoDB + Orion-LD (via Docker Compose)
 ```
 
----
+### 🔧 Environment Configuration
 
-## 🛠️ Manual Setup (Alternative)
+After running `just setup-env`, edit the created files:
 
-```bash
-# 1. Install dependencies
-uv sync                              # Backend dependencies
-cd website && npm install && cd ..   # Frontend dependencies
-
-# 2. Setup environment variables
-cp .env.example .env
-# Edit .env with your API keys
-
-# 3. Start services
-docker-compose up -d mongodb orion   # Start databases
-uvicorn app.app:app --reload         # Backend (port 8000)
-cd website && npm run dev            # Frontend (port 3000)
-```
-
----
-
-## 🔧 Environment Variables
+<details>
+<summary><b>.env (Backend)</b></summary>
 
 ```bash
-# .env file
-DATABASE_URL="mongodb://localhost:27017/urbanreflex"
-JWT_SECRET_KEY="your-secret-key"
+# Database
+MONGODB_URL="mongodb://localhost:27017"
+DATABASE_NAME="urbanreflex"
+
+# Authentication
+SECRET_KEY="your-secret-key-here"  # Generate: openssl rand -hex 32
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# AI Services (Optional - features disabled without these)
+GEMINI_API_KEY="your-gemini-key"           # Required for chatbot
+PINECONE_API_KEY="your-pinecone-key"       # Required for vector search
+PINECONE_INDEX_NAME="urbanreflex-index"
+
+# External APIs (Optional - falls back to mock data)
 OPENAQ_API_KEY="your-openaq-key"
-GEMINI_API_KEY="your-gemini-key"
-PINECONE_API_KEY="your-pinecone-key"
-ORION_BROKER_URL="http://localhost:1026"
+OWM_API_KEY="your-openweathermap-key"
 ```
+
+</details>
+
+<details>
+<summary><b>src/frontend/.env.local (Frontend)</b></summary>
+
+```bash
+NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_OPENAQ_API_KEY=your-openaq-key
+NEXT_PUBLIC_NGSI_LD_URL=http://localhost:1026
+```
+
+</details>
+
+### ✅ Verify Installation
+
+```bash
+# Check backend health
+curl http://localhost:8000/health
+# Expected: {"service":"UrbanReflex","status":"running","version":"0.2.0"}
+
+# Check all services info
+just info
+
+# Check frontend
+open http://localhost:3000
+```
+
+---
+
+## 🔐 Demo Credentials
+
+### Pre-configured Test Accounts
+
+| Role              | Email                    | Password        | Permissions        |
+| ----------------- | ------------------------ | --------------- | ------------------ |
+| **Admin**         | admin@urbanreflex.dev    | Admin@123456    | Full system access |
+| **City Official** | official@urbanreflex.dev | Official@123456 | Report management  |
+| **Citizen**       | citizen@urbanreflex.dev  | Citizen@123456  | Standard user      |
+
+### Service URLs
+
+| Service                     | URL                         |
+| --------------------------- | --------------------------- |
+| Frontend Application        | http://localhost:3000       |
+| Backend API                 | http://localhost:8000       |
+| API Documentation (Swagger) | http://localhost:8000/docs  |
+| API Documentation (ReDoc)   | http://localhost:8000/redoc |
+| Orion Context Broker        | http://localhost:1026       |
+| MongoDB                     | localhost:27017             |
 
 ---
 
 ## 🛠️ Technology Stack
 
-### Backend Architecture
+### Backend
 
-```
-FastAPI + Python 3.10+     → High-performance asynchronous API framework
-MongoDB                    → Document database for users and reports
-Orion Context Broker       → NGSI-LD compliant context management
-Redis                      → In-memory caching and state management
-Gemini AI                  → Natural language understanding and analytics
-Pinecone                   → Vector search for semantic similarity
-```
+| Technology       | Purpose                                 |
+| ---------------- | --------------------------------------- |
+| **FastAPI**      | High-performance async API framework    |
+| **Python 3.10+** | Backend runtime                         |
+| **MongoDB**      | Document database for users and reports |
+| **Orion-LD**     | NGSI-LD compliant context broker        |
+| **Redis**        | In-memory caching and sessions          |
+| **Gemini AI**    | Natural language understanding          |
+| **Pinecone**     | Vector search for semantic similarity   |
 
-### Frontend Architecture
+### Frontend
 
-```
-Next.js 16                 → Modern React framework with App Router
-TypeScript                 → Strongly typed development
-Tailwind CSS               → Utility-first styling
-MapLibre GL                → WebGL-based interactive mapping
-Chart.js                   → Data visualization
-Framer Motion              → Smooth UI animations
-```
+| Technology        | Purpose                         |
+| ----------------- | ------------------------------- |
+| **Next.js 16**    | React framework with App Router |
+| **TypeScript**    | Type-safe development           |
+| **Tailwind CSS**  | Utility-first styling           |
+| **MapLibre GL**   | Interactive WebGL mapping       |
+| **Chart.js**      | Data visualization              |
+| **Framer Motion** | Smooth UI animations            |
 
 ### Infrastructure
 
-```
-Docker Compose             → Multi-service orchestration
-Nginx                      → Reverse proxy for production setup
-GitHub Actions             → CI/CD automation
-```
-
-### External Integrations
-
-```
-OpenAQ API                 → Global air quality data provider
-OpenStreetMap              → Geolocation and POI data
-Google Gemini API          → AI conversational capabilities
-Pinecone Cloud             → Managed vector database
-```
+| Technology         | Purpose                     |
+| ------------------ | --------------------------- |
+| **Docker Compose** | Multi-service orchestration |
+| **Just**           | Task automation             |
+| **UV**             | Fast Python package manager |
+| **Husky**          | Git hooks for code quality  |
 
 ---
 
@@ -287,49 +340,42 @@ Pinecone Cloud             → Managed vector database
 
 ```mermaid
 graph TB
-    subgraph "User Layer"
-        A[Web Browser]
-        B[Mobile Browser]
+    subgraph "Client Layer"
+        WEB[Web App<br/>Next.js 16]
+        MOBILE[Mobile Browser]
     end
 
-    subgraph "Frontend - Next.js 16"
-        C[React Components]
-        D[API Client]
-        E[State Management]
+    subgraph "API Gateway"
+        AUTH[Authentication<br/>JWT & API Keys]
     end
 
-    subgraph "Backend - FastAPI"
-        F[REST API]
-        G[Authentication JWT]
-        H[Business Logic]
+    subgraph "Application Layer"
+        BACKEND[FastAPI Server<br/>Python 3.10+]
+        AI[AI Service<br/>Gemini + Pinecone]
     end
 
     subgraph "Data Layer"
-        I[(MongoDB)]
-        J[(Orion Context Broker)]
-        K[(Redis Cache)]
-        L[(Pinecone Vector DB)]
+        MONGO[(MongoDB)]
+        ORION[(Orion-LD<br/>NGSI-LD)]
+        PINECONE[(Pinecone<br/>Vector DB)]
     end
 
     subgraph "External Services"
-        M[OpenAQ API]
-        N[Gemini AI]
-        O[OpenStreetMap]
+        OPENAQ[OpenAQ API]
+        GEMINI[Gemini AI]
+        OSM[OpenStreetMap]
     end
 
-    A --> C
-    B --> C
-    C --> D
-    D --> F
-    F --> G
-    G --> H
-    H --> I
-    H --> J
-    H --> K
-    H --> L
-    H --> M
-    H --> N
-    H --> O
+    WEB --> AUTH
+    MOBILE --> AUTH
+    AUTH --> BACKEND
+    BACKEND --> AI
+    BACKEND --> MONGO
+    BACKEND --> ORION
+    AI --> PINECONE
+    AI --> GEMINI
+    BACKEND --> OPENAQ
+    BACKEND --> OSM
 ```
 
 ---
@@ -338,54 +384,108 @@ graph TB
 
 ```
 UrbanReflex/
-├── app/                    # FastAPI backend application
-│   ├── routers/           # API endpoint definitions (auth, chatbot, reports, users)
-│   ├── models/            # Database models and schemas
-│   ├── schemas/           # Pydantic validation schemas
-│   ├── ai_service/        # Gemini AI and Pinecone integration
-│   └── utils/             # Utility functions and helpers
-├── website/               # Next.js 16 frontend application
-│   ├── app/              # App Router pages and routes
-│   ├── components/       # Reusable React components
-│   ├── lib/              # API clients and utility functions
-│   └── types/            # TypeScript type definitions
-├── docs/                  # Project documentation
-│   ├── API_REFERENCE.md  # Complete API documentation
-│   ├── ARCHITECTURE.md   # System architecture details
-│   └── USER_GUIDE.md     # End-user manual
-├── scripts/               # Data collection and seeding scripts
-├── open_data/            # Open datasets (GeoJSON, NDJSON formats)
-├── docker-compose.yml    # Container orchestration configuration
-└── LICENSE               # Apache 2.0 license file
+├── src/
+│   ├── backend/              # FastAPI Backend
+│   │   ├── app.py            # Main application entry
+│   │   ├── routers/          # API endpoint definitions
+│   │   ├── models/           # Database models
+│   │   ├── schemas/          # Pydantic validation schemas
+│   │   ├── ai_service/       # Gemini AI & Pinecone integration
+│   │   └── utils/            # Utility functions
+│   └── frontend/             # Next.js 16 Frontend
+│       ├── app/              # App Router pages
+│       ├── components/       # React components
+│       ├── contexts/         # State management
+│       ├── lib/              # API clients & utilities
+│       └── types/            # TypeScript definitions
+├── scripts/                  # Data fetching & processing scripts
+├── docs/                     # Project documentation
+├── open_data/                # Open datasets (GeoJSON, NDJSON)
+├── schemas/                  # JSON schemas for data validation
+├── .justfile                 # Just task automation recipes
+├── pyproject.toml            # Python dependencies (PEP 518)
+├── docker-compose.yml        # Container orchestration
+└── LICENSE                   # GPL-3.0 license
 ```
+
+---
+
+## 📜 Just Commands Reference
+
+### Installation & Setup
+
+```bash
+just install          # Install UV + backend deps + frontend deps
+just setup-env        # Create .env and .env.local from examples
+just backend-install  # Install only backend dependencies
+just frontend-install # Install only frontend dependencies
+```
+
+### Development
+
+```bash
+just dev             # Start backend + frontend + databases
+just backend-dev     # Start backend only (port 8000)
+just frontend-dev    # Start frontend only (port 3000)
+```
+
+### Code Quality
+
+```bash
+just format          # Format all code (Black + Prettier)
+just lint            # Run linters (Flake8 + ESLint)
+just test            # Run all tests
+```
+
+### Utilities
+
+```bash
+just info            # Show project info (ports, services)
+just health          # Check backend health endpoint
+just clean           # Clean build artifacts
+```
+
+---
+
+## 📖 Documentation
+
+| Document                                         | Description                     |
+| ------------------------------------------------ | ------------------------------- |
+| [API Reference](./docs/API_REFERENCE.md)         | Complete REST API documentation |
+| [Architecture](./docs/ARCHITECTURE.md)           | System design and components    |
+| [Development Setup](./docs/DEVELOPMENT_SETUP.md) | Local development guide         |
+| [Data Model](./docs/DATA_MODEL_AND_ENTITIES.md)  | NGSI-LD entity definitions      |
+| [User Guide](./docs/USER_GUIDE.md)               | End-user manual                 |
+| [Code Style Guide](./docs/CODE_STYLE_GUIDE.md)   | Coding conventions              |
 
 ---
 
 ## 📈 Project Status
 
-**Current Version**: v0.1.0 (Beta)  
-**Development Status**: Feature complete, in testing phase  
+**Current Version**: v0.2.0 (Stable)  
+**Development Status**: Production Ready  
 **Target Competition**: Vietnam Open Source Software Competition 2025
 
-### Completed Features
+### ✅ Completed Features
 
-- Air quality monitoring integration (10,000+ stations)
-- Citizen reporting system with photo uploads
-- AI chatbot with Gemini integration
-- Administrative dashboard with analytics
-- NGSI-LD compliance (Orion Context Broker integration)
-- JWT authentication with role-based access control
-- Docker Compose deployment configuration
-- Comprehensive API documentation
+- [x] Air quality monitoring (10,000+ stations)
+- [x] Citizen reporting with photo uploads
+- [x] AI chatbot with Gemini integration
+- [x] Administrative dashboard
+- [x] NGSI-LD compliance
+- [x] JWT authentication with RBAC
+- [x] 12-language support
+- [x] One-command setup automation
+- [x] Docker Compose deployment
+- [x] Comprehensive documentation
 
-### Planned Enhancements
+### 🔮 Planned Features (v1.0)
 
-- Real-time push notifications (v1.1)
-- Native mobile applications (iOS/Android)
-- Email and SMS alert system for critical issues
-- Machine learning models for predictive analytics
-- Multi-language support (Vietnamese, English)
-- Kubernetes deployment manifests
+- [ ] Real-time push notifications (WebSocket)
+- [ ] Native mobile applications (iOS/Android)
+- [ ] Email and SMS alert system
+- [ ] Predictive analytics with ML models
+- [ ] Kubernetes deployment manifests
 
 ---
 
@@ -393,7 +493,7 @@ UrbanReflex/
 
 ### For Citizens
 
-- Monitor air quality conditions before outdoor activities
+- Monitor air quality before outdoor activities
 - Report infrastructure issues with photo documentation
 - Track resolution status of submitted reports
 - Access AI-powered health recommendations
@@ -408,33 +508,57 @@ UrbanReflex/
 ### For Developers
 
 - Access to open air quality data via REST API
-- Integration with NGSI-LD compliant smart city systems
+- Integration with NGSI-LD compliant systems
 - Custom dashboard development using provided APIs
 - Contribution to open-source smart city initiatives
 
 ---
 
-## Contributing
+## 🤝 Contributing
 
-### 📖 Contributing Guidelines
+We welcome contributions! Please read our guidelines before submitting.
 
-<p align="justify">
-We are excited that you are interested in contributing to this project! Before submitting your contribution, please make sure to take a moment and read through the following guidelines:
-</p>
+### Quick Contribution Guide
 
-<p align="justify">
-Read through our <a href="./CONTRIBUTING.md">contributing guidelines</a> to learn about our submission process, coding rules, and more.
-</p>
+```bash
+# 1. Fork and clone
+git clone https://github.com/YOUR_USERNAME/UrbanReflex.git
+cd UrbanReflex
 
-### 💁 Want to Help?
+# 2. Create feature branch
+git checkout -b feature/your-feature-name
 
-<p align="justify">
-Want to report a bug, contribute some code, or improve the documentation? Excellent! Read up on our guidelines for <a href="./CONTRIBUTING.md">contributing</a> and then check out one of our issues labeled as <kbd><a href="https://github.com/minhe51805/UrbanReflex/labels/help%20wanted">help wanted</a></kbd> or <kbd><a href="https://github.com/minhe51805/UrbanReflex/labels/good%20first%20issue">good first issue</a></kbd>.
-</p>
+# 3. Install and develop
+just install
+just dev
+
+# 4. Make changes and test
+just format
+just lint
+just test
+
+# 5. Commit with conventional commits
+git commit -m "feat: add new feature"
+# Types: feat, fix, docs, style, refactor, test, chore
+
+# 6. Push and create PR
+git push origin feature/your-feature-name
+```
+
+### Code Quality Standards
+
+All code must pass:
+
+- ✅ `just format` (Black + Prettier)
+- ✅ `just lint` (Flake8 + ESLint)
+- ✅ `just test` (pytest + Jest)
+- ✅ Pre-commit hooks
+
+Read our [Contributing Guidelines](./CONTRIBUTING.md) for detailed information.
 
 ---
 
-## Support and Organization
+## 🏫 Support and Organization
 
 <p align="center">
 	<a href="https://hutech.edu.vn/" target="_blank">
@@ -456,7 +580,7 @@ Want to report a bug, contribute some code, or improve the documentation? Excell
 
 <div align="center">
 
-| Metric               | Count                                                                                                                                                                                                       |
+| Metric               | Badge                                                                                                                                                                                                       |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 🌟 **Stars**         | ![GitHub stars](https://img.shields.io/github/stars/minhe51805/UrbanReflex?style=social)                                                                                                                    |
 | 🍴 **Forks**         | ![GitHub forks](https://img.shields.io/github/forks/minhe51805/UrbanReflex?style=social)                                                                                                                    |
@@ -473,8 +597,25 @@ Want to report a bug, contribute some code, or improve the documentation? Excell
 
 ---
 
-## License
+## 📄 License
 
-<p align="justify">
-This project is licensed under the terms of the <a href="./LICENSE">GNU General Public License v3.0</a>.
-</p>
+This project is licensed under the **GNU General Public License v3.0** - see the [LICENSE](LICENSE) file for details.
+
+**Key Points:**
+
+- ✅ Free to use, modify, and distribute
+- ✅ Source code must be made available
+- ✅ Modifications must use same GPL-3.0 license
+- 📖 Full license: https://www.gnu.org/licenses/gpl-3.0.html
+
+---
+
+<div align="center">
+
+**UrbanReflex v0.2.0** — Smart City Intelligence Platform
+
+Built with ❤️ for Vietnam Open Source Software Competition 2025
+
+[🏠 Homepage](https://minhe51805.github.io/UrbanReflex/) • [📚 Documentation](./docs/) • [🐛 Report Bug](https://github.com/minhe51805/UrbanReflex/issues) • [💬 Discussions](https://github.com/minhe51805/UrbanReflex/discussions)
+
+</div>

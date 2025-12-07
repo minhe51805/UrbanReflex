@@ -1,24 +1,183 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to UrbanReflex are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.2.0] - 2025-12-07
 
 ### Added
 
-- Comprehensive justfile for project automation
-- Open source standard files (CONTRIBUTING.md, CODE_OF_CONDUCT.md, SECURITY.md)
-- Enhanced .gitignore with comprehensive patterns
+#### Developer Experience & Automation
+
+- **Just Task Runner**: Implemented comprehensive task automation with 16+ recipes
+- **UV Auto-Installation**: `just install` now automatically installs UV package manager
+- **Dual Environment Setup**: `just setup-env` creates both backend `.env` and frontend `.env.local`
+- **Models Package**: Added `src/backend/models` with `ChatSession` and `ChatMessage` classes
+- **Code Formatting**: Added Prettier 3.2.5 to frontend dependencies
+- **Production README**: Created release-specific documentation for v0.2.0
+
+#### Internationalization & Multi-Language Support
+
+- **Google Translate Integration**: Implemented `LanguageSwitcher` component for seamless language switching
+- **12 Language Support**: Users can now switch between English, Vietnamese, Spanish, French, German, Chinese, Japanese, Korean, Arabic, Russian, Portuguese, and Hindi
+- **Dynamic Language Switching**: Real-time UI updates without page reload using Google Translate API
+- **Language Persistence**: Selected language preference stored in browser localStorage
+
+#### Legal & Compliance
+
+- **GPL-3.0 License Headers**: Added standardized license headers to 100+ source files
+- **License Compliance**: Ensured all dependencies comply with open-source requirements
+
+#### Data Export
+
+- **XLSX Support**: Added `xlsx` library for future data export functionality
+- **TypeScript Definitions**: Full type support for spreadsheet operations
 
 ### Changed
 
-- Renamed urbanreflex-fe folder to website for better clarity
-- Updated .gitignore patterns to use website/ instead of urbanreflex-fe/
+#### Developer Experience
 
-## [1.0.0] - 2025-12-04
+- **Frontend Dependencies**: Updated Next.js from 16.0.3 to 16.0.7
+- **Frontend Linting**: Removed Husky/lint-staged from frontend (using root-level tools)
+- **Documentation**: Comprehensive README rewrite with accurate setup instructions
+- **Setup Process**: Simplified to one-command installation (`just install`)
+
+#### Frontend Content Localization
+
+- **UI Text Translation**: Converted all Vietnamese UI text to English across entire application
+- **Status Labels**: Updated citizen report status labels to English
+- **Error Messages**: Translated all error and success messages
+- **Tooltips & Placeholders**: Localized form inputs and helper text
+
+#### UI/UX Improvements
+
+- **Header Layout**: Reorganized user menu with new LanguageSwitcher placement
+- **Language Switcher Placement**: Positioned in header for easy access
+- **Mobile Responsive**: LanguageSwitcher works seamlessly on all devices
+
+#### Component Updates
+
+- `website/components/layout/Header.tsx`: Integrated LanguageSwitcher component
+- `website/components/ui/LanguageSwitcher.tsx`: New multi-language selector (NEW)
+- `website/lib/utils/reportStatus.ts`: Updated status enums to English
+- All `.tsx`/`.ts` files: Added GPL-3.0 headers
+
+### Fixed
+
+#### Developer Experience
+
+- **Import Errors**: Fixed `ModuleNotFoundError` for `src.backend.models` package
+- **Just Commands**: Corrected `setup-env` PowerShell syntax and removed invalid `restart` recipe
+- **Environment Files**: Moved `.env.local.example` to `src/frontend/` directory
+- **Gitignore**: Updated to properly track models package files
+
+#### UI/UX
+
+- **Language Consistency**: Fixed inconsistent Vietnamese/English text
+- **RTL Support Preparation**: Added groundwork for right-to-left language support
+
+### Documentation
+
+- **README.md**: Complete production-ready release documentation
+- **Setup Guide**: Updated to reflect UV auto-installation and dual environment setup
+- **Just Commands Reference**: Added comprehensive command listing with descriptions
+- **Prerequisites**: Removed manual UV installation (handled by `just install`)
+- **Troubleshooting**: Added comprehensive troubleshooting section
+
+### Dependencies
+
+#### Added
+
+```json
+{
+  "xlsx": "^0.18.5",
+  "@types/xlsx": "^0.0.36",
+  "prettier": "^3.2.5"
+}
+```
+
+#### Updated
+
+```json
+{
+  "next": "16.0.3 → 16.0.7"
+}
+```
+
+### Files Changed
+
+- **Modified**: 128+ files (100+ license headers, 28+ text updates, automation improvements)
+- **Added**: 2 new components (LanguageSwitcher, models package)
+- **Removed**: Redundant configurations
+
+### Migration Guide
+
+For users upgrading from v0.1.0 to v0.2.0:
+
+1. **Environment Files**: Frontend `.env.local` moved to `src/frontend/` directory
+2. **Just Commands**: Install Just task runner for automation
+3. **Dependencies**: Run `just install` to update all packages
+4. **Setup**: Use `just setup-env` to create new environment structure
+
+### Breaking Changes
+
+**None** - Fully backward compatible with v0.1.0
+
+All existing features continue to work. New automation tools are optional.
+
+### Known Limitations
+
+- Translation quality depends on Google Translate API
+- Offline translation not supported
+- Performance impact minimal (additional ~50KB bundle size)
+
+---
+
+## [0.1.0] - 2025-12-04
+
+### Initial Beta Release
+
+#### ✨ Features
+
+- Complete air quality monitoring system
+- NGSI-LD compliant smart city data model
+- Citizen reporting with photo uploads
+- AI-powered chatbot with Gemini integration
+- Admin dashboard with analytics
+- JWT authentication and role-based access
+- Interactive map with clustering
+- Real-time data visualization
+
+#### 🔧 Infrastructure
+
+- Docker Compose orchestration
+- MongoDB for primary data storage
+- Orion Context Broker for NGSI-LD
+- FastAPI backend with async support
+- Next.js 16 frontend with App Router
+
+#### 📚 Documentation
+
+- Complete API documentation
+- Developer setup guides
+- Architecture documentation
+- Testing guidelines
+
+#### 🐛 Known Issues
+
+- Map performance with >1000 markers
+- Email notifications not implemented
+- Mobile responsiveness needs improvement
+
+---
+
+<div align="center">
+
+**UrbanReflex Changelog**
+
+[v0.2.0](https://github.com/minhe51805/UrbanReflex/releases/tag/v0.2.0) • [v0.1.0](https://github.com/minhe51805/UrbanReflex/releases/tag/v0.1.0)
 
 ### Added
 

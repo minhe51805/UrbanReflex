@@ -88,7 +88,7 @@ graph TB
 ### 🎨 Frontend Architecture (Next.js)
 
 ```
-website/
+src/frontend/
 ├── app/                    # Next.js 14 App Router
 │   ├── (dashboard)/       # Route groups
 │   ├── api/              # API routes (proxy to backend)
@@ -120,7 +120,7 @@ website/
 ### 🐍 Backend Architecture (FastAPI)
 
 ```
-app/
+src/backend/
 ├── app.py              # FastAPI application setup
 ├── dependencies.py     # Dependency injection
 ├── routers/           # API endpoint routers

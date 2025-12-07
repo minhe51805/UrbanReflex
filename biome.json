@@ -1,0 +1,51 @@
+{
+  "organizeImports": {
+    "enabled": true
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "correctness": {
+        "noConstAssign": "error",
+        "noInvalidNewBuiltin": "error",
+        "noInvalidConstructorSuper": "error",
+        "noSetterReturn": "error",
+        "noUndeclaredVariables": "error",
+        "noUnreachableCode": "error",
+        "noUnusedLabels": "error"
+      },
+      "style": {
+        "noImplicitAny": "error",
+        "noUnusedVariables": "error",
+        "useAsConstAssertion": "error",
+        "useBlockStatements": "warn",
+        "useExplicitLengthCheck": "warn"
+      }
+    }
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentSize": 2,
+    "lineWidth": 100,
+    "lineEnding": "lf",
+    "ignore": ["node_modules", ".next", "dist", "build", "__pycache__", ".venv"]
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "trailingComma": "es5",
+      "semicolons": "always",
+      "arrowParentheses": "asNeeded"
+    },
+    "parser": {
+      "unsafeParameterDecoratorsEnabled": true
+    }
+  },
+  "json": {
+    "formatter": {
+      "trailingCommas": "none"
+    }
+  }
+}

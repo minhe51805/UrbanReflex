@@ -98,18 +98,18 @@ uv sync --upgrade
 
 ```bash
 # Format code
-black app/
+black src/backend/
 black scripts/
 
 # Lint code
-flake8 app/
+flake8 src/backend/
 flake8 scripts/
 
 # Type checking
-mypy app/
+mypy src/backend/
 
 # Import sorting
-isort app/
+isort src/backend/
 ```
 
 ### Testing
@@ -289,7 +289,7 @@ docker-compose exec mongodb mongodump --out /backup
 ```bash
 # Copy example files
 cp .env.example .env
-cp website/.env.example website/.env.local
+cp src/frontend/.env.example src/frontend/.env.local
 
 # View environment variables
 cat .env
@@ -391,13 +391,13 @@ lsof -i :8000
 
 ```bash
 # Profile Python code
-python -m cProfile -o profile.stats app/main.py
+python -m cProfile -o profile.stats src/backend/app.py
 
 # Analyze profile
 python -c "import pstats; pstats.Stats('profile.stats').sort_stats('cumulative').print_stats()"
 
 # Profile memory usage
-mprof run python app/main.py
+mprof run python src/backend/app.py
 mprof plot
 ```
 

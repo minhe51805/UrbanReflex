@@ -1,3 +1,0 @@
-"""
-Configuration module for UrbanReflex.
-"""
