@@ -311,11 +311,16 @@ This automatically:
 #### Step 3: Setup Environment Files (Just)
 
 ```bash
-# Auto-create .env from example
+# Auto-create .env and .env.local from examples
 just setup-env
 ```
 
-Edit `.env` with your configuration:
+This creates:
+
+- `.env` (backend configuration)
+- `src/frontend/.env.local` (frontend configuration)
+
+Edit both files with your configuration:
 
 ```bash
 # MongoDB
@@ -396,7 +401,7 @@ just info       # Show project info
 ```bash
 # Setup
 just install               # Install UV + backend + frontend dependencies
-just setup-env            # Create .env files
+just setup-env            # Create .env and src/frontend/.env.local files
 
 # Backend Development
 just backend-dev          # Start dev server (http://localhost:8000)
