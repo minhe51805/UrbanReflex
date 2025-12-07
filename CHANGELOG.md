@@ -5,40 +5,18 @@ All notable changes to UrbanReflex are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.2.0] - 2025-12-07
 
 ### Added
+
+#### Developer Experience & Automation
 
 - **Just Task Runner**: Implemented comprehensive task automation with 16+ recipes
 - **UV Auto-Installation**: `just install` now automatically installs UV package manager
 - **Dual Environment Setup**: `just setup-env` creates both backend `.env` and frontend `.env.local`
 - **Models Package**: Added `src/backend/models` with `ChatSession` and `ChatMessage` classes
 - **Code Formatting**: Added Prettier 3.2.5 to frontend dependencies
-
-### Changed
-
-- **Frontend Dependencies**: Updated Next.js from 16.0.3 to 16.0.7
-- **Frontend Linting**: Removed Husky/lint-staged from frontend (using root-level tools)
-- **Documentation**: Comprehensive README rewrite with accurate setup instructions
-- **Setup Process**: Simplified to one-command installation (`just install`)
-
-### Fixed
-
-- **Import Errors**: Fixed `ModuleNotFoundError` for `src.backend.models` package
-- **Just Commands**: Corrected `setup-env` PowerShell syntax and removed invalid `restart` recipe
-- **Environment Files**: Moved `.env.local.example` to `src/frontend/` directory
-- **Gitignore**: Updated to properly track models package files
-
-### Documentation
-
-- **README.md**: Complete rewrite with tech stack tables, project structure, and just commands
-- **Setup Guide**: Updated to reflect UV auto-installation and dual environment setup
-- **Just Commands Reference**: Added comprehensive command listing with descriptions
-- **Prerequisites**: Removed manual UV installation (handled by `just install`)
-
-## [0.2.0] - 2025-12-07
-
-### Added
+- **Production README**: Created release-specific documentation for v0.2.0
 
 #### Internationalization & Multi-Language Support
 
@@ -58,6 +36,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **TypeScript Definitions**: Full type support for spreadsheet operations
 
 ### Changed
+
+#### Developer Experience
+
+- **Frontend Dependencies**: Updated Next.js from 16.0.3 to 16.0.7
+- **Frontend Linting**: Removed Husky/lint-staged from frontend (using root-level tools)
+- **Documentation**: Comprehensive README rewrite with accurate setup instructions
+- **Setup Process**: Simplified to one-command installation (`just install`)
 
 #### Frontend Content Localization
 
@@ -81,33 +66,72 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+#### Developer Experience
+
+- **Import Errors**: Fixed `ModuleNotFoundError` for `src.backend.models` package
+- **Just Commands**: Corrected `setup-env` PowerShell syntax and removed invalid `restart` recipe
+- **Environment Files**: Moved `.env.local.example` to `src/frontend/` directory
+- **Gitignore**: Updated to properly track models package files
+
+#### UI/UX
+
 - **Language Consistency**: Fixed inconsistent Vietnamese/English text
 - **RTL Support Preparation**: Added groundwork for right-to-left language support
 
-### Dependencies Added
+### Documentation
+
+- **README.md**: Complete production-ready release documentation
+- **Setup Guide**: Updated to reflect UV auto-installation and dual environment setup
+- **Just Commands Reference**: Added comprehensive command listing with descriptions
+- **Prerequisites**: Removed manual UV installation (handled by `just install`)
+- **Troubleshooting**: Added comprehensive troubleshooting section
+
+### Dependencies
+
+#### Added
 
 ```json
 {
   "xlsx": "^0.18.5",
-  "@types/xlsx": "^0.0.36"
+  "@types/xlsx": "^0.0.36",
+  "prettier": "^3.2.5"
+}
+```
+
+#### Updated
+
+```json
+{
+  "next": "16.0.3 → 16.0.7"
 }
 ```
 
 ### Files Changed
 
-- **Modified**: 128 files (100+ license headers, 28+ text updates)
-- **Added**: 1 new component (LanguageSwitcher)
-- **Backend**: No changes
+- **Modified**: 128+ files (100+ license headers, 28+ text updates, automation improvements)
+- **Added**: 2 new components (LanguageSwitcher, models package)
+- **Removed**: Redundant configurations
+
+### Migration Guide
+
+For users upgrading from v0.1.0 to v0.2.0:
+
+1. **Environment Files**: Frontend `.env.local` moved to `src/frontend/` directory
+2. **Just Commands**: Install Just task runner for automation
+3. **Dependencies**: Run `just install` to update all packages
+4. **Setup**: Use `just setup-env` to create new environment structure
+
+### Breaking Changes
+
+**None** - Fully backward compatible with v0.1.0
+
+All existing features continue to work. New automation tools are optional.
 
 ### Known Limitations
 
 - Translation quality depends on Google Translate API
 - Offline translation not supported
-- Performance impact minimal
-
-### Breaking Changes
-
-None - fully backward compatible with v0.1.0
+- Performance impact minimal (additional ~50KB bundle size)
 
 ---
 
