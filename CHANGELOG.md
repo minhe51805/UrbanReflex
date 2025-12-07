@@ -5,6 +5,37 @@ All notable changes to UrbanReflex are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Just Task Runner**: Implemented comprehensive task automation with 16+ recipes
+- **UV Auto-Installation**: `just install` now automatically installs UV package manager
+- **Dual Environment Setup**: `just setup-env` creates both backend `.env` and frontend `.env.local`
+- **Models Package**: Added `src/backend/models` with `ChatSession` and `ChatMessage` classes
+- **Code Formatting**: Added Prettier 3.2.5 to frontend dependencies
+
+### Changed
+
+- **Frontend Dependencies**: Updated Next.js from 16.0.3 to 16.0.7
+- **Frontend Linting**: Removed Husky/lint-staged from frontend (using root-level tools)
+- **Documentation**: Comprehensive README rewrite with accurate setup instructions
+- **Setup Process**: Simplified to one-command installation (`just install`)
+
+### Fixed
+
+- **Import Errors**: Fixed `ModuleNotFoundError` for `src.backend.models` package
+- **Just Commands**: Corrected `setup-env` PowerShell syntax and removed invalid `restart` recipe
+- **Environment Files**: Moved `.env.local.example` to `src/frontend/` directory
+- **Gitignore**: Updated to properly track models package files
+
+### Documentation
+
+- **README.md**: Complete rewrite with tech stack tables, project structure, and just commands
+- **Setup Guide**: Updated to reflect UV auto-installation and dual environment setup
+- **Just Commands Reference**: Added comprehensive command listing with descriptions
+- **Prerequisites**: Removed manual UV installation (handled by `just install`)
+
 ## [0.2.0] - 2025-12-07
 
 ### Added
