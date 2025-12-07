@@ -250,16 +250,6 @@ docker --version
 docker-compose --version
 ```
 
-**UV Package Manager**
-
-```bash
-# Install globally
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Or via pip
-pip install uv
-```
-
 ### Optional but Recommended
 
 - Git for version control
