@@ -1,22 +1,22 @@
-# Testing Guide - Chi tiết chức năng
+# Testing Guide - Feature Details
 
-## [object Object]ổng quan
+## Overview
 
-Hướng dẫn đầy đủ để test UrbanReflex API system.
+Complete guide to test UrbanReflex API system.
 
 ---
 
 ## 🚀 Quick Start Testing
 
-### Bước 1: Tạo API Key
+### Step 1: Create API Key
 
-1. Mở browser: `http://localhost:3000/api-keys`
+1. Open browser: `http://localhost:3000/api-keys`
 2. Click **"+ Create New Key"**
-3. Nhập tên: "Test Key"
+3. Enter name: "Test Key"
 4. Click **"Create Key"**
 5. Copy API key (format: `urx_xxxxx_xxxxx`)
 
-### Bước 2: Test với cURL
+### Step 2: Test with cURL
 
 ```bash
 # Set API key as environment variable

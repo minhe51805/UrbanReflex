@@ -1,8 +1,8 @@
-# Security Best Practices - Chi tiết chức năng
+# Security Best Practices - Feature Details
 
-## 📋 Tổng quan
+## 📋 Overview
 
-Hướng dẫn bảo mật toàn diện cho UrbanReflex API system.
+Comprehensive security guide for UrbanReflex API system.
 
 ---
 

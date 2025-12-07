@@ -1,29 +1,29 @@
 # Components Directory
 
-## Tổng quan
+## Overview
 
-Folder `components/` chứa tất cả các React components được tái sử dụng trong ứng dụng UrbanReflex. Components được tổ chức theo feature/module để dễ quản lý.
+The `components/` folder contains all reusable React components in the UrbanReflex application. Components are organized by feature/module for easy management.
 
-## Cấu trúc
+## Structure
 
 ```
 components/
-├── explore/              # Components cho trang explore
-│   ├── EnhancedRoadMapView.tsx    # Map component chính
-│   ├── RoadDetailModal.tsx        # Modal chi tiết đường phố
-│   ├── ReportsListSidebar.tsx     # Sidebar danh sách báo cáo
-│   └── FloatingReportButton.tsx   # Nút báo cáo nổi
-├── admin/                # Components cho admin dashboard
-├── auth/                 # Components cho authentication
-├── ui/                   # UI components tái sử dụng (buttons, inputs, etc.)
+├── explore/              # Components for explore page
+│   ├── EnhancedRoadMapView.tsx    # Main map component
+│   ├── RoadDetailModal.tsx        # Road detail modal
+│   ├── ReportsListSidebar.tsx     # Reports list sidebar
+│   └── FloatingReportButton.tsx   # Floating report button
+├── admin/                # Components for admin dashboard
+├── auth/                 # Components for authentication
+├── ui/                   # Reusable UI components (buttons, inputs, etc.)
 ├── layout/               # Layout components (Header, Footer)
-├── home/                 # Components cho homepage
+├── home/                 # Components for homepage
 ├── Header.tsx            # Header component
 ├── Footer.tsx            # Footer component
 └── [các components khác]
 ```
 
-## Flow chính
+## Main Flows
 
 ### 1. Explore Components Flow
 ```
@@ -60,20 +60,20 @@ AdminPage Components
 ## Components quan trọng
 
 ### `explore/EnhancedRoadMapView.tsx`
-- **Chức năng**: Render interactive map với MapLibre GL JS
+- **Function**: Render interactive map with MapLibre GL JS
 - **Features**:
   - Road segments visualization
   - Clustered road nodes (donut shape với white border)
   - Highlight markers cho selected roads
   - Popups với close button
 - **Props**:
-  - `roadSegments: RoadSegment[]` - Danh sách đoạn đường
+  - `roadSegments: RoadSegment[]` - List of road segments
   - `onRoadClick?: (road: RoadSegment) => void` - Callback khi click
   - `highlightLocation?: [number, number]` - Vị trí highlight
   - `highlightLabel?: string` - Label cho highlight
 
 ### `explore/RoadDetailModal.tsx`
-- **Chức năng**: Hiển thị chi tiết đầy đủ về một đoạn đường
+- **Function**: Display full details about a road segment
 - **Data hiển thị**:
   - Weather information
   - Air Quality Index (AQI) stations
@@ -83,7 +83,7 @@ AdminPage Components
 - **API**: `GET /api/roads/[id]`
 
 ### `explore/ReportsListSidebar.tsx`
-- **Chức năng**: Sidebar hiển thị danh sách báo cáo trong khu vực
+- **Function**: Sidebar displaying list of reports in the area
 - **Features**:
   - Spatial query (lat, lon, radius)
   - Filter by status/priority
@@ -92,10 +92,10 @@ AdminPage Components
 - **API**: `GET /api/reports?lat=&lon=&maxDistance=`
 
 ### `explore/FloatingReportButton.tsx`
-- **Chức năng**: Nút báo cáo nổi ở giữa bottom màn hình
+- **Function**: Floating report button at bottom center of screen
 - **Flow**:
-  1. Check authentication → Redirect to `/login` nếu chưa login
-  2. Check selected road → Show error nếu chưa chọn đường
+  1. Check authentication → Redirect to `/login` if not logged in
+  2. Check selected road → Show error if no road selected
   3. Open modal form
   4. Submit → `POST /api/ngsi-ld?type=RoadReport`
 

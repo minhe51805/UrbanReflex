@@ -1,8 +1,8 @@
-# Code Examples - Chi tiết chức năng
+# Code Examples - Feature Details
 
-## 📋 Tổng quan
+## 📋 Overview
 
-Collection đầy đủ các code examples để tích hợp UrbanReflex API vào ứng dụng của bạn.
+Complete collection of code examples to integrate UrbanReflex API into your application.
 
 ---
 

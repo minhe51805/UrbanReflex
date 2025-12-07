@@ -1,14 +1,30 @@
 /**
- * Author: Trương Dương Bảo Minh (minhe51805)
- * Create at: 20-11-2025
- * Update at: 01-12-2025
- * Description: Road detail panel component displaying road segment information with report button
+ * ============================================================================
+ * UrbanReflex — Smart City Intelligence Platform
+ * Copyright (C) 2025  WAG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ * For more information, visit: https://github.com/minhe51805/UrbanReflex
+ * ============================================================================
  */
+
 
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MapPin, Route, Ruler, Layers, Navigation, Database, X, Cloud, Wind, Droplets, Gauge, Eye, Lightbulb, AlertTriangle, Landmark, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { MapPin, Route, Ruler, Layers, Navigation, Database, X, Cloud, Wind, Droplets, Gauge, Eye, Lightbulb, AlertTriangle, Landmark, Loader2 } from 'lucide-react';
 import ReportButton from './ReportButton';
 
 interface RoadSegment {
@@ -67,29 +83,26 @@ interface RoadReport {
   reporterContact?: string;
 }
 
-// Simple in-memory cache cho dữ liệu chi tiết road trong phiên hiện tại
+// Simple in-memory cache for road detail data in current session
 // Key: roadId, Value: { data, timestamp }
 const ROAD_DETAIL_CACHE = new Map<string, { data: RoadDetailData; timestamp: number }>();
-const CACHE_TTL_MS = 15 * 60 * 1000; // 15 phút
+const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
 export default function RoadDetailModal({ road, onClose, onOpenAreaReports }: RoadDetailModalProps) {
   const [detailData, setDetailData] = useState<RoadDetailData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showAllAQIStations, setShowAllAQIStations] = useState(false);
 
   useEffect(() => {
     if (road) {
       fetchRoadDetails(road.id);
-      setShowAllAQIStations(false); // Reset về hiển thị 3 trạm đầu tiên khi mở modal mới
     } else {
       setDetailData(null);
-      setShowAllAQIStations(false);
     }
   }, [road]);
 
   const fetchRoadDetails = async (roadId: string) => {
-    // Nếu không có roadId thì bỏ qua
+    // If no roadId, skip
     if (!roadId) return;
 
     try {
@@ -98,7 +111,7 @@ export default function RoadDetailModal({ road, onClose, onOpenAreaReports }: Ro
       const now = Date.now();
       const cached = ROAD_DETAIL_CACHE.get(roadId);
 
-      // Nếu có cache còn hạn, dùng luôn để hiển thị nhanh, không cần spinner
+      // If cache is still valid, use it immediately for fast display, no spinner needed
       if (cached && now - cached.timestamp < CACHE_TTL_MS) {
         setDetailData(cached.data);
         setLoading(false);
@@ -158,9 +171,45 @@ export default function RoadDetailModal({ road, onClose, onOpenAreaReports }: Ro
                 <h3 className="text-lg font-bold text-gray-900 break-words mb-1.5">
                   {road.name || 'Unnamed Road'}
                 </h3>
-                <span className="inline-block px-2.5 py-0.5 rounded-lg text-xs font-semibold uppercase bg-blue-100 text-blue-700">
-                  {road.roadType}
-                </span>
+                {(() => {
+                  // Get the latest timestamp from available data sources
+                  const timestamps: (string | Date)[] = [];
+                  
+                  if (detailData?.weather?.dateObserved) {
+                    timestamps.push(new Date(detailData.weather.dateObserved));
+                  }
+                  if (road.dateCreated) {
+                    timestamps.push(new Date(road.dateCreated));
+                  }
+                  if (detailData?.aqi && Array.isArray(detailData.aqi) && detailData.aqi.length > 0) {
+                    detailData.aqi.forEach((station: any) => {
+                      if (station.dateObserved) {
+                        timestamps.push(new Date(station.dateObserved));
+                      }
+                    });
+                  }
+                  
+                  // Find the latest timestamp
+                  const latestTime = timestamps.length > 0 
+                    ? new Date(Math.max(...timestamps.map(t => new Date(t).getTime())))
+                    : null;
+                  
+                  return latestTime ? (
+                    <span className="inline-block px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-blue-100 text-blue-700">
+                      {latestTime.toLocaleString('vi-VN', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </span>
+                  ) : (
+                    <span className="inline-block px-2.5 py-0.5 rounded-lg text-xs font-semibold uppercase bg-blue-100 text-blue-700">
+                      {road.roadType}
+                    </span>
+                  );
+                })()}
               </div>
               {/* Close Button */}
               <button
@@ -197,7 +246,7 @@ export default function RoadDetailModal({ road, onClose, onOpenAreaReports }: Ro
                       <div className="bg-sky-100 p-2 rounded-lg">
                         <Cloud className="h-5 w-5 text-sky-600" />
                       </div>
-                      <h4 className="font-bold text-gray-900">1. Weather Observed (City-wide)</h4>
+                      <h4 className="font-bold text-gray-900">1. Weather Observed</h4>
                     </div>
                     <div className="bg-sky-50 rounded-xl p-4 space-y-3">
                       <div className="grid grid-cols-2 gap-3">
@@ -286,81 +335,120 @@ export default function RoadDetailModal({ road, onClose, onOpenAreaReports }: Ro
                           <p className="text-sm font-bold text-gray-900">{detailData.weather.weatherDescription} ({detailData.weather.weatherType})</p>
                         </div>
                       )}
-                      {detailData.weather.dateObserved && (
-                        <div className="bg-blue-100 rounded-lg p-2">
-                          <p className="text-xs text-blue-700">Observed: {new Date(detailData.weather.dateObserved).toLocaleString()}</p>
-                        </div>
-                      )}
                     </div>
                   </div>
                 )}
 
-                {/* AQI Section */}
-                {detailData.aqi !== undefined && detailData.aqi !== null && Array.isArray(detailData.aqi) && detailData.aqi.length > 0 && (
-                  <div className="mb-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="bg-green-100 p-2 rounded-lg">
-                        <span className="text-xl">🌬️</span>
+                {/* AQI Section - Only Nearest Station */}
+                {detailData.aqi !== undefined && detailData.aqi !== null && Array.isArray(detailData.aqi) && detailData.aqi.length > 0 && (() => {
+                  const nearestStation = detailData.aqi[0];
+                  return (
+                    <div className="mb-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="bg-green-100 p-2 rounded-lg">
+                          <span className="text-xl">🌬️</span>
+                        </div>
+                        <h4 className="font-bold text-gray-900">2. Air Quality Observed</h4>
                       </div>
-                      <h4 className="font-bold text-gray-900">2. Air Quality Observed</h4>
-                      <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-semibold">
-                        OpenAQ có {detailData.aqi.length} trạm
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-600 mb-3 ml-12">
-                      Tuyến đường sẽ visual data từ trạm OpenAQ ở gần nhất
-                    </p>
-                    <div className="bg-green-50 rounded-xl p-4 space-y-3">
-                      {(showAllAQIStations ? detailData.aqi : detailData.aqi.slice(0, 3)).map((station: any, idx: number) => (
-                        <div key={idx} className="bg-white rounded-lg p-3">
-                          <div className="flex items-center justify-between mb-2">
-                            <p className="font-semibold text-gray-900 text-sm">{station.name || station.stationId}</p>
-                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                              AQI: {station.aqi} ({station.airQualityLevel})
-                            </span>
-                          </div>
-                          <div className="grid grid-cols-2 gap-2 text-xs mb-2">
-                            <div>PM2.5: {station.pm25} µg/m³</div>
-                            <div>PM10: {station.pm10} µg/m³</div>
-                            <div>NO₂: {station.no2} µg/m³</div>
-                            <div>O₃: {station.o3} µg/m³</div>
-                            {station.so2 !== undefined && <div>SO₂: {station.so2} µg/m³</div>}
-                            {station.co !== undefined && <div>CO: {station.co} mg/m³</div>}
-                          </div>
-                          {station.measurementQuality && (
-                            <div className="text-xs text-gray-600">
-                              Quality: <span className="font-semibold">{station.measurementQuality}</span>
+                      <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-5 border border-green-100">
+                        {/* Station Name & AQI Badge */}
+                        <div className="flex items-center justify-between mb-4">
+                          <p className="font-bold text-gray-900 text-base">{nearestStation.name || nearestStation.stationId}</p>
+                          <span className="text-sm bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 py-1.5 rounded-full font-bold shadow-sm">
+                            AQI: {nearestStation.aqi}
+                          </span>
+                        </div>
+                        
+                        {/* Air Quality Parameters Grid */}
+                        <div className="grid grid-cols-2 gap-3">
+                          {/* PM2.5 */}
+                          {nearestStation.pm25 !== undefined && (
+                            <div className="bg-white rounded-xl p-4 border-2 border-orange-200 shadow-sm hover:shadow-md transition-shadow">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                                  <span className="text-xs font-bold text-orange-700">PM</span>
+                                </div>
+                                <span className="text-xs font-semibold text-gray-600">PM2.5</span>
+                              </div>
+                              <p className="text-2xl font-bold text-gray-900">{nearestStation.pm25}</p>
+                              <p className="text-xs text-gray-500 mt-1">µg/m³</p>
                             </div>
                           )}
-                          {station.dateObserved && (
-                            <div className="text-xs text-gray-500 mt-1">
-                              {new Date(station.dateObserved).toLocaleString()}
+                          
+                          {/* PM10 */}
+                          {nearestStation.pm10 !== undefined && (
+                            <div className="bg-white rounded-xl p-4 border-2 border-red-200 shadow-sm hover:shadow-md transition-shadow">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                                  <span className="text-xs font-bold text-red-700">PM</span>
+                                </div>
+                                <span className="text-xs font-semibold text-gray-600">PM10</span>
+                              </div>
+                              <p className="text-2xl font-bold text-gray-900">{nearestStation.pm10}</p>
+                              <p className="text-xs text-gray-500 mt-1">µg/m³</p>
+                            </div>
+                          )}
+                          
+                          {/* NO₂ */}
+                          {nearestStation.no2 !== undefined && (
+                            <div className="bg-white rounded-xl p-4 border-2 border-yellow-200 shadow-sm hover:shadow-md transition-shadow">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                                  <span className="text-xs font-bold text-yellow-700">NO</span>
+                                </div>
+                                <span className="text-xs font-semibold text-gray-600">NO₂</span>
+                              </div>
+                              <p className="text-2xl font-bold text-gray-900">{nearestStation.no2}</p>
+                              <p className="text-xs text-gray-500 mt-1">µg/m³</p>
+                            </div>
+                          )}
+                          
+                          {/* O₃ */}
+                          {nearestStation.o3 !== undefined && (
+                            <div className="bg-white rounded-xl p-4 border-2 border-blue-200 shadow-sm hover:shadow-md transition-shadow">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                  <span className="text-xs font-bold text-blue-700">O</span>
+                                </div>
+                                <span className="text-xs font-semibold text-gray-600">O₃</span>
+                              </div>
+                              <p className="text-2xl font-bold text-gray-900">{nearestStation.o3}</p>
+                              <p className="text-xs text-gray-500 mt-1">µg/m³</p>
+                            </div>
+                          )}
+                          
+                          {/* SO₂ */}
+                          {nearestStation.so2 !== undefined && (
+                            <div className="bg-white rounded-xl p-4 border-2 border-purple-200 shadow-sm hover:shadow-md transition-shadow">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                                  <span className="text-xs font-bold text-purple-700">SO</span>
+                                </div>
+                                <span className="text-xs font-semibold text-gray-600">SO₂</span>
+                              </div>
+                              <p className="text-2xl font-bold text-gray-900">{nearestStation.so2}</p>
+                              <p className="text-xs text-gray-500 mt-1">µg/m³</p>
+                            </div>
+                          )}
+                          
+                          {/* CO */}
+                          {nearestStation.co !== undefined && (
+                            <div className="bg-white rounded-xl p-4 border-2 border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                                  <span className="text-xs font-bold text-gray-700">CO</span>
+                                </div>
+                                <span className="text-xs font-semibold text-gray-600">CO</span>
+                              </div>
+                              <p className="text-2xl font-bold text-gray-900">{nearestStation.co}</p>
+                              <p className="text-xs text-gray-500 mt-1">mg/m³</p>
                             </div>
                           )}
                         </div>
-                      ))}
-                      {detailData.aqi.length > 3 && (
-                        <button
-                          type="button"
-                          onClick={() => setShowAllAQIStations(!showAllAQIStations)}
-                          className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-green-700 bg-white border border-green-200 rounded-lg hover:bg-green-50 transition-colors"
-                        >
-                          {showAllAQIStations ? (
-                            <>
-                              <ChevronUp className="w-4 h-4" />
-                              <span>Thu gọn</span>
-                            </>
-                          ) : (
-                            <>
-                              <ChevronDown className="w-4 h-4" />
-                              <span>Xem tất cả ({detailData.aqi.length} trạm)</span>
-                            </>
-                          )}
-                        </button>
-                      )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {/* Streetlights Section - removed from UI per design request */}
 
@@ -373,7 +461,7 @@ export default function RoadDetailModal({ road, onClose, onOpenAreaReports }: Ro
                           <AlertTriangle className="h-5 w-5 text-rose-600" />
                         </div>
                         <div className="flex items-center gap-2">
-                          <h4 className="font-bold text-gray-900">4. Citizen Reports</h4>
+                          <h4 className="font-bold text-gray-900">3. Citizen Reports</h4>
                           {Array.isArray(detailData.reports) && detailData.reports.length > 0 && (
                             <span className="text-xs bg-rose-100 text-rose-700 px-2 py-1 rounded-full font-semibold">
                               {detailData.reports.length}
@@ -423,17 +511,27 @@ export default function RoadDetailModal({ road, onClose, onOpenAreaReports }: Ro
                                 Location: [{report.location.coordinates[0].toFixed(5)}, {report.location.coordinates[1].toFixed(5)}]
                               </p>
                             )}
-                            {report.dateCreated && (
-                              <p className="text-xs text-gray-500">
-                                {new Date(report.dateCreated).toLocaleString()}
-                              </p>
-                            )}
+                            {report.dateCreated && (() => {
+                              try {
+                                const date = new Date(report.dateCreated);
+                                if (!isNaN(date.getTime())) {
+                                  return (
+                                    <p className="text-xs text-gray-500">
+                                      {date.toLocaleString()}
+                                    </p>
+                                  );
+                                }
+                              } catch (e) {
+                                // Invalid date, don't display
+                              }
+                              return null;
+                            })()}
                           </div>
                         ))}
                       </div>
                     ) : (
                       <div className="bg-rose-50 rounded-xl p-4 text-center">
-                        <p className="text-sm text-gray-600">(Không có report nào cho tuyến đường này)</p>
+                        <p className="text-sm text-gray-600">(No reports for this road segment)</p>
                       </div>
                     )}
                   </div>
@@ -446,7 +544,7 @@ export default function RoadDetailModal({ road, onClose, onOpenAreaReports }: Ro
                       <div className="bg-purple-100 p-2 rounded-lg">
                         <Landmark className="h-5 w-5 text-purple-600" />
                       </div>
-                      <h4 className="font-bold text-gray-900">5. Points of Interest</h4>
+                      <h4 className="font-bold text-gray-900">4. Points of Interest</h4>
                       {Array.isArray(detailData.pois) && detailData.pois.length > 0 && (
                         <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-semibold">
                           {detailData.pois.length}
@@ -469,7 +567,7 @@ export default function RoadDetailModal({ road, onClose, onOpenAreaReports }: Ro
                       </div>
                     ) : (
                       <div className="bg-purple-50 rounded-xl p-4 text-center">
-                        <p className="text-sm text-gray-600">(Không có POI nào gần tuyến đường trong bán kính đặt ra)</p>
+                        <p className="text-sm text-gray-600">(No POIs near this road segment within the specified radius)</p>
                       </div>
                     )}
                   </div>
@@ -477,54 +575,36 @@ export default function RoadDetailModal({ road, onClose, onOpenAreaReports }: Ro
               </>
             )}
 
-            {/* Road Statistics */}
+            {/* Road Statistics - Length and Surface in one row */}
             <div className="mb-4">
               <div className="grid grid-cols-2 gap-3">
+                {/* Length */}
                 <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white">
                   <div className="flex items-center gap-2 mb-2">
                     <Ruler className="h-4 w-4" />
                     <span className="text-xs font-semibold uppercase">Length</span>
                   </div>
-                  <p className="text-2xl font-bold">{road.length.toFixed(0)} m</p>
+                  <p className="text-2xl font-bold">
+                    {road.length && typeof road.length === 'number' 
+                      ? `${road.length.toFixed(0)} m`
+                      : detailData?.road?.length && typeof detailData.road.length === 'number'
+                      ? `${detailData.road.length.toFixed(0)} m`
+                      : 'N/A'}
+                  </p>
                 </div>
 
-                {road.laneCount && (
-                  <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-4 text-white">
+                {/* Surface */}
+                {road.surface && (
+                  <div className="bg-purple-50 rounded-xl p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <Route className="h-4 w-4" />
-                      <span className="text-xs font-semibold uppercase">Lanes</span>
+                      <Layers className="h-4 w-4 text-purple-600" />
+                      <span className="text-xs font-semibold uppercase text-purple-700">Surface</span>
                     </div>
-                    <p className="text-2xl font-bold">{road.laneCount}</p>
+                    <p className="text-lg font-bold text-purple-900 capitalize">{road.surface}</p>
                   </div>
                 )}
               </div>
             </div>
-
-            {(road.surface || road.maximumAllowedSpeed) && (
-              <div className="mb-4">
-                <div className="grid grid-cols-2 gap-3">
-                  {road.surface && (
-                    <div className="bg-purple-50 rounded-xl p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Layers className="h-4 w-4 text-purple-600" />
-                        <span className="text-xs font-semibold uppercase text-purple-700">Surface</span>
-                      </div>
-                      <p className="text-lg font-bold text-purple-900 capitalize">{road.surface}</p>
-                    </div>
-                  )}
-
-                  {road.maximumAllowedSpeed && (
-                    <div className="bg-orange-50 rounded-xl p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Navigation className="h-4 w-4 text-orange-600" />
-                        <span className="text-xs font-semibold uppercase text-orange-700">Max Speed</span>
-                      </div>
-                      <p className="text-lg font-bold text-orange-900">{road.maximumAllowedSpeed} km/h</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
 
           </div>
         </div>

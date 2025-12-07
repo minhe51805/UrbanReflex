@@ -6,7 +6,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { MessageCircle, X, Send, Bot, Minimize2, RefreshCw, Copy, Check, ChevronDown, LogIn } from 'lucide-react';
+import { MessageCircle, X, Send, Bot, RefreshCw, Copy, Check, ChevronDown, LogIn } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -31,7 +31,7 @@ export default function FloatingChatButton() {
     {
       id: '0',
       role: 'assistant',
-      content: '**Xin chào!** Tôi là trợ lý hỗ trợ của UrbanReflex.\n\nTôi có thể giúp bạn:\n- Tìm hiểu về hệ thống\n- Hướng dẫn sử dụng\n- Trả lời câu hỏi\n- Hỗ trợ kỹ thuật\n\nBạn cần hỗ trợ gì hôm nay?',
+      content: '**Hello!** I am UrbanReflex support assistant.\n\nI can help you:\n- Learn about the system\n- Usage guidance\n- Answer questions\n- Technical support\n\nWhat do you need help with today?',
       timestamp: new Date(),
     },
   ]);
@@ -45,12 +45,12 @@ export default function FloatingChatButton() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   
-  // Đếm số câu hỏi của user (chỉ đếm user messages, không tính welcome message)
+  // Count user questions (only count user messages, not welcome message)
   const userQuestionCount = useMemo(() => {
     return messages.filter(msg => msg.role === 'user').length;
   }, [messages]);
   
-  // Check nếu đã đạt giới hạn và chưa login
+  // Check if limit reached and not logged in
   const hasReachedLimit = !isAuthenticated && userQuestionCount >= MAX_QUESTIONS_FOR_GUEST;
   const dragStateRef = useRef<{ isDragging: boolean; startX: number; startRight: number; moved: boolean; containerWidth: number }>({
     isDragging: false,
@@ -92,14 +92,14 @@ export default function FloatingChatButton() {
       // Khi kéo sang trái (deltaX > 0) thì giảm right, kéo sang phải tăng right
       let nextRight = dragState.startRight - deltaX;
 
-      // Giới hạn trong viewport: đảm bảo toàn bộ container vẫn nằm trong màn hình
-      const minRight = 8; // khoảng cách mép phải tối thiểu
+      // Limit within viewport: ensure entire container stays within screen
+      const minRight = 8; // minimum right edge distance
       const viewportWidth = window.innerWidth || 0;
       const maxRight = Math.max(8, viewportWidth - dragState.containerWidth - 8);
       if (nextRight < minRight) nextRight = minRight;
       if (nextRight > maxRight) nextRight = maxRight;
 
-      // Đánh dấu là đã kéo (để không trigger click khi chỉ muốn kéo)
+      // Mark as moved (to prevent click trigger when only dragging)
       if (Math.abs(deltaX) > 3) {
         dragState.moved = true;
       }
@@ -134,7 +134,7 @@ export default function FloatingChatButton() {
     dragState.moved = false;
     dragState.startX = clientX;
     dragState.startRight = buttonRightOffset;
-    // Ước lượng width hiện tại của container để clamp (chat window rộng hơn floating button)
+    // Estimate current container width for clamping (chat window is wider than floating button)
     dragState.containerWidth = isOpen ? (isMinimized ? 320 : 420) : 72;
   };
 
@@ -149,12 +149,12 @@ export default function FloatingChatButton() {
   };
 
   const handleReset = () => {
-    if (confirm('Bạn có chắc muốn bắt đầu cuộc trò chuyện mới?')) {
+    if (confirm('Are you sure you want to start a new conversation?')) {
       setMessages([
         {
           id: String(Date.now()),
           role: 'assistant',
-          content: '**Xin chào!** Tôi là trợ lý hỗ trợ của UrbanReflex.\n\nTôi có thể giúp bạn:\n- Tìm hiểu về hệ thống\n- Hướng dẫn sử dụng\n- Trả lời câu hỏi\n- Hỗ trợ kỹ thuật\n\nBạn cần hỗ trợ gì hôm nay?',
+          content: '**Hello!** I am UrbanReflex support assistant.\n\nI can help you:\n- Learn about the system\n- Usage guidance\n- Answer questions\n- Technical support\n\nWhat do you need help with today?',
           timestamp: new Date(),
         },
       ]);
@@ -164,9 +164,9 @@ export default function FloatingChatButton() {
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isTyping) return;
     
-    // Check giới hạn cho guest users
+    // Check limit for guest users
     if (!isAuthenticated && userQuestionCount >= MAX_QUESTIONS_FOR_GUEST) {
-      return; // Không cho phép gửi thêm
+      return; // Do not allow sending more
     }
 
     const userMessage = inputMessage.trim();
@@ -205,7 +205,7 @@ export default function FloatingChatButton() {
         {
           id: String(Date.now()),
           role: 'assistant',
-          content: data.response || 'Xin lỗi, tôi không thể trả lời câu hỏi này. Vui lòng thử lại sau.',
+          content: data.response || 'Sorry, I cannot answer this question. Please try again later.',
           timestamp: new Date(),
         },
       ]);
@@ -216,7 +216,7 @@ export default function FloatingChatButton() {
         {
           id: String(Date.now()),
           role: 'assistant',
-          content: '**Lỗi kết nối**\n\nXin lỗi, đã có lỗi xảy ra khi kết nối với hệ thống.\n\nVui lòng:\n- Thử lại sau\n- Kiểm tra kết nối mạng\n- Liên hệ đội ngũ hỗ trợ nếu lỗi vẫn tiếp diễn',
+          content: '**Connection Error**\n\nSorry, an error occurred while connecting to the system.\n\nPlease:\n- Try again later\n- Check your network connection\n- Contact support team if the error persists',
           timestamp: new Date(),
         },
       ]);
@@ -235,7 +235,7 @@ export default function FloatingChatButton() {
   };
 
   const formatTime = (date: Date) => {
-    return new Intl.DateTimeFormat('vi-VN', {
+    return new Intl.DateTimeFormat('en-US', {
       hour: '2-digit',
       minute: '2-digit',
     }).format(date);
@@ -348,16 +348,9 @@ export default function FloatingChatButton() {
                 onClick={handleReset}
                 className="p-2 hover:bg-white/20 rounded-lg transition-colors text-white hover:text-white border border-transparent hover:border-white/30"
                 aria-label="Reset chat"
-                title="Bắt đầu lại"
+                title="Start over"
               >
                 <RefreshCw className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setIsMinimized(!isMinimized)}
-                className="p-2 hover:bg-white/20 rounded-lg transition-colors text-white hover:text-white border border-transparent hover:border-white/30"
-                aria-label={isMinimized ? 'Expand' : 'Minimize'}
-              >
-                <Minimize2 className="w-4 h-4" />
               </button>
               <button
                 onClick={() => {
@@ -480,7 +473,7 @@ export default function FloatingChatButton() {
 
               {/* Input - UrbanReflex Style */}
               <div className="p-4 border-t-2 border-[#64BABE] bg-white">
-                {/* Thông báo giới hạn cho guest users */}
+                {/* Limit notification for guest users */}
                 {!isAuthenticated && (
                   <div className={`mb-3 p-3 rounded-lg border-2 ${
                     hasReachedLimit 
@@ -494,17 +487,17 @@ export default function FloatingChatButton() {
                         </div>
                         <div className="flex-1">
                           <p className="text-sm font-bold text-[#D4343F] mb-1">
-                            Đã đạt giới hạn {MAX_QUESTIONS_FOR_GUEST} câu hỏi
+                            Reached limit of {MAX_QUESTIONS_FOR_GUEST} questions
                           </p>
                           <p className="text-xs text-gray-700 mb-2">
-                            Vui lòng đăng nhập để tiếp tục sử dụng chatbot.
+                            Please log in to continue using the chatbot.
                           </p>
                           <Link
                             href="/login"
                             className="inline-flex items-center gap-2 px-4 py-2 bg-[#008EA0] hover:bg-[#085979] text-white text-sm font-bold rounded-lg border-2 border-[#085979] shadow-[2px_2px_0_0_#085979] hover:shadow-[4px_4px_0_0_#085979] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-150"
                           >
                             <LogIn className="w-4 h-4" />
-                            Đăng nhập ngay
+                            Log in now
                           </Link>
                         </div>
                       </div>
@@ -514,10 +507,10 @@ export default function FloatingChatButton() {
                           <Bot className="w-3 h-3 text-white" />
                         </div>
                         <p className="text-xs text-gray-700 font-medium">
-                          Bạn còn <span className="font-bold text-[#008EA0]">{MAX_QUESTIONS_FOR_GUEST - userQuestionCount}</span> câu hỏi miễn phí. 
+                          You have <span className="font-bold text-[#008EA0]">{MAX_QUESTIONS_FOR_GUEST - userQuestionCount}</span> free questions remaining. 
                           <Link href="/login" className="text-[#008EA0] hover:text-[#085979] underline font-bold ml-1">
-                            Đăng nhập
-                          </Link> để không giới hạn.
+                            Log in
+                          </Link> for unlimited access.
                         </p>
                       </div>
                     )}
@@ -531,7 +524,7 @@ export default function FloatingChatButton() {
                       value={inputMessage}
                       onChange={(e) => setInputMessage(e.target.value)}
                       onKeyDown={handleKeyPress}
-                      placeholder={hasReachedLimit ? "Vui lòng đăng nhập để tiếp tục..." : "Type your message..."}
+                      placeholder={hasReachedLimit ? "Please log in to continue..." : "Type your message..."}
                       rows={1}
                       className={`w-full px-4 py-2.5 border-2 rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 resize-none bg-white text-sm font-medium text-gray-800 ${
                         hasReachedLimit

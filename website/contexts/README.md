@@ -1,17 +1,17 @@
 # Contexts Directory
 
-## Tổng quan
+## Overview
 
-Folder `contexts/` chứa các React Context providers để quản lý global state trong ứng dụng UrbanReflex. Hiện tại chủ yếu tập trung vào authentication state.
+The `contexts/` folder contains React Context providers to manage global state in the UrbanReflex application. Currently focused mainly on authentication state.
 
-## Cấu trúc
+## Structure
 
 ```
 contexts/
 └── AuthContext.tsx      # Authentication context provider
 ```
 
-## Flow chính
+## Main Flows
 
 ### Authentication Flow
 

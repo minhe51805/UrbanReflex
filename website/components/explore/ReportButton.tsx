@@ -1,9 +1,25 @@
 /**
- * Author: Trương Dương Bảo Minh (minhe51805)
- * Create at: 20-11-2025
- * Update at: 01-12-2025
- * Description: Report button component for road issue reporting with image upload capability
+ * ============================================================================
+ * UrbanReflex — Smart City Intelligence Platform
+ * Copyright (C) 2025  WAG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ * For more information, visit: https://github.com/minhe51805/UrbanReflex
+ * ============================================================================
  */
+
 
 'use client';
 
@@ -395,7 +411,7 @@ export default function ReportButton({ roadId, roadName, location }: ReportButto
                 {success && (
                   <div className="bg-gradient-to-r from-green-50 to-green-100 border-2 border-green-300 text-green-800 px-4 py-3 rounded-xl text-sm font-medium flex items-start gap-2">
                     <span className="text-lg">✅</span>
-                    <span>Báo cáo đã được gửi thành công! Admin sẽ xem xét trong thời gian sớm nhất.</span>
+                    <span>Report submitted successfully! Admin will review it as soon as possible.</span>
                   </div>
                 )}
 

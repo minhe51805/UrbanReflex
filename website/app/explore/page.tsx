@@ -1,8 +1,23 @@
 /**
- * Author: Trương Dương Bảo Minh (minhe51805)
- * Create at: 13-11-2025
- * Update at: 01-12-2025
- * Description: Explore page with Vietnam road network visualization and community reporting system
+ * ============================================================================
+ * UrbanReflex — Smart City Intelligence Platform
+ * Copyright (C) 2025  WAG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ * For more information, visit: https://github.com/minhe51805/UrbanReflex
+ * ============================================================================
  */
 
 'use client';
@@ -140,10 +155,7 @@ function VirtualizedRoadList({ roads, onRoadClick }: { roads: RoadSegment[]; onR
 
 function ExplorePageContent() {
   const searchParams = useSearchParams();
-<<<<<<< HEAD
   const MAX_ROADS_DISPLAY = 2500;
-=======
->>>>>>> frontend
   const [roadSegments, setRoadSegments] = useState<RoadSegment[]>([]);
   const [filteredRoadSegments, setFilteredRoadSegments] = useState<RoadSegment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -160,7 +172,6 @@ function ExplorePageContent() {
   const [highlightLabel, setHighlightLabel] = useState<string>('');
   const [areaReports, setAreaReports] = useState<ReportMarker[]>([]);
   const [streetlightMarkers, setStreetlightMarkers] = useState<Array<{id: string; coordinates: [number, number]; powerState?: string; status?: string}>>([]);
-<<<<<<< HEAD
   const totalRoadCount = filteredRoadSegments.length;
 
   const displayedRoadSegments = useMemo(
@@ -168,22 +179,13 @@ function ExplorePageContent() {
     [filteredRoadSegments, MAX_ROADS_DISPLAY]
   );
 
-=======
-  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
-  const totalRoadCount = filteredRoadSegments.length;
-
-  // Use all filtered road segments (no artificial display limit)
-  const displayedRoadSegments = filteredRoadSegments;
->>>>>>> frontend
   const displayedRoadCount = displayedRoadSegments.length;
 
   useEffect(() => {
     loadRoadSegments();
   }, []);
 
-<<<<<<< HEAD
-=======
-  // Lấy vị trí hiện tại của người dùng (nếu được browser cho phép)
+  // Get current user location (if browser allows)
   useEffect(() => {
     if (typeof window === 'undefined' || !navigator.geolocation) return;
 
@@ -205,7 +207,6 @@ function ExplorePageContent() {
     );
   }, []);
 
->>>>>>> frontend
   useEffect(() => {
     if (!showReportsSidebar) {
       setAreaReports([]);
@@ -284,10 +285,7 @@ function ExplorePageContent() {
     setReportsLocation(centerLocation);
     setHighlightLocation(centerLocation);
     setHighlightLabel(road.name);
-<<<<<<< HEAD
     setShowReportsSidebar(true);
-=======
->>>>>>> frontend
 
     // Fetch streetlights for this road - chỉ hiện khi road được chọn
     try {
@@ -513,10 +511,6 @@ function ExplorePageContent() {
           highlightLabel={highlightLabel}
           reportMarkers={areaReports}
           streetlightMarkers={streetlightMarkers}
-<<<<<<< HEAD
-=======
-          userLocation={userLocation}
->>>>>>> frontend
         />
       </div>
 
@@ -688,20 +682,6 @@ function ExplorePageContent() {
       <RoadDetailModal
         road={selectedRoad}
         onClose={() => setSelectedRoad(null)}
-<<<<<<< HEAD
-=======
-        onOpenAreaReports={() => {
-          if (!selectedRoad) return;
-          // Đảm bảo đã có vị trí để sidebar dùng
-          if (!reportsLocation && selectedRoad.location?.coordinates?.length) {
-            const centerIndex = Math.floor(selectedRoad.location.coordinates.length / 2);
-            const rawCenter = selectedRoad.location.coordinates[centerIndex] || [0, 0];
-            const [lng, lat] = normalizeLngLat(rawCenter);
-            setReportsLocation([lng, lat]);
-          }
-          setShowReportsSidebar(true);
-        }}
->>>>>>> frontend
       />
 
       {/*Reports List Sidebar*/}
@@ -709,25 +689,11 @@ function ExplorePageContent() {
         <ReportsListSidebar
           location={reportsLocation}
           radius={1}
-<<<<<<< HEAD
-=======
-          attachToRoadDetail
->>>>>>> frontend
           onClose={() => {
             setShowReportsSidebar(false);
             setAreaReports([]);
           }}
           onApprovedReportsUpdate={setAreaReports}
-<<<<<<< HEAD
-=======
-          onFocusLocation={(coords, label) => {
-            if (!coords) return;
-            const [lng, lat] = coords;
-            if (!isFinite(lng) || !isFinite(lat)) return;
-            setHighlightLocation([lng, lat]);
-            setHighlightLabel(label || 'Citizen report');
-          }}
->>>>>>> frontend
         />
       )}
 

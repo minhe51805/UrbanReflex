@@ -1,8 +1,23 @@
 /**
- * Author: Trương Dương Bảo Minh (minhe51805)
- * Create at: 13-11-2025
- * Update at: 01-12-2025
- * Description: Main navigation header component with responsive mobile menu and dropdown navigation for the application
+ * ============================================================================
+ * UrbanReflex — Smart City Intelligence Platform
+ * Copyright (C) 2025  WAG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ * For more information, visit: https://github.com/minhe51805/UrbanReflex
+ * ============================================================================
  */
 
 'use client';
@@ -12,6 +27,7 @@ import { useState } from 'react';
 
 import { Menu, X, ChevronDown, LogIn, LogOut, User, Shield, UserCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
 
 type NavigationItem = {
   name: string;
@@ -122,13 +138,6 @@ export default function Header() {
                   <User className="w-4 h-4 text-slate-600" />
                   <span className="text-sm font-medium text-slate-700">{user.full_name}</span>
                 </Link>
-                <button
-                  onClick={logout}
-                  className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span>Logout</span>
-                </button>
               </>
             ) : (
               <div
@@ -164,6 +173,16 @@ export default function Header() {
                   </div>
                 )}
               </div>
+            )}
+            <LanguageSwitcher />
+            {user && (
+              <button
+                onClick={logout}
+                className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Logout</span>
+              </button>
             )}
             <Link
               href="/donate"
@@ -248,6 +267,10 @@ export default function Header() {
                     </Link>
                   </>
                 )}
+              </div>
+
+              <div className="mt-4 mx-3">
+                <LanguageSwitcher />
               </div>
 
               <Link

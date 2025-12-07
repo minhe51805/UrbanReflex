@@ -1,27 +1,27 @@
-# API Key Management - Chi tiết chức năng
+# API Key Management - Feature Details
 
-## 📋 Tổng quan
+## 📋 Overview
 
-Trang quản lý API Keys cho phép người dùng tạo, xem, và quản lý các API keys để truy cập UrbanReflex API.
+The API Keys management page allows users to create, view, and manage API keys to access UrbanReflex API.
 
 **URL**: `/api-keys`  
 **File**: `app/api-keys/page.tsx`
 
 ---
 
-## 🎯 Các chức năng chính
+## 🎯 Main Features
 
-### 1. Tạo API Key mới
+### 1. Create New API Key
 
-#### Mô tả
-Người dùng có thể tạo API key mới với tên tùy chỉnh để dễ dàng quản lý và phân biệt.
+#### Description
+Users can create new API keys with custom names for easy management and identification.
 
-#### Cách sử dụng
-1. Click nút **"+ Create New Key"**
-2. Nhập tên cho API key (ví dụ: "Production App", "Development", "Mobile App")
+#### Usage
+1. Click **"+ Create New Key"** button
+2. Enter name for API key (e.g., "Production App", "Development", "Mobile App")
 3. Click **"Create Key"**
-4. API key mới sẽ được hiển thị trong alert màu xanh
-5. **Copy ngay** vì bạn sẽ không thể xem lại full key sau này
+4. New API key will be displayed in green alert
+5. **Copy immediately** as you won't be able to view the full key again later
 
 #### Technical Details
 ```typescript
@@ -34,9 +34,9 @@ const generateAPIKey = () => {
 ```
 
 **Format**: `urx_[timestamp]_[random_string]`
-- `urx_` - Prefix để identify UrbanReflex keys
-- `[timestamp]` - Base36 timestamp để đảm bảo unique
-- `[random_string]` - Random alphanumeric string để security
+- `urx_` - Prefix to identify UrbanReflex keys
+- `[timestamp]` - Base36 timestamp to ensure uniqueness
+- `[random_string]` - Random alphanumeric string for security
 
 #### Data Structure
 ```typescript
@@ -53,18 +53,18 @@ interface APIKey {
 
 ---
 
-### 2. Xem danh sách API Keys
+### 2. View API Keys List
 
-#### Mô tả
-Hiển thị tất cả API keys đã tạo với thông tin chi tiết và trạng thái.
+#### Description
+Display all created API keys with detailed information and status.
 
-#### Thông tin hiển thị
-- **Name**: Tên do người dùng đặt
+#### Displayed Information
+- **Name**: User-defined name
 - **Status**: Active/Inactive badge
-- **API Key**: Masked hoặc full (tùy toggle)
-- **Created**: Ngày tạo
-- **Last Used**: Lần sử dụng cuối (hoặc "Never")
-- **Requests**: Tổng số requests đã thực hiện
+- **API Key**: Masked or full (depending on toggle)
+- **Created**: Creation date
+- **Last Used**: Last usage time (or "Never")
+- **Requests**: Total number of requests made
 
 #### UI Components
 ```tsx
@@ -89,12 +89,12 @@ Hiển thị tất cả API keys đã tạo với thông tin chi tiết và tr�
 
 ---
 
-### 3. Ẩn/Hiện API Key
+### 3. Hide/Show API Key
 
-#### Mô tả
-Toggle visibility của API key để bảo vệ khỏi shoulder surfing.
+#### Description
+Toggle API key visibility to protect against shoulder surfing.
 
-#### Cách hoạt động
+#### How it Works
 - **Hidden**: `urx_lq8k9j_********************`
 - **Visible**: `urx_lq8k9j_abc123def456ghi789`
 
@@ -122,22 +122,22 @@ const maskKey = (key: string) => {
 ```
 
 #### UI States
-- **Eye Icon** (👁️): Click để show key
-- **Eye Off Icon** (🚫👁️): Click để hide key
-- Hover effect để indicate clickable
+- **Eye Icon** (👁️): Click to show key
+- **Eye Off Icon** (🚫👁️): Click to hide key
+- Hover effect to indicate clickable
 
 ---
 
 ### 4. Copy API Key
 
-#### Mô tả
-Copy API key vào clipboard với visual feedback.
+#### Description
+Copy API key to clipboard with visual feedback.
 
 #### Features
-- Click icon 📋 để copy
-- Visual feedback: Icon đổi thành ✅ trong 2 giây
+- Click icon 📋 to copy
+- Visual feedback: Icon changes to ✅ for 2 seconds
 - Toast notification (optional)
-- Works với cả masked và visible keys
+- Works with both masked and visible keys
 
 #### Implementation
 ```typescript
@@ -163,16 +163,16 @@ const copyToClipboard = (key: string, id: string) => {
 
 ---
 
-### 5. Xóa API Key
+### 5. Delete API Key
 
-#### Mô tả
-Xóa API key với confirmation để tránh xóa nhầm.
+#### Description
+Delete API key with confirmation to prevent accidental deletion.
 
 #### Flow
 1. Click icon 🗑️ (Trash)
-2. Confirmation dialog xuất hiện
-3. Confirm → Key bị xóa khỏi localStorage
-4. Cancel → Không làm gì
+2. Confirmation dialog appears
+3. Confirm → Key is removed from localStorage
+4. Cancel → No action
 
 #### Implementation
 ```typescript
@@ -188,21 +188,21 @@ const deleteKey = (id: string) => {
 ```
 
 #### Security Note
-⚠️ **Warning**: Xóa API key sẽ làm tất cả applications đang sử dụng key đó bị lỗi authentication.
+⚠️ **Warning**: Deleting an API key will cause all applications using that key to fail authentication.
 
 ---
 
 ### 6. Newly Created Key Alert
 
-#### Mô tả
-Hiển thị alert đặc biệt khi vừa tạo key mới, nhắc nhở user copy ngay.
+#### Description
+Display special alert when a new key is just created, reminding user to copy immediately.
 
 #### Features
-- Background màu xanh lá (success)
+- Green background (success)
 - Border highlight
 - Full API key visible
 - Copy button
-- Auto-hide sau 30 giây
+- Auto-hide after 30 seconds
 
 #### Implementation
 ```typescript
@@ -246,11 +246,11 @@ const createNewKey = async () => {
 
 ### 7. Empty State
 
-#### Mô tả
-Hiển thị khi chưa có API key nào được tạo.
+#### Description
+Displayed when no API keys have been created yet.
 
 #### Features
-- Icon lớn (Key icon)
+- Large icon (Key icon)
 - Heading: "No API Keys Yet"
 - Description text
 - Call-to-action button
@@ -273,13 +273,13 @@ Hiển thị khi chưa có API key nào được tạo.
 
 ### 8. API Base URL Display
 
-#### Mô tả
-Hiển thị base URL của API để user biết endpoint gốc.
+#### Description
+Display API base URL so user knows the root endpoint.
 
 #### Features
-- Dynamic URL (lấy từ `window.location.origin`)
+- Dynamic URL (taken from `window.location.origin`)
 - Copy button
-- Hướng dẫn cách sử dụng header
+- Instructions on how to use header
 
 #### Implementation
 ```tsx

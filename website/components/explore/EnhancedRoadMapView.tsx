@@ -1,8 +1,25 @@
 /**
- * Author: Trương Dương Bảo Minh (minhe51805)
- * Create at: 27-11-2025
- * Description: Simple map with road segments and markers
+ * ============================================================================
+ * UrbanReflex — Smart City Intelligence Platform
+ * Copyright (C) 2025  WAG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ * For more information, visit: https://github.com/minhe51805/UrbanReflex
+ * ============================================================================
  */
+
 
 'use client';
 
@@ -1182,7 +1199,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
       container: mapContainer.current,
       center: vietnamCenter,
       zoom: vietnamZoom,
-      // Hạn chế mức zoom tối đa để không request tile vượt quá level hỗ trợ (tránh 400)
+      // Limit maximum zoom level to avoid requesting tiles beyond supported level (prevent 400)
       maxZoom: 19,
     };
 
@@ -1202,7 +1219,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
                 type: 'raster',
                 tiles: ['/api/tiles/{z}/{x}/{y}'],
                 tileSize: 256,
-                // Giới hạn zoom level của source để không request tile > 19
+                // Limit source zoom level to avoid requesting tiles > 19
                 maxzoom: 19,
                 attribution: '© OpenStreetMap contributors',
               },
@@ -1311,7 +1328,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
         .setPopup(popup)
         .addTo(map.current);
 
-      // Khi đóng popup thì remove luôn marker để không còn pin trên map
+      // When closing popup, remove marker so no pin remains on map
       popup.on('close', () => {
         if (highlightMarkerRef.current) {
           highlightMarkerRef.current.remove();
@@ -1321,11 +1338,11 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
     }
   }, [highlightLocation, highlightLabel, mapLoaded]);
 
-  // User location marker (vị trí hiện tại của người dùng)
+  // User location marker (current user location)
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
 
-    // Remove old marker nếu có
+    // Remove old marker if exists
     if (userLocationMarkerRef.current) {
       userLocationMarkerRef.current.remove();
       userLocationMarkerRef.current = null;
@@ -1385,7 +1402,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
       .addTo(map.current);
   }, [userLocation, mapLoaded]);
 
-  // Report markers for approved reports (Đang xử lý / Đã giải quyết)
+  // Report markers for approved reports (In Progress / Resolved)
   useEffect(() => {
     // Remove existing report markers
     reportMarkerRefs.current.forEach(marker => marker.remove());
@@ -1424,7 +1441,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
       if (!isResolved && !isInProgress) return;
 
       const color = isResolved ? '#22c55e' : '#f97316';
-      const label = isResolved ? 'Đã giải quyết' : 'Đang xử lý';
+      const label = isResolved ? 'Resolved' : 'In Progress';
       const icon = isResolved ? '✔' : '⏳';
 
       const markerEl = document.createElement('div');
@@ -1476,10 +1493,10 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
           <div style="font-weight:600; font-size:14px; color:#111827; margin-bottom:4px;">${escapeHtml(report.title)}</div>
           <div style="font-size:12px; color:#374151; margin-bottom:6px;">${escapeHtml(report.description || '')}</div>
           <div style="display:flex; flex-direction:column; gap:4px; font-size:12px; color:#6b7280;">
-            <div><strong>Trạng thái:</strong> <span style="color:${color}; font-weight:600;">${label}</span></div>
-            ${report.category ? `<div><strong>Loại:</strong> ${escapeHtml(report.category)}</div>` : ''}
-            ${report.priority ? `<div><strong>Ưu tiên:</strong> ${escapeHtml(report.priority)}</div>` : ''}
-            <div><strong>Vị trí:</strong> ${lat.toFixed(4)}, ${lng.toFixed(4)}</div>
+            <div><strong>Status:</strong> <span style="color:${color}; font-weight:600;">${label}</span></div>
+            ${report.category ? `<div><strong>Category:</strong> ${escapeHtml(report.category)}</div>` : ''}
+            ${report.priority ? `<div><strong>Priority:</strong> ${escapeHtml(report.priority)}</div>` : ''}
+            <div><strong>Location:</strong> ${lat.toFixed(4)}, ${lng.toFixed(4)}</div>
           </div>
         </div>
       `);
@@ -1507,7 +1524,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
 
     const mapInstance = map.current;
 
-    // Nếu không có streetlight, clear source nếu tồn tại
+    // If no streetlights, clear source if exists
     if (!streetlightMarkers.length) {
       const src = mapInstance.getSource('streetlights') as maplibregl.GeoJSONSource | undefined;
       if (src) {
@@ -1555,7 +1572,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
         data: geojson,
       } as any);
 
-      // Shadow layer cho streetlight
+      // Shadow layer for streetlight
       mapInstance.addLayer({
         id: 'streetlights-shadow',
         type: 'circle',
@@ -1576,7 +1593,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
         },
       } as any);
 
-      // Main streetlight node (vòng ngoài)
+      // Main streetlight node (outer circle)
       mapInstance.addLayer({
         id: 'streetlights-circle',
         type: 'circle',
@@ -1590,7 +1607,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
             14, 7,
             18, 10,
           ],
-          // Vàng nếu powerState == 'on', xám nếu khác
+          // Yellow if powerState == 'on', gray otherwise
           'circle-color': [
             'case',
             ['==', ['get', 'powerState'], 'on'],
@@ -1603,7 +1620,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
         },
       } as any);
 
-      // Inner circle để tạo cảm giác bóng và đậm màu ở giữa
+      // Inner circle to create shadow effect and darker color in center
       mapInstance.addLayer({
         id: 'streetlights-inner',
         type: 'circle',
@@ -1620,8 +1637,8 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
           'circle-color': [
             'case',
             ['==', ['get', 'powerState'], 'on'],
-            '#fde68a', // vàng nhạt hơn ở giữa
-            '#e5e7eb', // xám nhạt ở giữa
+            '#fde68a', // lighter yellow in center
+            '#e5e7eb', // lighter gray in center
           ],
           'circle-opacity': 1,
         },
@@ -1660,7 +1677,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
       return;
     }
 
-    // Build features for all roads (MapLibre sẽ tự ẩn/hiện theo zoom qua circle-opacity)
+    // Build features for all roads (MapLibre will auto hide/show based on zoom via circle-opacity)
     const features = roadSegments
       .map((road) => {
         const coords = road.location?.coordinates;
@@ -1715,9 +1732,9 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
         type: 'geojson',
         data: geojson,
         cluster: true,
-        // Dùng bán kính ở mức trung bình để không gom hết thành 1 cụm
-        // nhưng cũng không nổ quá nhiều cụm nhỏ như khi để 20px.
-        clusterRadius: 30,   // pixels (thỏa hiệp giữa 20 và 60)
+        // Use medium radius to avoid grouping everything into 1 cluster
+        // but also not creating too many small clusters like with 20px.
+        clusterRadius: 30,   // pixels (compromise between 20 and 60)
         clusterMaxZoom: 13,  // beyond this zoom, show individual points
       } as any);
 
@@ -1738,7 +1755,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
               60, 50,
             ],
             'circle-color': '#0f172a',
-            // Giảm opacity để bóng cụm đường mềm hơn
+            // Reduce opacity to make road cluster shadow softer
             'circle-opacity': 0.18,
             'circle-blur': 0.7,
             'circle-translate': [0, 2],
@@ -1775,7 +1792,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
             ],
             'circle-stroke-color': '#1e3a8a',
             'circle-stroke-width': 1.5,
-            // Luôn hiển thị rõ (không trong suốt) khi đang nhìn ở mức cluster
+            // Always display clearly (not transparent) when viewing at cluster level
             'circle-opacity': 0.95,
           },
         } as any);
@@ -1801,7 +1818,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
       }
 
       // Unclustered individual road points (only when zoomed in enough)
-      // Shadow layer đặt trước để nằm phía dưới node chính cho road nodes
+      // Shadow layer placed first to be below main node for road nodes
       if (mapInstance && !mapInstance.getLayer('road-points-circle-white')) {
         mapInstance.addLayer({
           id: 'road-points-circle-white',
@@ -1818,7 +1835,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
               18, 17,
             ],
             'circle-color': '#0f172a', // shadow color
-            // Giảm opacity để bóng node mềm hơn
+            // Reduce opacity to make node shadow softer
             'circle-opacity': 0.18,
             'circle-blur': 0.7,
             'circle-translate': [0, 2],
@@ -1826,7 +1843,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
         } as any);
       }
       
-      // Layer node chính dạng hình tròn đặc với viền
+      // Main node layer as solid circle with border
       if (mapInstance && !mapInstance.getLayer('road-points-circle')) {
         mapInstance.addLayer({
           id: 'road-points-circle',
@@ -1857,7 +1874,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
         } as any);
           }
 
-      // Inner circle để tạo hiệu ứng bóng / highlight cho road nodes
+      // Inner circle to create shadow/highlight effect for road nodes
       if (mapInstance && !mapInstance.getLayer('road-points-inner')) {
         mapInstance.addLayer({
           id: 'road-points-inner',
@@ -1873,7 +1890,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
               16, 7,
               18, 9,
             ],
-            'circle-color': '#60a5fa', // xanh nhạt hơn ở giữa
+            'circle-color': '#60a5fa', // lighter blue in center
             'circle-opacity': 1,
           },
         } as any);
@@ -1934,7 +1951,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
       if (!geoJsonPopupRef.current) {
         geoJsonPopupRef.current = new maplibregl.Popup({
           offset: [0, -12],
-          closeButton: true,      // hiển thị nút X để tắt popup
+          closeButton: true,      // display X button to close popup
           closeOnClick: false,
           className: 'road-marker-popup',
           maxWidth: '300px',
@@ -2126,7 +2143,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
               </div>
               <div>
                 <h3 className="font-bold text-sm text-gray-900">Map Legend</h3>
-                <p className="text-[11px] text-gray-500">Ý nghĩa các node & màu sắc</p>
+                <p className="text-[11px] text-gray-500">Node meanings & colors</p>
               </div>
             </div>
             <button
@@ -2147,7 +2164,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
               </div>
               <div>
                 <div className="text-gray-800 font-semibold">Road nodes</div>
-                <div className="text-gray-500">Điểm đường đơn lẻ khi zoom gần</div>
+                <div className="text-gray-500">Single road point when zoomed in</div>
               </div>
             </div>
 
@@ -2161,7 +2178,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
               </div>
               <div>
                 <div className="text-gray-800 font-semibold">Clusters</div>
-                <div className="text-gray-500">Nhóm nhiều node khi zoom xa (số = số lượng)</div>
+                <div className="text-gray-500">Multiple nodes grouped when zoomed out (number = count)</div>
               </div>
             </div>
 
@@ -2173,7 +2190,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
               </div>
               <div>
                 <div className="text-gray-800 font-semibold">Streetlight ON</div>
-                <div className="text-gray-500">Đèn đang bật (màu vàng)</div>
+                <div className="text-gray-500">Light on (yellow color)</div>
               </div>
             </div>
 
@@ -2184,7 +2201,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
               </div>
               <div>
                 <div className="text-gray-800 font-semibold">Streetlight OFF</div>
-                <div className="text-gray-500">Đèn tắt / không hoạt động (màu xám)</div>
+                <div className="text-gray-500">Light off / inactive (gray color)</div>
               </div>
             </div>
 
@@ -2198,7 +2215,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
               </div>
               <div>
                 <div className="text-gray-800 font-semibold">Your location</div>
-                <div className="text-gray-500">Vị trí hiện tại (nếu được cấp quyền)</div>
+                <div className="text-gray-500">Current location (if permission granted)</div>
               </div>
             </div>
 
@@ -2212,7 +2229,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
               </div>
               <div>
                 <div className="text-gray-800 font-semibold">Selected road / report</div>
-                <div className="text-gray-500">Pin highlight khi chọn road hoặc "Xem trên bản đồ"</div>
+                <div className="text-gray-500">Pin highlight when selecting road or "View on map"</div>
               </div>
             </div>
 
@@ -2226,7 +2243,7 @@ const EnhancedRoadMapView = memo(forwardRef<EnhancedRoadMapViewRef, EnhancedRoad
               </div>
               <div>
                 <div className="text-gray-800 font-semibold">Citizen reports</div>
-                <div className="text-gray-500">Các báo cáo đã được duyệt hiển thị trên map</div>
+                <div className="text-gray-500">Approved reports are displayed on the map</div>
               </div>
             </div>
           </div>

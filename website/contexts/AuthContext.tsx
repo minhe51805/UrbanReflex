@@ -1,8 +1,23 @@
 /**
- * Author: Trương Dương Bảo Minh (minhe51805)
- * Create at: 14-11-2025
- * Update at: 01-12-2025
- * Description: React context and provider for managing user authentication state, including login, logout, registration, and role-based access control.
+ * ============================================================================
+ * UrbanReflex — Smart City Intelligence Platform
+ * Copyright (C) 2025  WAG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ * For more information, visit: https://github.com/minhe51805/UrbanReflex
+ * ============================================================================
  */
 
 
@@ -179,7 +194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (fetchError: any) {
           // Handle network errors
           if (fetchError.message?.includes('Failed to fetch') || fetchError.message?.includes('ERR_CONNECTION_REFUSED')) {
-            throw new Error('Không thể kết nối đến server. Vui lòng kiểm tra lại kết nối hoặc liên hệ quản trị viên.');
+            throw new Error('Unable to connect to server. Please check your connection or contact the administrator.');
           }
           throw fetchError;
         }
@@ -268,7 +283,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             throw new Error(`Lỗi xác thực: ${detailStr}`);
           }
         }
-        throw new Error(errorMsg || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin đăng nhập.');
+        throw new Error(errorMsg || 'Login failed. Please check your login information.');
       }
 
       // Handle successful response

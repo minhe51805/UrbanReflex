@@ -1,8 +1,23 @@
 /**
- * Author: Trương Dương Bảo Minh (minhe51805)
- * Create at: 20-11-2025
- * Update at: 12-02-2025
- * Description: Professional Admin Dashboard with advanced filters and management tools
+ * ============================================================================
+ * UrbanReflex — Smart City Intelligence Platform
+ * Copyright (C) 2025  WAG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ * For more information, visit: https://github.com/minhe51805/UrbanReflex
+ * ============================================================================
  */
 
 'use client';
@@ -12,6 +27,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { STATUS_CONFIG, formatStatus, getStatusBadgeClasses, getAllowedTransitions, type ReportStatus } from '@/lib/utils/reportStatus';
 import { retrieveImages } from '@/lib/utils/imageProcessor';
+import * as XLSX from 'xlsx';
 import {
   Shield,
   User,
@@ -40,17 +56,6 @@ import {
   ExternalLink,
   ChevronLeft,
   ChevronRight,
-<<<<<<< HEAD
-=======
-  Bot,
-  CheckCircle2,
-  X as XIcon,
-  FileCheck,
-  Sparkles,
-  AlertCircle,
-  HelpCircle,
-  Circle,
->>>>>>> frontend
 } from 'lucide-react';
 
 interface UserForAdmin {
@@ -58,6 +63,7 @@ interface UserForAdmin {
   email: string;
   username: string;
   full_name: string;
+  phone?: string;
   is_admin: boolean;
   created_at?: string;
 }
@@ -85,6 +91,15 @@ interface Report {
   updated_at?: string;
   user_id?: string;
   road_id?: string;
+  reportedBy?: string;
+  locationName?: string;
+  dateCreated?: string;
+  metadata?: {
+    images?: string | string[];
+    categoryConfidence?: string;
+    severity?: string;
+    coordinates?: [number, number];
+  };
 }
 
 type TabType = 'overview' | 'reports' | 'users' | 'settings';
@@ -416,6 +431,73 @@ export default function AdminPage() {
     setUserRoleFilter('all');
   };
 
+  const exportToExcel = () => {
+    try {
+      // Prepare data for Excel
+      const excelData = filteredReports.map((report) => {
+        const dateStr = report.reportedAt || report.created_at;
+        let formattedDate = 'N/A';
+        if (dateStr) {
+          try {
+            const date = new Date(dateStr);
+            if (!isNaN(date.getTime())) {
+              formattedDate = date.toLocaleDateString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              });
+            }
+          } catch (e) {
+            formattedDate = dateStr;
+          }
+        }
+
+        return {
+          'ID': report.id,
+          'Category': report.category || 'N/A',
+          'Description': report.description || 'N/A',
+          'Status': formatStatus(report.status as ReportStatus),
+          'Priority': report.priority === 'urgent' ? 'Urgent' :
+                       report.priority === 'high' ? 'High' :
+                       report.priority === 'medium' ? 'Medium' : 'Low',
+          'Created Date': formattedDate,
+          'Reporter': report.reportedBy || 'N/A',
+          'Location': report.locationName || 'N/A',
+        };
+      });
+
+      // Create workbook and worksheet
+      const worksheet = XLSX.utils.json_to_sheet(excelData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Reports');
+
+      // Set column widths automatically
+      const columnWidths = [
+        { wch: 30 }, // ID
+        { wch: 15 }, // Category
+        { wch: 50 }, // Description
+        { wch: 20 }, // Status
+        { wch: 15 }, // Priority
+        { wch: 20 }, // Created Date
+        { wch: 25 }, // Reporter
+        { wch: 30 }, // Location
+      ];
+      worksheet['!cols'] = columnWidths;
+
+      // Create filename with timestamp
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+      const fileName = `Reports_${timestamp}.xlsx`;
+
+      // Export file
+      XLSX.writeFile(workbook, fileName);
+    } catch (error) {
+      console.error('Error exporting Excel:', error);
+      setError('An error occurred while exporting Excel file. Please try again.');
+    }
+  };
+
   const openEditUserModal = (user: UserForAdmin) => {
     setSelectedUser(user);
     setEditFormData({
@@ -477,14 +559,14 @@ export default function AdminPage() {
         throw new Error(data.detail || data.message || 'Failed to update user');
       }
 
-      setEditSuccess('Cập nhật thông tin thành công!');
+      setEditSuccess('Information updated successfully!');
       // Reload users list
       setTimeout(() => {
         loadData();
         closeEditUserModal();
       }, 1500);
         } catch (err: any) {
-      setEditError(err.message || 'Có lỗi xảy ra khi cập nhật thông tin');
+      setEditError(err.message || 'An error occurred while updating information');
       console.error('Update user error:', err);
     }
   };
@@ -492,30 +574,14 @@ export default function AdminPage() {
   const handleChangePassword = async () => {
     if (!selectedUser) return;
 
-<<<<<<< HEAD
-=======
-    // Get user ID - try multiple possible fields (same strategy as delete user)
-    const userId =
-      selectedUser.id ||
-      (selectedUser as any)._id ||
-      (selectedUser as any).user_id ||
-      (selectedUser as any).userId;
-
-    if (!userId) {
-      setEditError('Không tìm thấy ID của người dùng. Vui lòng làm mới trang và thử lại.');
-      console.error('Change password error: missing user id', selectedUser);
-      return;
-    }
-
->>>>>>> frontend
     // Validation
     if (!newPassword || newPassword.length < 6) {
-      setEditError('Mật khẩu phải có ít nhất 6 ký tự');
+      setEditError('Password must be at least 6 characters');
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setEditError('Mật khẩu xác nhận không khớp');
+      setEditError('Password confirmation does not match');
       return;
     }
 
@@ -528,16 +594,7 @@ export default function AdminPage() {
         throw new Error('No authentication token');
       }
 
-<<<<<<< HEAD
       const response = await fetch(`http://163.61.183.90:8001/admin/users/${selectedUser.id}/password`, {
-=======
-      console.log('Changing password for user:', {
-        userId,
-        hasToken: !!token,
-      });
-
-      const response = await fetch(`http://163.61.183.90:8001/admin/users/${encodeURIComponent(userId)}/password`, {
->>>>>>> frontend
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -548,20 +605,77 @@ export default function AdminPage() {
         }),
       });
 
-      const data = await response.json();
-
+      // Handle response - check if it's JSON or text
+      let errorMessage = 'An error occurred while changing password';
+      
       if (!response.ok) {
-        throw new Error(data.detail || data.message || 'Failed to change password');
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const data = await response.json();
+            
+            // Handle 422 validation error format: { detail: [{ loc: [...], msg: "...", type: "..." }] }
+            if (response.status === 422 && Array.isArray(data.detail)) {
+              const validationErrors = data.detail.map((err: any) => {
+                const field = Array.isArray(err.loc) ? err.loc.slice(1).join('.') : 'field';
+                return `${field}: ${err.msg || err.message || 'Validation error'}`;
+              });
+              errorMessage = validationErrors.join('; ') || 'Data validation error';
+            } 
+            // Handle other error formats
+            else if (data.detail) {
+              // If detail is a string
+              if (typeof data.detail === 'string') {
+                errorMessage = data.detail;
+              } 
+              // If detail is an array (other format)
+              else if (Array.isArray(data.detail) && data.detail.length > 0) {
+                errorMessage = data.detail[0].msg || data.detail[0].message || String(data.detail[0]);
+              }
+            } else {
+              errorMessage = data.message || data.error || `HTTP ${response.status}: ${response.statusText}`;
+            }
+          } else {
+            const text = await response.text();
+            errorMessage = text || `HTTP ${response.status}: ${response.statusText}`;
+          }
+        } catch (parseError) {
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
 
-      setEditSuccess('Đổi mật khẩu thành công!');
+      // Success - try to parse JSON if available, otherwise just show success
+      try {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await response.json();
+          console.log('Password changed successfully:', data);
+        }
+      } catch (parseError) {
+        // Response might be empty on success, which is fine
+        console.log('Password changed successfully (empty response)');
+      }
+
+      setEditSuccess('Password changed successfully!');
       setNewPassword('');
       setConfirmPassword('');
       setTimeout(() => {
         setActiveEditTab('info');
       }, 1500);
     } catch (err: any) {
-      setEditError(err.message || 'Có lỗi xảy ra khi đổi mật khẩu');
+      // Better error handling
+      let errorMessage = 'An error occurred while changing password';
+      
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      } else if (err && typeof err === 'object') {
+        errorMessage = err.message || err.detail || err.error || JSON.stringify(err);
+      }
+      
+      setEditError(errorMessage);
       console.error('Change password error:', err);
     }
   };
@@ -586,7 +700,7 @@ export default function AdminPage() {
                    (userToDelete as any).userId;
 
     if (!userId) {
-      setError('Không tìm thấy ID của người dùng. Vui lòng làm mới trang và thử lại.');
+      setError('User ID not found. Please refresh the page and try again.');
       console.error('User object:', userToDelete);
       return;
     }
@@ -621,7 +735,7 @@ export default function AdminPage() {
       await loadData();
       closeDeleteModal();
     } catch (err: any) {
-      setError(err.message || 'Có lỗi xảy ra khi xóa người dùng');
+      setError(err.message || 'An error occurred while deleting the user');
       console.error('Delete user error:', err);
     } finally {
       setDeleteLoading(false);
@@ -659,7 +773,7 @@ export default function AdminPage() {
         throw new Error(errorData.detail || errorData.message || 'Failed to update report');
       }
 
-      setUpdateSuccess('Cập nhật báo cáo thành công!');
+      setUpdateSuccess('Report updated successfully!');
       
       // Update selected report immediately with new values
       const updatedReport = {
@@ -676,7 +790,7 @@ export default function AdminPage() {
         setUpdateSuccess('');
       }, 3000);
     } catch (err: any) {
-      setUpdateError(err.message || 'Có lỗi xảy ra khi cập nhật báo cáo');
+      setUpdateError(err.message || 'An error occurred while updating report');
       console.error('Update report error:', err);
     } finally {
       setUpdateLoading(false);
@@ -688,7 +802,7 @@ export default function AdminPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <RefreshCw className="w-8 h-8 animate-spin mx-auto text-blue-600" />
-          <p className="mt-4 text-gray-600">Đang tải...</p>
+          <p className="mt-4 text-gray-600">Loading...</p>
         </div>
       </div>
     );
@@ -708,7 +822,7 @@ export default function AdminPage() {
               <Shield className="w-8 h-8 text-blue-600" />
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-                <p className="text-sm text-gray-500">Quản lý hệ thống UrbanReflex</p>
+                <p className="text-sm text-gray-500">Manage UrbanReflex system</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
@@ -717,7 +831,7 @@ export default function AdminPage() {
                 className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
               >
                 <RefreshCw className="w-4 h-4" />
-                <span>Làm mới</span>
+                <span>Refresh</span>
               </button>
               <div className="flex items-center space-x-2 text-sm text-gray-600">
                 <User className="w-4 h-4" />
@@ -733,10 +847,10 @@ export default function AdminPage() {
         <div className="border-b border-gray-200">
           <nav className="flex space-x-8">
             {[
-              { id: 'overview', label: 'Tổng quan', icon: Activity },
-              { id: 'reports', label: 'Báo cáo', icon: FileText },
-              { id: 'users', label: 'Người dùng', icon: Users },
-              { id: 'settings', label: 'Cài đặt', icon: Settings },
+              { id: 'overview', label: 'Overview', icon: Activity },
+              { id: 'reports', label: 'Reports', icon: FileText },
+              { id: 'users', label: 'Users', icon: Users },
+              { id: 'settings', label: 'Settings', icon: Settings },
             ].map((tab) => {
               const Icon = tab.icon;
               return (
@@ -773,7 +887,7 @@ export default function AdminPage() {
                 <div className="bg-white rounded-lg shadow p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Tổng báo cáo</p>
+                      <p className="text-sm font-medium text-gray-600">Total Reports</p>
                       <p className="text-3xl font-bold text-gray-900 mt-2">{stats.totalReports}</p>
                     </div>
                     <FileText className="w-12 h-12 text-blue-500" />
@@ -783,7 +897,7 @@ export default function AdminPage() {
                 <div className="bg-white rounded-lg shadow p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Đang chờ xử lý</p>
+                      <p className="text-sm font-medium text-gray-600">Pending</p>
                       <p className="text-3xl font-bold text-orange-600 mt-2">{stats.pendingReports}</p>
                     </div>
                     <AlertTriangle className="w-12 h-12 text-orange-500" />
@@ -793,7 +907,7 @@ export default function AdminPage() {
                 <div className="bg-white rounded-lg shadow p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Đang xử lý</p>
+                      <p className="text-sm font-medium text-gray-600">In Progress</p>
                       <p className="text-3xl font-bold text-yellow-600 mt-2">{stats.inProgressReports}</p>
                     </div>
                     <Activity className="w-12 h-12 text-yellow-500" />
@@ -803,7 +917,7 @@ export default function AdminPage() {
                 <div className="bg-white rounded-lg shadow p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Đã giải quyết</p>
+                      <p className="text-sm font-medium text-gray-600">Resolved</p>
                       <p className="text-3xl font-bold text-green-600 mt-2">{stats.resolvedReports}</p>
                     </div>
                     <CheckCircle className="w-12 h-12 text-green-500" />
@@ -813,7 +927,7 @@ export default function AdminPage() {
                 <div className="bg-white rounded-lg shadow p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Ưu tiên cao</p>
+                      <p className="text-sm font-medium text-gray-600">High Priority</p>
                       <p className="text-3xl font-bold text-red-600 mt-2">{stats.highPriorityReports}</p>
                     </div>
                     <TrendingUp className="w-12 h-12 text-red-500" />
@@ -823,7 +937,7 @@ export default function AdminPage() {
                 <div className="bg-white rounded-lg shadow p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Tổng người dùng</p>
+                      <p className="text-sm font-medium text-gray-600">Total Users</p>
                       <p className="text-3xl font-bold text-gray-900 mt-2">{stats.totalUsers}</p>
                     </div>
                     <Users className="w-12 h-12 text-purple-500" />
@@ -833,7 +947,7 @@ export default function AdminPage() {
                 <div className="bg-white rounded-lg shadow p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Quản trị viên</p>
+                      <p className="text-sm font-medium text-gray-600">Administrators</p>
                       <p className="text-3xl font-bold text-blue-600 mt-2">{stats.adminUsers}</p>
                     </div>
                     <Shield className="w-12 h-12 text-blue-500" />
@@ -851,7 +965,7 @@ export default function AdminPage() {
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
                     <Filter className="w-5 h-5" />
-                    <span>Bộ lọc</span>
+                    <span>Filters</span>
                   </h2>
           <button
                     onClick={() => setShowFilters(!showFilters)}
@@ -865,14 +979,14 @@ export default function AdminPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {/* Search */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Tìm kiếm</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
                       <div className="relative">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                         <input
                           type="text"
                           value={reportSearch}
                           onChange={(e) => setReportSearch(e.target.value)}
-                          placeholder="Tìm kiếm báo cáo..."
+                          placeholder="Search reports..."
                           className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
                       </div>
@@ -880,13 +994,13 @@ export default function AdminPage() {
 
                     {/* Status */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Trạng thái</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
                       <select
                         value={reportStatus}
                         onChange={(e) => setReportStatus(e.target.value as ReportStatusFilter)}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
-                        <option value="all">Tất cả</option>
+                        <option value="all">All</option>
                         <option value="submitted">{formatStatus('submitted')}</option>
                         <option value="ai_processing">{formatStatus('ai_processing')}</option>
                         <option value="auto_approved">{formatStatus('auto_approved')}</option>
@@ -899,50 +1013,50 @@ export default function AdminPage() {
 
                     {/* Priority */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Độ ưu tiên</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
                       <select
                         value={reportPriority}
                         onChange={(e) => setReportPriority(e.target.value as ReportPriority)}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
-                        <option value="all">Tất cả</option>
-                        <option value="low">Thấp</option>
-                        <option value="medium">Trung bình</option>
-                        <option value="high">Cao</option>
-                        <option value="urgent">Khẩn cấp</option>
+                        <option value="all">All</option>
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                        <option value="urgent">Urgent</option>
                       </select>
                     </div>
 
                     {/* Category */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Danh mục</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
                       <select
                         value={reportCategory}
                         onChange={(e) => setReportCategory(e.target.value as ReportCategory)}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
-                        <option value="all">Tất cả</option>
-                        <option value="pothole">Ổ gà</option>
-                        <option value="traffic">Giao thông</option>
-                        <option value="lighting">Chiếu sáng</option>
-                        <option value="safety">An toàn</option>
-                        <option value="other">Khác</option>
+                        <option value="all">All</option>
+                        <option value="pothole">Pothole</option>
+                        <option value="traffic">Traffic</option>
+                        <option value="lighting">Lighting</option>
+                        <option value="safety">Safety</option>
+                        <option value="other">Other</option>
                       </select>
                     </div>
 
                     {/* Date Range */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Khoảng thời gian</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
                       <select
                         value={dateRange}
                         onChange={(e) => setDateRange(e.target.value as DateRange)}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
-                        <option value="all">Tất cả</option>
-                        <option value="today">Hôm nay</option>
-                        <option value="week">7 ngày qua</option>
-                        <option value="month">30 ngày qua</option>
-                        <option value="custom">Tùy chọn</option>
+                        <option value="all">All</option>
+                        <option value="today">Today</option>
+                        <option value="week">Last 7 days</option>
+                        <option value="month">Last 30 days</option>
+                        <option value="custom">Custom</option>
                       </select>
                     </div>
 
@@ -950,7 +1064,7 @@ export default function AdminPage() {
                     {dateRange === 'custom' && (
                       <>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Từ ngày</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">From Date</label>
                           <input
                             type="date"
                             value={customStartDate}
@@ -959,7 +1073,7 @@ export default function AdminPage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Đến ngày</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">To Date</label>
                           <input
                             type="date"
                             value={customEndDate}
@@ -976,7 +1090,7 @@ export default function AdminPage() {
                         onClick={resetFilters}
                         className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium"
                       >
-                        Đặt lại
+                        Reset
                       </button>
                     </div>
                   </div>
@@ -987,11 +1101,15 @@ export default function AdminPage() {
               <div className="bg-white rounded-lg shadow">
                 <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
                   <h3 className="text-lg font-semibold text-gray-900">
-                    Danh sách báo cáo ({filteredReports.length})
+                    Reports List ({filteredReports.length})
                   </h3>
-                  <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                  <button 
+                    onClick={exportToExcel}
+                    disabled={filteredReports.length === 0}
+                    className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
                     <Download className="w-4 h-4" />
-                    <span>Xuất Excel</span>
+                    <span>Export Excel</span>
                   </button>
                 </div>
                 <div className="overflow-x-auto">
@@ -999,19 +1117,19 @@ export default function AdminPage() {
             <thead className="bg-gray-50">
               <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Danh mục</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mô tả</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Độ ưu tiên</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày tạo</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created Date</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
                       {filteredReports.length === 0 ? (
                         <tr>
                           <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
-                            Không có báo cáo nào
+                            No reports found
                           </td>
                         </tr>
                       ) : (
@@ -1045,9 +1163,9 @@ export default function AdminPage() {
                                     : 'bg-gray-100 text-gray-800'
                                 }`}
                               >
-                                {report.priority === 'urgent' ? 'Khẩn cấp' :
-                                 report.priority === 'high' ? 'Cao' :
-                                 report.priority === 'medium' ? 'Trung bình' : 'Thấp'}
+                                {report.priority === 'urgent' ? 'Urgent' :
+                                 report.priority === 'high' ? 'High' :
+                                 report.priority === 'medium' ? 'Medium' : 'Low'}
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -1057,7 +1175,7 @@ export default function AdminPage() {
                                 try {
                                   const date = new Date(dateStr);
                                   if (isNaN(date.getTime())) return 'Invalid Date';
-                                  return date.toLocaleDateString('vi-VN', {
+                                  return date.toLocaleDateString('en-US', {
                                     day: '2-digit',
                                     month: '2-digit',
                                     year: 'numeric',
@@ -1081,7 +1199,7 @@ export default function AdminPage() {
                                 }}
                                 className="text-blue-600 hover:text-blue-900 font-medium hover:underline"
                               >
-                                Xem
+                                View
                               </button>
                             </td>
                           </tr>
@@ -1101,42 +1219,42 @@ export default function AdminPage() {
               <div className="bg-white rounded-lg shadow p-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Tìm kiếm</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                       <input
                         type="text"
                         value={userSearch}
                         onChange={(e) => setUserSearch(e.target.value)}
-                        placeholder="Tìm kiếm người dùng..."
+                        placeholder="Search users..."
                         className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Vai trò</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
                     <select
                       value={userRoleFilter}
                       onChange={(e) => setUserRoleFilter(e.target.value as 'all' | 'admin' | 'user')}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
-                      <option value="all">Tất cả</option>
-                      <option value="admin">Quản trị viên</option>
-                      <option value="user">Người dùng</option>
+                      <option value="all">All</option>
+                      <option value="admin">Administrator</option>
+                      <option value="user">User</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Sắp xếp</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
                     <select
                       value={userSortBy}
                       onChange={(e) => setUserSortBy(e.target.value as 'name' | 'email' | 'created')}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
-                      <option value="name">Theo tên</option>
-                      <option value="email">Theo email</option>
-                      <option value="created">Theo ngày tạo</option>
+                      <option value="name">By Name</option>
+                      <option value="email">By Email</option>
+                      <option value="created">By Created Date</option>
                     </select>
                   </div>
                 </div>
@@ -1146,25 +1264,25 @@ export default function AdminPage() {
               <div className="bg-white rounded-lg shadow">
                 <div className="px-6 py-4 border-b border-gray-200">
                   <h3 className="text-lg font-semibold text-gray-900">
-                    Danh sách người dùng ({filteredUsers.length})
+                    Users List ({filteredUsers.length})
                   </h3>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vai trò</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {filteredUsers.length === 0 ? (
                         <tr>
                           <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
-                            Không có người dùng nào
+                            No users found
                   </td>
                         </tr>
                       ) : (
@@ -1182,11 +1300,11 @@ export default function AdminPage() {
                   <td className="px-6 py-4 whitespace-nowrap">
                               {user.is_admin ? (
                                 <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
-                                  Quản trị viên
+                                  Administrator
                       </span>
                     ) : (
                                 <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
-                                  Người dùng
+                                  User
                       </span>
                     )}
                   </td>
@@ -1195,13 +1313,13 @@ export default function AdminPage() {
                                 onClick={() => openEditUserModal(user)}
                                 className="text-blue-600 hover:text-blue-900 mr-4"
                               >
-                                Sửa
+                                Edit
                               </button>
                               <button
                                 onClick={() => openDeleteModal(user)}
                                 className="text-red-600 hover:text-red-900"
                               >
-                                Xóa
+                                Delete
                     </button>
                   </td>
                 </tr>
@@ -1217,8 +1335,8 @@ export default function AdminPage() {
           {/* Settings Tab */}
           {activeTab === 'settings' && (
             <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Cài đặt hệ thống</h2>
-              <p className="text-gray-500">Tính năng đang phát triển...</p>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">System Settings</h2>
+              <p className="text-gray-500">Feature under development...</p>
       </div>
           )}
     </div>
@@ -1231,7 +1349,7 @@ export default function AdminPage() {
             <div className="flex items-center justify-between p-6 border-b sticky top-0 bg-white z-10">
               <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
                 <User className="w-5 h-5" />
-                <span>Sửa thông tin người dùng</span>
+                <span>Edit User Information</span>
               </h3>
               <button
                 onClick={closeEditUserModal}
@@ -1253,7 +1371,7 @@ export default function AdminPage() {
                         : 'border-transparent text-gray-500 hover:text-gray-700'
                     }`}
                   >
-                    Thông tin
+                    Information
                   </button>
                   <button
                     onClick={() => setActiveEditTab('password')}
@@ -1264,7 +1382,7 @@ export default function AdminPage() {
                     }`}
                   >
                     <Lock className="w-4 h-4" />
-                    <span>Đổi mật khẩu</span>
+                    <span>Change Password</span>
                   </button>
                 </nav>
               </div>
@@ -1286,14 +1404,14 @@ export default function AdminPage() {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Họ và tên
+                      Full Name
                     </label>
                     <input
                       type="text"
                       value={editFormData.full_name}
                       onChange={(e) => setEditFormData({ ...editFormData, full_name: e.target.value })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Nhập họ và tên"
+                      placeholder="Enter full name"
                     />
                   </div>
 
@@ -1306,7 +1424,7 @@ export default function AdminPage() {
                       value={editFormData.email}
                       onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Nhập email"
+                      placeholder="Enter email"
                     />
                   </div>
 
@@ -1319,20 +1437,20 @@ export default function AdminPage() {
                       value={editFormData.username}
                       onChange={(e) => setEditFormData({ ...editFormData, username: e.target.value })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Nhập username"
+                      placeholder="Enter username"
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Số điện thoại
+                      Phone Number
                     </label>
                     <input
                       type="text"
                       value={editFormData.phone}
                       onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Nhập số điện thoại"
+                      placeholder="Enter phone number"
                     />
                   </div>
 
@@ -1344,7 +1462,7 @@ export default function AdminPage() {
                         onChange={(e) => setEditFormData({ ...editFormData, is_admin: e.target.checked })}
                         className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                       />
-                      <span className="text-sm font-medium text-gray-700">Quản trị viên</span>
+                      <span className="text-sm font-medium text-gray-700">Administrator</span>
                     </label>
                   </div>
                 </div>
@@ -1355,20 +1473,20 @@ export default function AdminPage() {
                 <div className="space-y-4">
                   <div>
                     <p className="text-sm text-gray-600 mb-4">
-                      Đổi mật khẩu cho: <span className="font-medium text-gray-900">{selectedUser.full_name || selectedUser.username}</span>
+                      Change password for: <span className="font-medium text-gray-900">{selectedUser.full_name || selectedUser.username}</span>
                     </p>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Mật khẩu mới
+                      New Password
                     </label>
                     <div className="relative">
                       <input
                         type={showPassword ? 'text' : 'password'}
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
-                        placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)"
+                        placeholder="Enter new password (minimum 6 characters)"
                         className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                       <button
@@ -1383,14 +1501,14 @@ export default function AdminPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Xác nhận mật khẩu
+                      Confirm Password
                     </label>
                     <div className="relative">
                       <input
                         type={showConfirmPassword ? 'text' : 'password'}
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder="Nhập lại mật khẩu mới"
+                        placeholder="Re-enter new password"
                         className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                       <button
@@ -1411,14 +1529,14 @@ export default function AdminPage() {
                 onClick={closeEditUserModal}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
               >
-                Hủy
+                Cancel
               </button>
               {activeEditTab === 'info' ? (
                 <button
                   onClick={handleUpdateUser}
                   className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
                 >
-                  Lưu thay đổi
+                  Save Changes
                 </button>
               ) : (
                 <button
@@ -1426,7 +1544,7 @@ export default function AdminPage() {
                   className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 flex items-center space-x-2"
                 >
                   <Lock className="w-4 h-4" />
-                  <span>Đổi mật khẩu</span>
+                  <span>Change Password</span>
                 </button>
               )}
             </div>
@@ -1441,7 +1559,7 @@ export default function AdminPage() {
             <div className="flex items-center justify-between p-6 border-b">
               <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
                 <AlertTriangle className="w-5 h-5 text-red-600" />
-                <span>Xác nhận xóa người dùng</span>
+                <span>Confirm Delete User</span>
               </h3>
               <button
                 onClick={closeDeleteModal}
@@ -1454,7 +1572,7 @@ export default function AdminPage() {
 
             <div className="p-6">
               <p className="text-gray-700 mb-4">
-                Bạn có chắc chắn muốn xóa người dùng này không?
+                Are you sure you want to delete this user?
               </p>
               <div className="bg-gray-50 rounded-lg p-4 mb-4">
                 <p className="font-medium text-gray-900">{userToDelete.full_name || 'N/A'}</p>
@@ -1462,7 +1580,7 @@ export default function AdminPage() {
                 <p className="text-sm text-gray-500">@{userToDelete.username}</p>
               </div>
               <p className="text-sm text-red-600 font-medium">
-                ⚠️ Hành động này không thể hoàn tác!
+                ⚠️ This action cannot be undone!
               </p>
             </div>
 
@@ -1472,7 +1590,7 @@ export default function AdminPage() {
                 disabled={deleteLoading}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
               >
-                Hủy
+                Cancel
               </button>
               <button
                 onClick={handleDeleteUser}
@@ -1482,12 +1600,12 @@ export default function AdminPage() {
                 {deleteLoading ? (
                   <>
                     <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>Đang xóa...</span>
+                    <span>Deleting...</span>
                   </>
                 ) : (
                   <>
                     <XCircle className="w-4 h-4" />
-                    <span>Xóa người dùng</span>
+                    <span>Delete User</span>
                   </>
                 )}
               </button>
@@ -1499,7 +1617,6 @@ export default function AdminPage() {
       {/* Report Detail Modal */}
       {showReportModal && selectedReport && (
         <div 
-<<<<<<< HEAD
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
           onClick={() => setShowReportModal(false)}
         >
@@ -1516,42 +1633,17 @@ export default function AdminPage() {
                 <div>
                   <h3 className="text-lg font-bold text-gray-900">Chi tiết báo cáo</h3>
                   <p className="text-xs text-gray-500 mt-0.5">ID: {selectedReport.id.substring(0, 15)}...</p>
-=======
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-          onClick={() => setShowReportModal(false)}
-        >
-          <div 
-            className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[85vh] flex flex-col overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-blue-100 rounded-xl">
-                  <FileText className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900">Chi tiết báo cáo</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">ID: {selectedReport.id.substring(0, 20)}...</p>
->>>>>>> frontend
                 </div>
               </div>
               <button
                 onClick={() => setShowReportModal(false)}
-<<<<<<< HEAD
                 className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <X className="w-4 h-4" />
-=======
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
-              >
-                <X className="w-5 h-5" />
->>>>>>> frontend
               </button>
             </div>
 
             {/* Content - Scrollable */}
-<<<<<<< HEAD
             <div className="flex-1 overflow-y-auto px-4 py-3">
               <div className="space-y-3">
                 {/* Title */}
@@ -1560,23 +1652,13 @@ export default function AdminPage() {
                     Tiêu đề
                   </label>
                   <h4 className="text-base font-bold text-gray-900 line-clamp-2">
-=======
-            <div className="flex-1 overflow-y-auto px-6 py-4">
-              <div className="space-y-4">
-                {/* Title */}
-                <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-xl border border-gray-200">
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                    TIÊU ĐỀ
-                  </label>
-                  <h4 className="text-base font-bold text-gray-900">
->>>>>>> frontend
+                    {selectedReport.title || selectedReport.description || 'No title'}
                     {selectedReport.title || selectedReport.description || 'Không có tiêu đề'}
                   </h4>
                 </div>
 
                 {/* Status and Priority Row - Editable */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-<<<<<<< HEAD
                   <div className="bg-gradient-to-br from-gray-50 to-white p-3 rounded-lg border border-gray-200">
                     <div className="flex items-center justify-between mb-1.5">
                       <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
@@ -1591,17 +1673,6 @@ export default function AdminPage() {
                       onChange={(e) => setEditingStatus(e.target.value)}
                       className={`w-full px-3 py-2 text-sm border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white font-medium ${
                         editingStatus !== selectedReport.status ? 'border-orange-400' : 'border-gray-300'
-=======
-                  <div className="bg-gradient-to-br from-gray-50 to-white p-3 rounded-xl border border-gray-200">
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                      TRẠNG THÁI
-                    </label>
-                    <select
-                      value={editingStatus}
-                      onChange={(e) => setEditingStatus(e.target.value)}
-                      className={`w-full px-3 py-2 text-sm border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white font-semibold ${
-                        editingStatus !== selectedReport.status ? 'border-orange-400 bg-orange-50' : 'border-gray-300'
->>>>>>> frontend
                       }`}
                     >
                       <option value="submitted">{formatStatus('submitted')}</option>
@@ -1614,16 +1685,11 @@ export default function AdminPage() {
                     </select>
                     {/* Status Description */}
                     {editingStatus && STATUS_CONFIG[editingStatus as ReportStatus] && (
-<<<<<<< HEAD
                       <p className="mt-1.5 text-xs text-gray-500">
-=======
-                      <p className="mt-1.5 text-xs text-gray-600">
->>>>>>> frontend
                         {STATUS_CONFIG[editingStatus as ReportStatus].description}
                       </p>
                     )}
                   </div>
-<<<<<<< HEAD
                   <div className="bg-gradient-to-br from-gray-50 to-white p-3 rounded-lg border border-gray-200">
                     <div className="flex items-center justify-between mb-1.5">
                       <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
@@ -1644,23 +1710,10 @@ export default function AdminPage() {
                       <option value="medium">🟡 Trung bình</option>
                       <option value="high">🟠 Cao</option>
                       <option value="urgent">🔴 Khẩn cấp</option>
-=======
-                  <div className="bg-gradient-to-br from-gray-50 to-white p-3 rounded-xl border border-gray-200">
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                      ĐỘ ƯU TIÊN
-                    </label>
-                    <select
-                      value={editingPriority}
-                      onChange={(e) => setEditingPriority(e.target.value)}
-                      className={`w-full px-3 py-2 text-sm border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white font-semibold ${
-                        editingPriority !== selectedReport.priority ? 'border-orange-400 bg-orange-50' : 'border-gray-300'
-                      }`}
-                    >
-                      <option value="low">Thấp</option>
-                      <option value="medium">Trung bình</option>
-                      <option value="high">Cao</option>
-                      <option value="urgent">Khẩn cấp</option>
->>>>>>> frontend
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                      <option value="urgent">Urgent</option>
                     </select>
                   </div>
                 </div>
@@ -1678,23 +1731,14 @@ export default function AdminPage() {
                 )}
 
                 {/* Description */}
-<<<<<<< HEAD
                 <div className="bg-gradient-to-br from-gray-50 to-white p-2 rounded-lg border border-gray-200">
                   <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
                     Mô tả chi tiết
                   </label>
                   <div className="prose prose-sm max-w-none">
                     <p className="text-xs text-gray-900 leading-relaxed whitespace-pre-wrap max-h-24 overflow-y-auto">
-=======
-                <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-xl border border-gray-200">
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                    MÔ TẢ CHI TIẾT
-                  </label>
-                  <div className="prose prose-sm max-w-none">
-                    <p className="text-sm text-gray-900 leading-relaxed whitespace-pre-wrap">
->>>>>>> frontend
                       {selectedReport.description || (
-                        <span className="text-gray-400 italic">Không có mô tả</span>
+                        <span className="text-gray-400 italic">No description</span>
                       )}
                     </p>
                   </div>
@@ -1713,7 +1757,7 @@ export default function AdminPage() {
                   <div className="bg-gradient-to-br from-gray-50 to-white p-3 rounded-lg border border-gray-200">
                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-2">
                       <Camera className="w-3 h-3" />
-                      <span>Hình ảnh ({displayImages.length})</span>
+                      <span>Images ({displayImages.length})</span>
                     </label>
                     
                     {/* Main Image Display */}
@@ -1795,7 +1839,6 @@ export default function AdminPage() {
 
                 {/* AI Classification Metrics */}
                 {(selectedReport.category || selectedReport.metadata?.categoryConfidence || selectedReport.metadata?.severity) && (
-<<<<<<< HEAD
                   <div className="bg-gradient-to-br from-purple-50 to-white p-3 rounded-lg border border-purple-200">
                     <label className="block text-xs font-semibold text-purple-700 uppercase tracking-wide mb-2 flex items-center gap-2">
                       <span className="text-lg">🤖</span>
@@ -1813,52 +1856,16 @@ export default function AdminPage() {
                           {selectedReport.category === 'drainage' && '💧 Thoát nước'}
                           {(!selectedReport.category || selectedReport.category === 'unknown') && '❓ Chưa xác định'}
                         </p>
-=======
-                  <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 p-4 rounded-xl border border-purple-200">
-                    <label className="block text-xs font-semibold text-purple-700 uppercase tracking-wide mb-3 flex items-center gap-2">
-                      <Bot className="w-4 h-4 text-purple-600" />
-                      <span>PHÂN LOẠI AI</span>
-                    </label>
-                    <div className="grid grid-cols-2 gap-3">
-                      {/* Category */}
-                      <div className="bg-white p-2.5 rounded-xl border border-purple-100">
-                        <p className="text-xs text-gray-500 mb-1.5 font-semibold">Danh mục</p>
-                        <div className="flex items-center gap-2">
-                          {selectedReport.category === 'pothole' && <AlertTriangle className="w-3.5 h-3.5 text-orange-600" />}
-                          {selectedReport.category === 'road_damage' && <FileText className="w-3.5 h-3.5 text-blue-600" />}
-                          {selectedReport.category === 'traffic_sign' && <AlertCircle className="w-3.5 h-3.5 text-yellow-600" />}
-                          {selectedReport.category === 'streetlight' && <Sparkles className="w-3.5 h-3.5 text-yellow-500" />}
-                          {selectedReport.category === 'drainage' && <Activity className="w-3.5 h-3.5 text-blue-500" />}
-                          {(!selectedReport.category || selectedReport.category === 'unknown') && <HelpCircle className="w-3.5 h-3.5 text-gray-500" />}
-                          <p className="text-sm font-bold text-gray-900">
-                            {selectedReport.category === 'pothole' && 'Ổ gà'}
-                            {selectedReport.category === 'road_damage' && 'Hư hỏng đường'}
-                            {selectedReport.category === 'traffic_sign' && 'Biển báo'}
-                            {selectedReport.category === 'streetlight' && 'Đèn đường'}
-                            {selectedReport.category === 'drainage' && 'Thoát nước'}
-                            {(!selectedReport.category || selectedReport.category === 'unknown') && 'Chưa xác định'}
-                          </p>
-                        </div>
->>>>>>> frontend
                       </div>
                       
                       {/* Confidence */}
                       {selectedReport.metadata?.categoryConfidence && (
-<<<<<<< HEAD
                         <div className="bg-white p-2.5 rounded-lg border border-purple-100">
                           <p className="text-xs text-gray-500 mb-1">Độ tin cậy</p>
                           <div className="flex items-center gap-2">
                             <div className="flex-1 bg-gray-200 rounded-full h-2">
                               <div 
                                 className={`h-2 rounded-full ${
-=======
-                        <div className="bg-white p-2.5 rounded-xl border border-purple-100">
-                          <p className="text-xs text-gray-500 mb-1.5 font-semibold">Độ tin cậy</p>
-                          <div className="flex items-center gap-2">
-                            <div className="flex-1 bg-gray-200 rounded-full h-2">
-                              <div 
-                                className={`h-2 rounded-full transition-all ${
->>>>>>> frontend
                                   parseFloat(selectedReport.metadata.categoryConfidence) >= 0.7 
                                     ? 'bg-green-500' 
                                     : parseFloat(selectedReport.metadata.categoryConfidence) >= 0.5
@@ -1868,11 +1875,7 @@ export default function AdminPage() {
                                 style={{ width: `${parseFloat(selectedReport.metadata.categoryConfidence) * 100}%` }}
                               />
                             </div>
-<<<<<<< HEAD
                             <span className="text-sm font-bold text-gray-900">
-=======
-                            <span className="text-sm font-bold text-gray-900 min-w-[2.5rem] text-right">
->>>>>>> frontend
                               {(parseFloat(selectedReport.metadata.categoryConfidence) * 100).toFixed(0)}%
                             </span>
                           </div>
@@ -1880,7 +1883,6 @@ export default function AdminPage() {
                       )}
                       
                       {/* Priority */}
-<<<<<<< HEAD
                       <div className="bg-white p-2.5 rounded-lg border border-purple-100">
                         <p className="text-xs text-gray-500 mb-1">Mức độ ưu tiên AI</p>
                         <p className="text-sm font-bold text-gray-900">
@@ -1889,27 +1891,10 @@ export default function AdminPage() {
                           {selectedReport.priority === 'high' && '🟠 Cao'}
                           {selectedReport.priority === 'urgent' && '🔴 Khẩn cấp'}
                         </p>
-=======
-                      <div className="bg-white p-2.5 rounded-xl border border-purple-100">
-                        <p className="text-xs text-gray-500 mb-1.5 font-semibold">Mức độ ưu tiên AI</p>
-                        <div className="flex items-center gap-2">
-                          {selectedReport.priority === 'low' && <Circle className="w-3.5 h-3.5 text-gray-400" />}
-                          {selectedReport.priority === 'medium' && <AlertCircle className="w-3.5 h-3.5 text-yellow-500" />}
-                          {selectedReport.priority === 'high' && <AlertTriangle className="w-3.5 h-3.5 text-orange-500" />}
-                          {selectedReport.priority === 'urgent' && <XCircle className="w-3.5 h-3.5 text-red-500" />}
-                          <p className="text-sm font-bold text-gray-900">
-                            {selectedReport.priority === 'low' && 'Thấp'}
-                            {selectedReport.priority === 'medium' && 'Trung bình'}
-                            {selectedReport.priority === 'high' && 'Cao'}
-                            {selectedReport.priority === 'urgent' && 'Khẩn cấp'}
-                          </p>
-                        </div>
->>>>>>> frontend
                       </div>
                       
                       {/* Severity */}
                       {selectedReport.metadata?.severity && (
-<<<<<<< HEAD
                         <div className="bg-white p-2.5 rounded-lg border border-purple-100">
                           <p className="text-xs text-gray-500 mb-1">Mức độ nghiêm trọng</p>
                           <p className="text-sm font-bold text-gray-900 capitalize">
@@ -1918,29 +1903,12 @@ export default function AdminPage() {
                             {selectedReport.metadata.severity === 'high' && '🟠 Nặng'}
                             {selectedReport.metadata.severity === 'critical' && '🔴 Nghiêm trọng'}
                           </p>
-=======
-                        <div className="bg-white p-2.5 rounded-xl border border-purple-100">
-                          <p className="text-xs text-gray-500 mb-1.5 font-semibold">Mức độ nghiêm trọng</p>
-                          <div className="flex items-center gap-2">
-                            {selectedReport.metadata.severity === 'low' && <Circle className="w-3.5 h-3.5 text-gray-400" />}
-                            {selectedReport.metadata.severity === 'medium' && <AlertCircle className="w-3.5 h-3.5 text-yellow-500" />}
-                            {selectedReport.metadata.severity === 'high' && <AlertTriangle className="w-3.5 h-3.5 text-orange-500" />}
-                            {selectedReport.metadata.severity === 'critical' && <XCircle className="w-3.5 h-3.5 text-red-500" />}
-                            <p className="text-sm font-bold text-gray-900 capitalize">
-                              {selectedReport.metadata.severity === 'low' && 'Nhẹ'}
-                              {selectedReport.metadata.severity === 'medium' && 'Vừa'}
-                              {selectedReport.metadata.severity === 'high' && 'Nặng'}
-                              {selectedReport.metadata.severity === 'critical' && 'Nghiêm trọng'}
-                            </p>
-                          </div>
->>>>>>> frontend
                         </div>
                       )}
                     </div>
                     
                     {/* Auto-approval conditions check */}
                     {selectedReport.metadata?.categoryConfidence && (
-<<<<<<< HEAD
                       <div className="mt-3 p-2.5 bg-white rounded-lg border border-purple-100">
                         <p className="text-xs font-semibold text-gray-700 mb-2">Điều kiện tự động duyệt:</p>
                         <div className="space-y-1.5">
@@ -1981,48 +1949,7 @@ export default function AdminPage() {
                               <span className="text-red-600">❌</span>
                             )}
                             <span className="text-gray-700">
-=======
-                      <div className="mt-3 p-3 bg-white rounded-xl border border-purple-200">
-                        <p className="text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wide">Điều kiện tự động duyệt:</p>
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2.5 text-sm">
-                            {parseFloat(selectedReport.metadata.categoryConfidence) >= 0.7 ? (
-                              <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
-                            ) : (
-                              <XIcon className="w-4 h-4 text-red-600 flex-shrink-0" />
-                            )}
-                            <span className="text-gray-900 font-medium">
-                              Độ tin cậy ≥ 70% ({(parseFloat(selectedReport.metadata.categoryConfidence) * 100).toFixed(0)}%)
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2.5 text-sm">
-                            {['low', 'medium'].includes(selectedReport.priority) ? (
-                              <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
-                            ) : (
-                              <XIcon className="w-4 h-4 text-red-600 flex-shrink-0" />
-                            )}
-                            <span className="text-gray-900 font-medium">
-                              Ưu tiên thấp/trung bình ({selectedReport.priority})
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2.5 text-sm">
-                            {selectedReport.metadata?.severity && ['low', 'medium'].includes(selectedReport.metadata.severity) ? (
-                              <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
-                            ) : (
-                              <XIcon className="w-4 h-4 text-red-600 flex-shrink-0" />
-                            )}
-                            <span className="text-gray-900 font-medium">
-                              Mức độ nhẹ/vừa ({selectedReport.metadata?.severity || 'N/A'})
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2.5 text-sm">
-                            {normalizeImages(selectedReport.metadata?.images).length > 0 ? (
-                              <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
-                            ) : (
-                              <XIcon className="w-4 h-4 text-red-600 flex-shrink-0" />
-                            )}
-                            <span className="text-gray-900 font-medium">
->>>>>>> frontend
+                              Has images ({normalizeImages(selectedReport.metadata?.images).length} images)
                               Có hình ảnh ({normalizeImages(selectedReport.metadata?.images).length} ảnh)
                             </span>
                           </div>
@@ -2033,17 +1960,11 @@ export default function AdminPage() {
                 )}
 
                 {/* Workflow Timeline */}
-<<<<<<< HEAD
                 <div className="bg-gradient-to-br from-blue-50 to-white p-3 rounded-lg border border-blue-200">
                   <label className="block text-xs font-semibold text-blue-700 uppercase tracking-wide mb-3 flex items-center gap-2">
                     <span className="text-lg">📋</span>
                     <span>Quy trình xử lý</span>
-=======
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 p-4 rounded-xl border border-blue-200">
-                  <label className="block text-xs font-semibold text-blue-700 uppercase tracking-wide mb-3 flex items-center gap-2">
-                    <FileCheck className="w-4 h-4 text-blue-600" />
-                    <span>QUY TRÌNH XỬ LÝ</span>
->>>>>>> frontend
+                    <span>PROCESSING WORKFLOW</span>
                   </label>
                   
                   <div className="relative">
@@ -2053,24 +1974,13 @@ export default function AdminPage() {
                     <div className="space-y-4">
                       {/* Step 1: Submitted */}
                       <div className="relative flex items-start gap-3">
-<<<<<<< HEAD
                         <div className={`relative z-10 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
                           selectedReport.status ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-500'
                         }`}>
                           {selectedReport.status ? '✓' : '1'}
-=======
-                        <div className={`relative z-10 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm ${
-                          selectedReport.status ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-500'
-                        }`}>
-                          {selectedReport.status ? (
-                            <CheckCircle2 className="w-4 h-4" />
-                          ) : (
-                            <span className="text-xs font-bold">1</span>
-                          )}
->>>>>>> frontend
                         </div>
                         <div className="flex-1 pb-2">
-                          <p className="text-sm font-bold text-gray-900">Đã gửi báo cáo</p>
+                          <p className="text-sm font-bold text-gray-900">Report Submitted</p>
                           <p className="text-xs text-gray-500 mt-0.5">
                             {selectedReport.dateCreated 
                               ? new Date(selectedReport.dateCreated).toLocaleString('vi-VN')
@@ -2082,35 +1992,23 @@ export default function AdminPage() {
                       
                       {/* Step 2: AI Processing */}
                       <div className="relative flex items-start gap-3">
-<<<<<<< HEAD
                         <div className={`relative z-10 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-=======
-                        <div className={`relative z-10 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm ${
->>>>>>> frontend
                           selectedReport.metadata?.categoryConfidence !== undefined && selectedReport.metadata?.categoryConfidence !== ''
                             ? 'bg-green-500 text-white' 
                             : selectedReport.status === 'ai_processing'
                             ? 'bg-yellow-500 text-white animate-pulse'
                             : 'bg-gray-300 text-gray-500'
                         }`}>
-<<<<<<< HEAD
                           {selectedReport.metadata?.categoryConfidence !== undefined && selectedReport.metadata?.categoryConfidence !== '' ? '✓' : '2'}
-=======
-                          {selectedReport.metadata?.categoryConfidence !== undefined && selectedReport.metadata?.categoryConfidence !== '' ? (
-                            <CheckCircle2 className="w-4 h-4" />
-                          ) : (
-                            <span className="text-xs font-bold">2</span>
-                          )}
->>>>>>> frontend
                         </div>
                         <div className="flex-1 pb-2">
-                          <p className="text-sm font-bold text-gray-900">Phân loại AI</p>
+                          <p className="text-sm font-bold text-gray-900">AI Classification</p>
                           <p className="text-xs text-gray-500 mt-0.5">
                             {selectedReport.metadata?.categoryConfidence !== undefined && selectedReport.metadata?.categoryConfidence !== ''
-                              ? `Hoàn thành - ${selectedReport.category || 'unknown'} (${(parseFloat(selectedReport.metadata.categoryConfidence) * 100).toFixed(0)}%)`
+                              ? `Completed - ${selectedReport.category || 'unknown'} (${(parseFloat(selectedReport.metadata.categoryConfidence) * 100).toFixed(0)}%)`
                               : selectedReport.status === 'ai_processing'
-                              ? 'Đang xử lý...'
-                              : 'Chờ xử lý'
+                              ? 'Processing...'
+                              : 'Pending'
                             }
                           </p>
                         </div>
@@ -2118,85 +2016,52 @@ export default function AdminPage() {
                       
                       {/* Step 3: Auto Approval or Review */}
                       <div className="relative flex items-start gap-3">
-<<<<<<< HEAD
                         <div className={`relative z-10 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-=======
-                        <div className={`relative z-10 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm ${
->>>>>>> frontend
                           ['auto_approved', 'approved', 'rejected', 'resolved'].includes(selectedReport.status)
                             ? 'bg-green-500 text-white'
                             : selectedReport.status === 'pending_review'
                             ? 'bg-yellow-500 text-white'
                             : 'bg-gray-300 text-gray-500'
                         }`}>
-<<<<<<< HEAD
                           {['auto_approved', 'approved', 'rejected', 'resolved'].includes(selectedReport.status) ? '✓' : '3'}
-=======
-                          {['auto_approved', 'approved', 'rejected', 'resolved'].includes(selectedReport.status) ? (
-                            selectedReport.status === 'rejected' ? (
-                              <XIcon className="w-4 h-4" />
-                            ) : (
-                              <CheckCircle2 className="w-4 h-4" />
-                            )
-                          ) : (
-                            <span className="text-xs font-bold">3</span>
-                          )}
->>>>>>> frontend
                         </div>
                         <div className="flex-1 pb-2">
                           <p className="text-sm font-bold text-gray-900">
-                            {selectedReport.status === 'auto_approved' && 'Tự động duyệt'}
-                            {selectedReport.status === 'pending_review' && 'Chờ kiểm duyệt'}
-                            {selectedReport.status === 'approved' && 'Đã duyệt'}
-                            {selectedReport.status === 'rejected' && 'Đã từ chối'}
-                            {!['auto_approved', 'pending_review', 'approved', 'rejected', 'resolved'].includes(selectedReport.status) && 'Chờ kiểm duyệt'}
+                            {selectedReport.status === 'auto_approved' && 'Auto Approved'}
+                            {selectedReport.status === 'pending_review' && 'Pending Review'}
+                            {selectedReport.status === 'approved' && 'Approved'}
+                            {selectedReport.status === 'rejected' && 'Rejected'}
+                            {!['auto_approved', 'pending_review', 'approved', 'rejected', 'resolved'].includes(selectedReport.status) && 'Pending Review'}
                           </p>
                           <p className="text-xs text-gray-500 mt-0.5">
-<<<<<<< HEAD
+                            {selectedReport.status === 'auto_approved' && 'Meets auto-approval conditions'}
+                            {selectedReport.status === 'pending_review' && 'Requires manual review'}
+                            {selectedReport.status === 'approved' && 'Administrator approved'}
+                            {selectedReport.status === 'rejected' && 'Administrator rejected'}
                             {selectedReport.status === 'auto_approved' && '✨ Đáp ứng điều kiện tự động duyệt'}
                             {selectedReport.status === 'pending_review' && '⏳ Cần kiểm tra thủ công'}
                             {selectedReport.status === 'approved' && '✅ Quản trị viên đã duyệt'}
                             {selectedReport.status === 'rejected' && '❌ Quản trị viên đã từ chối'}
-=======
-                            {selectedReport.status === 'auto_approved' && 'Đáp ứng điều kiện tự động duyệt'}
-                            {selectedReport.status === 'pending_review' && 'Cần kiểm tra thủ công'}
-                            {selectedReport.status === 'approved' && 'Quản trị viên đã duyệt'}
-                            {selectedReport.status === 'rejected' && 'Quản trị viên đã từ chối'}
->>>>>>> frontend
                           </p>
                         </div>
                       </div>
                       
                       {/* Step 4: Resolved (if applicable) */}
                       <div className="relative flex items-start gap-3">
-<<<<<<< HEAD
                         <div className={`relative z-10 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-=======
-                        <div className={`relative z-10 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm ${
->>>>>>> frontend
                           selectedReport.status === 'resolved'
                             ? 'bg-green-500 text-white'
                             : 'bg-gray-300 text-gray-500'
                         }`}>
-<<<<<<< HEAD
                           {selectedReport.status === 'resolved' ? '✓' : '4'}
-=======
-                          {selectedReport.status === 'resolved' ? (
-                            <CheckCircle2 className="w-4 h-4" />
-                          ) : (
-                            <span className="text-xs font-bold">4</span>
-                          )}
->>>>>>> frontend
                         </div>
                         <div className="flex-1">
-                          <p className="text-sm font-bold text-gray-900">Đã giải quyết</p>
+                          <p className="text-sm font-bold text-gray-900">Resolved</p>
                           <p className="text-xs text-gray-500 mt-0.5">
                             {selectedReport.status === 'resolved'
-<<<<<<< HEAD
+                              ? 'Issue has been resolved'
+                              : 'Pending resolution'
                               ? '🎉 Vấn đề đã được xử lý'
-=======
-                              ? 'Vấn đề đã được xử lý'
->>>>>>> frontend
                               : 'Chờ xử lý'
                             }
                           </p>
@@ -2208,7 +2073,6 @@ export default function AdminPage() {
 
                 {/* Location */}
                 {selectedReport.locationName && (
-<<<<<<< HEAD
                   <div className="bg-gradient-to-br from-green-50 to-white p-3 rounded-lg border border-green-100">
                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center space-x-2">
                       <MapPin className="w-3 h-3 text-green-600" />
@@ -2218,17 +2082,6 @@ export default function AdminPage() {
                       <div className="bg-white p-2 rounded border border-gray-200">
                         <p className="text-xs text-gray-500 mb-1">Tọa độ</p>
                         <p className="text-xs font-mono text-gray-900">
-=======
-                  <div className="bg-gradient-to-br from-green-50 to-white p-4 rounded-xl border border-green-200">
-                    <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2.5 flex items-center space-x-2">
-                      <MapPin className="w-4 h-4 text-green-600" />
-                      <span>VỊ TRÍ BÁO CÁO</span>
-                    </label>
-                    <div className="space-y-2">
-                      <div className="bg-white p-3 rounded-lg border border-gray-200">
-                        <p className="text-xs text-gray-500 mb-1 font-semibold">Tọa độ</p>
-                        <p className="text-sm font-mono text-gray-900">
->>>>>>> frontend
                           {selectedReport.locationName}
                         </p>
                       </div>
@@ -2237,19 +2090,11 @@ export default function AdminPage() {
                           href={`https://www.google.com/maps?q=${selectedReport.metadata.coordinates[1]},${selectedReport.metadata.coordinates[0]}`}
                           target="_blank"
                           rel="noopener noreferrer"
-<<<<<<< HEAD
                           className="inline-flex items-center space-x-2 px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 transition-colors"
                         >
                           <MapPin className="w-3 h-3" />
                           <span>Xem trên Google Maps</span>
                           <ExternalLink className="w-2.5 h-2.5" />
-=======
-                          className="inline-flex items-center space-x-2 px-4 py-2.5 bg-green-600 text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-colors shadow-sm"
-                        >
-                          <MapPin className="w-4 h-4" />
-                          <span>Xem trên Google Maps</span>
-                          <ExternalLink className="w-3.5 h-3.5" />
->>>>>>> frontend
                         </a>
                       )}
                     </div>
@@ -2260,16 +2105,16 @@ export default function AdminPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                   <div className="bg-gradient-to-br from-blue-50 to-white p-2 rounded-lg border border-blue-100">
                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                      Danh mục
+                      Category
                     </label>
                     <p className="text-xs font-medium text-gray-900 capitalize">
-                      {selectedReport.category || 'Khác'}
+                      {selectedReport.category || 'Other'}
                     </p>
                   </div>
                   <div className="bg-gradient-to-br from-purple-50 to-white p-2 rounded-lg border border-purple-100">
                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 flex items-center space-x-1">
                       <Clock className="w-2.5 h-2.5" />
-                      <span>Ngày tạo</span>
+                      <span>Created Date</span>
                     </label>
                     <p className="text-xs font-medium text-gray-900">
                       {(() => {
@@ -2294,7 +2139,7 @@ export default function AdminPage() {
                   <div className="bg-gradient-to-br from-indigo-50 to-white p-2 rounded-lg border border-indigo-100">
                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 flex items-center space-x-1">
                       <User className="w-2.5 h-2.5" />
-                      <span>Người báo cáo</span>
+                      <span>Reporter</span>
                     </label>
                     <p className="text-xs font-medium text-gray-900 truncate">
                       {selectedReport.reportedBy || 'Unknown'}
@@ -2305,7 +2150,7 @@ export default function AdminPage() {
                 {/* Full Report ID */}
                 <div className="bg-gray-900 p-2 rounded-lg">
                   <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
-                    ID đầy đủ
+                    Full ID
                   </label>
                   <p className="text-xs font-mono text-gray-300 break-all">{selectedReport.id}</p>
                 </div>
@@ -2313,45 +2158,28 @@ export default function AdminPage() {
             </div>
 
             {/* Footer */}
-<<<<<<< HEAD
             <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50">
               <button
                 onClick={() => setShowReportModal(false)}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-=======
-            <div className="flex items-center justify-between px-6 py-3 border-t border-gray-200 bg-gray-50">
-              <button
-                onClick={() => setShowReportModal(false)}
-                className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors"
->>>>>>> frontend
               >
-                Đóng
+                Close
               </button>
               <button
                 onClick={handleUpdateReport}
                 disabled={updateLoading || (editingStatus === selectedReport.status && editingPriority === selectedReport.priority)}
-<<<<<<< HEAD
                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
               >
                 {updateLoading ? (
                   <>
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-=======
-                className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2 shadow-md"
-              >
-                {updateLoading ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
->>>>>>> frontend
+                    <span>Saving...</span>
                     <span>Đang lưu...</span>
                   </>
                 ) : (
                   <>
-<<<<<<< HEAD
                     <CheckCircle className="w-3.5 h-3.5" />
-=======
-                    <CheckCircle className="w-4 h-4" />
->>>>>>> frontend
+                    <span>Save Changes</span>
                     <span>Lưu thay đổi</span>
                   </>
                 )}

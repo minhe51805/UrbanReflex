@@ -1,8 +1,25 @@
 /**
- * Author: Trương Dương Bảo Minh (minhe51805)
- * Create at: 25-11-2025
- * Description: Floating report button for quick access to report road issues
+ * ============================================================================
+ * UrbanReflex — Smart City Intelligence Platform
+ * Copyright (C) 2025  WAG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ * For more information, visit: https://github.com/minhe51805/UrbanReflex
+ * ============================================================================
  */
+
 
 'use client';
 
@@ -254,7 +271,7 @@ export default function FloatingReportButton({ selectedRoad }: FloatingReportBut
             return;
           }
           if (!selectedRoad) {
-            setError('Vui lòng chọn một đường trên bản đồ trước khi báo cáo');
+            setError('Please select a road on the map before reporting');
             setTimeout(() => setError(null), 4000);
             return;
           }
@@ -268,7 +285,7 @@ export default function FloatingReportButton({ selectedRoad }: FloatingReportBut
          </div>
          <div className="flex flex-col leading-tight text-left">
            <span className="text-xs uppercase tracking-wider text-slate-500 hidden sm:block">Gửi cảnh báo</span>
-           <span className="text-base font-bold text-slate-900">Báo cáo</span>
+           <span className="text-base font-bold text-slate-900">Report</span>
          </div>
       </button>
 
@@ -290,7 +307,7 @@ export default function FloatingReportButton({ selectedRoad }: FloatingReportBut
                   <Flag className="h-6 w-6 text-orange-600 stroke-2" />
                 </div>
                 <h3 className="text-xl font-extrabold text-slate-900">
-                  Báo cáo sự cố đường
+                  Report Road Issue
                 </h3>
               </div>
               <button
@@ -418,7 +435,7 @@ export default function FloatingReportButton({ selectedRoad }: FloatingReportBut
               {success && (
                 <div className="bg-gradient-to-r from-green-50 to-green-100 border-2 border-green-300 text-green-800 px-4 py-3 rounded-xl text-sm font-medium flex items-start gap-2">
                   <span className="text-lg">✅</span>
-                  <span>Báo cáo đã được gửi thành công! Admin sẽ xem xét trong thời gian sớm nhất.</span>
+                  <span>Report submitted successfully! Admin will review it as soon as possible.</span>
                 </div>
               )}
 

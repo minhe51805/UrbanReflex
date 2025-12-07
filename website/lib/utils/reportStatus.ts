@@ -33,59 +33,59 @@ export const STATUS_CONFIG: Record<ReportStatus, {
   isPublic: boolean; // Whether to show on public map
 }> = {
   submitted: {
-    label: 'Đã gửi',
+    label: 'Submitted',
     emoji: '📝',
     color: 'text-blue-700',
     bgColor: 'bg-blue-50 border-blue-200',
-    description: 'Báo cáo vừa được gửi, đang chờ xử lý',
+    description: 'Report just submitted, awaiting processing',
     isPublic: false
   },
   ai_processing: {
-    label: 'Đang phân tích',
+    label: 'Processing',
     emoji: '🤖',
     color: 'text-purple-700',
     bgColor: 'bg-purple-50 border-purple-200',
-    description: 'AI đang phân tích và phân loại',
+    description: 'AI is analyzing and classifying',
     isPublic: false
   },
   auto_approved: {
-    label: 'Tự động duyệt',
+    label: 'Auto Approved',
     emoji: '✅',
     color: 'text-green-700',
     bgColor: 'bg-green-50 border-green-200',
-    description: 'Đã được AI tự động duyệt và hiển thị công khai',
+    description: 'Automatically approved by AI and displayed publicly',
     isPublic: true
   },
   pending_review: {
-    label: 'Chờ duyệt',
+    label: 'Pending Review',
     emoji: '⏳',
     color: 'text-yellow-700',
     bgColor: 'bg-yellow-50 border-yellow-200',
-    description: 'Cần admin xem xét và duyệt',
+    description: 'Requires admin review and approval',
     isPublic: false
   },
   approved: {
-    label: 'Đã duyệt',
+    label: 'Approved',
     emoji: '✓',
     color: 'text-green-700',
     bgColor: 'bg-green-50 border-green-200',
-    description: 'Admin đã duyệt và hiển thị công khai',
+    description: 'Approved by admin and displayed publicly',
     isPublic: true
   },
   rejected: {
-    label: 'Từ chối',
+    label: 'Rejected',
     emoji: '✗',
     color: 'text-red-700',
     bgColor: 'bg-red-50 border-red-200',
-    description: 'Báo cáo không hợp lệ hoặc trùng lặp',
+    description: 'Report is invalid or duplicate',
     isPublic: false
   },
   resolved: {
-    label: 'Đã giải quyết',
+    label: 'Resolved',
     emoji: '🎉',
     color: 'text-indigo-700',
     bgColor: 'bg-indigo-50 border-indigo-200',
-    description: 'Vấn đề đã được xử lý xong',
+    description: 'Issue has been resolved',
     isPublic: true
   }
 };

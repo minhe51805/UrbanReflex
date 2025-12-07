@@ -1,8 +1,8 @@
-# Deployment Guide - Chi tiết chức năng
+# Deployment Guide - Feature Details
 
-## 📋 Tổng quan
+## 📋 Overview
 
-Hướng dẫn đầy đủ để deploy UrbanReflex API lên production với DNS riêng.
+Complete guide to deploy UrbanReflex API to production with custom DNS.
 
 ---
 
@@ -34,7 +34,7 @@ https://urbanreflex.yourdomain.com/api/v1
 
 #### Update Code Examples
 
-Update all code examples trong documentation với production URL.
+Update all code examples in documentation with production URL.
 
 ### 2. Environment Variables
 

@@ -1,3 +1,27 @@
+/**
+ * ============================================================================
+ * UrbanReflex — Smart City Intelligence Platform
+ * Copyright (C) 2025  WAG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ * For more information, visit: https://github.com/minhe51805/UrbanReflex
+ * ============================================================================
+ */
+
+
+
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
@@ -52,7 +76,7 @@ export default function ProfilePage() {
       const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
       if (!token) {
         console.warn('No auth token found, skipping API keys load');
-        setApiKeysError('Bạn cần đăng nhập để xem API keys');
+        setApiKeysError('You need to log in to view API keys');
         return;
       }
       
@@ -130,21 +154,21 @@ export default function ProfilePage() {
         // Handle different error statuses
         if (response.status === 401) {
           // Unauthorized - token might be invalid or expired
-          setApiKeysError('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+          setApiKeysError('Your session has expired. Please log in again.');
           setApiKeys([]);
         } else if (response.status === 403) {
           // Forbidden - user doesn't have permission
-          setApiKeysError('Bạn không có quyền truy cập API keys. Chỉ admin mới có thể quản lý API keys.');
+          setApiKeysError('You do not have permission to access API keys. Only admins can manage API keys.');
           setApiKeys([]);
         } else {
           // Other errors
           try {
             const errorData = await response.json();
-            const errorMsg = errorData.detail || errorData.error || errorData.message || 'Không thể tải API keys';
+            const errorMsg = errorData.detail || errorData.error || errorData.message || 'Unable to load API keys';
             setApiKeysError(errorMsg);
             console.error('Failed to load API keys:', errorData);
           } catch (e) {
-            setApiKeysError(`Lỗi HTTP ${response.status}: Không thể tải API keys`);
+            setApiKeysError(`HTTP Error ${response.status}: Unable to load API keys`);
             console.error('Failed to load API keys: HTTP', response.status);
           }
           setApiKeys([]);
@@ -152,7 +176,7 @@ export default function ProfilePage() {
       }
     } catch (error) {
       console.error('Failed to load API keys:', error);
-      setApiKeysError('Đã xảy ra lỗi khi tải API keys. Vui lòng thử lại sau.');
+      setApiKeysError('An error occurred while loading API keys. Please try again later.');
       setApiKeys([]);
     }
   };
@@ -214,7 +238,7 @@ export default function ProfilePage() {
   const handleDeleteApiKey = async (keyId: string) => {
     if (!keyId || keyId === 'undefined') {
       console.error('Cannot delete: API key ID is missing or undefined');
-      setMessage({ type: 'error', text: 'Không thể xóa: ID của API key không hợp lệ' });
+      setMessage({ type: 'error', text: 'Cannot delete: Invalid API key ID' });
       return;
     }
     
@@ -416,7 +440,7 @@ export default function ProfilePage() {
                     <div className="flex items-start space-x-3">
                       <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
                       <div className="flex-1">
-                        <h3 className="text-sm font-semibold text-red-800 mb-1">Lỗi khi tải API Keys</h3>
+                        <h3 className="text-sm font-semibold text-red-800 mb-1">Error Loading API Keys</h3>
                         <p className="text-sm text-red-700">{apiKeysError}</p>
                       </div>
                       <button
@@ -492,7 +516,7 @@ export default function ProfilePage() {
                             onClick={() => {
                               if (!apiKey.id) {
                                 console.error('API key ID is missing:', apiKey);
-                                setMessage({ type: 'error', text: 'Không thể xóa: ID của API key không hợp lệ' });
+                                setMessage({ type: 'error', text: 'Cannot delete: Invalid API key ID' });
                                 return;
                               }
                               handleDeleteApiKey(apiKey.id);
