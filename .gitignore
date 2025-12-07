@@ -338,7 +338,6 @@ tmp/
 *.pb
 *.onnx
 *.tflite
-models/
 checkpoints/
 
 # Vector database indices
