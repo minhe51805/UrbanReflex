@@ -294,15 +294,16 @@ python -c "import motor.motor_asyncio; print('MongoDB driver installed')"
 
 ```
 UrbanReflex/
-├── app/                    # 🐍 FastAPI Backend
-│   ├── app.py              # Main application
-│   ├── routers/            # API endpoints
-│   ├── models/             # Database models
-│   └── utils/              # Utilities
-├── website/                # 🌐 Next.js Frontend
-│   ├── app/                # App Router pages
-│   ├── components/         # React components
-│   └── lib/                # Utilities
+├── src/                    # 💻 Source Code
+│   ├── backend/            # 🐍 FastAPI Backend
+│   │   ├── app.py          # Main application
+│   │   ├── routers/        # API endpoints
+│   │   ├── models/         # Database models
+│   │   └── utils/          # Utilities
+│   └── frontend/           # 🌐 Next.js Frontend
+│       ├── app/            # App Router pages
+│       ├── components/     # React components
+│       └── lib/            # Utilities
 ├── docs/                   # 📚 Documentation
 ├── scripts/                # 🤖 Automation scripts
 ├── docker-compose.yml      # 🐳 Services
@@ -345,7 +346,7 @@ just format
 # Or individually
 pytest                    # Backend tests
 cd website && npm test    # Frontend tests
-black app/               # Format Python code
+black src/backend/               # Format Python code
 cd website && npm run lint # Lint frontend code
 ```
 
@@ -353,7 +354,7 @@ cd website && npm run lint # Lint frontend code
 
 After successful setup:
 
-1. 📖 **Read the code** - Explore `app/` and `website/` directories
+1. 📖 **Read the code** - Explore `src/backend/` and `src/frontend/` directories
 2. 🧪 **Run tests** - Ensure everything works correctly
 3. 🌐 **Visit the app** - http://localhost:3000
 4. 📊 **Check API docs** - http://localhost:8000/docs

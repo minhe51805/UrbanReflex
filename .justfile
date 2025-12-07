@@ -34,7 +34,7 @@ setup: install setup-env
 # Run backend in development mode
 backend-dev:
     @echo "Starting backend development server..."
-    uv run uvicorn app.app:app --reload --host 0.0.0.0 --port 8000
+    uv run uvicorn src.backend.app:app --reload --host 0.0.0.0 --port 8000
 
 # Stop backend (for Windows)
 backend-stop:
@@ -58,24 +58,24 @@ backend-health:
 # Install frontend dependencies
 frontend-install:
     @echo "Installing frontend dependencies..."
-    cd website; npm install
+    cd src/frontend; npm install
     @echo "Frontend dependencies installed!"
 
 # Run frontend in development mode
 frontend-dev:
     @echo "Starting frontend development server..."
-    cd website; npm run dev
+    cd src/frontend; npm run dev
 
 # Build frontend for production
 frontend-build:
     @echo "Building frontend..."
-    cd website; npm run build
+    cd src/frontend; npm run build
     @echo "Frontend built!"
 
 # Run frontend in production mode
 frontend-start:
     @echo "Starting frontend production server..."
-    cd website; npm start
+    cd src/frontend; npm start
 
 # Stop frontend (for Windows)
 frontend-stop:
@@ -85,7 +85,7 @@ frontend-stop:
 # Lint frontend code
 frontend-lint:
     @echo "Linting frontend code..."
-    cd website; npm run lint
+    cd src/frontend; npm run lint
 
 # ============================================================================
 # INSTALLATION & SETUP

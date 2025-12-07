@@ -616,50 +616,51 @@ docker ps  # Should show mongo and orion-ld containers
 
 ```
 UrbanReflex/
-├── app/                          # FastAPI Backend
-│   ├── app.py                    # Main FastAPI app + CORS config
-│   ├── dependencies.py           # Dependency injection (get_db, auth)
-│   ├── routers/                  # API endpoints
-│   │   ├── auth.py               # POST /auth/register, /auth/login
-│   │   ├── chatbot.py           # POST /ai-service/chatbot/chat
-│   │   ├── citizen_reports.py   # POST /api/v1/citizen-reports/classify
-│   │   ├── users.py             # GET /api/v1/users/*
-│   │   └── items.py              # Example router
-│   ├── models/                   # Database models (Pydantic)
-│   │   └── chat_history.py       # ChatSession, ChatMessage
-│   ├── schemas/                  # Request/Response schemas
-│   │   └── user.py               # User, UserCreate, Token
-│   ├── utils/                    # Shared utilities
-│   │   ├── auth.py               # JWT, password hashing
-│   │   └── db.py                 # MongoDB serialization
-│   ├── ai_service/               # AI/ML services
-│   │   ├── chatbot/
-│   │   │   ├── rag.py            # RAG system (Gemini + Pinecone)
-│   │   │   ├── embedding.py     # Vector embeddings manager
-│   │   │   ├── crawler.py       # Web crawler for indexing
-│   │   │   └── pinecone_adapter.py
-│   │   └── classifier_report/
-│   │       ├── nlp_classifier.py # Report classification
-│   │       └── prioritizer.py    # POI-based priority
-│   └── internal/                 # Internal/admin routes
-│       └── admin.py              # Admin-only endpoints
-│
-├── website/                      # Next.js Frontend
-│   ├── app/                      # App Router (Next.js 16)
-│   │   ├── layout.tsx            # Root layout + providers
-│   │   ├── page.tsx              # Homepage
-│   │   ├── api/                  # API routes (server-side)
-│   │   └── [pages]/              # Dynamic routes
-│   ├── components/               # React components
-│   │   ├── layout/               # Header, Footer
-│   │   ├── ui/                   # Reusable UI components
-│   │   ├── home/                 # Homepage sections
-│   │   └── explore/              # Map/explore components
-│   ├── contexts/                 # React Context providers
-│   │   └── AuthContext.tsx       # Auth state management
-│   └── types/                    # TypeScript definitions
-│       ├── ngsi-ld.ts            # NGSI-LD entity types
-│       └── orion.ts              # Orion API types
+├── src/                          # Source Code
+│   ├── backend/                  # FastAPI Backend
+│   │   ├── app.py                # Main FastAPI app + CORS config
+│   │   ├── dependencies.py       # Dependency injection (get_db, auth)
+│   │   ├── routers/              # API endpoints
+│   │   │   ├── auth.py           # POST /auth/register, /auth/login
+│   │   │   ├── chatbot.py       # POST /ai-service/chatbot/chat
+│   │   │   ├── citizen_reports.py # POST /api/v1/citizen-reports/classify
+│   │   │   ├── users.py         # GET /api/v1/users/*
+│   │   │   └── items.py          # Example router
+│   │   ├── models/               # Database models (Pydantic)
+│   │   │   └── chat_history.py   # ChatSession, ChatMessage
+│   │   ├── schemas/              # Request/Response schemas
+│   │   │   └── user.py           # User, UserCreate, Token
+│   │   ├── utils/                # Shared utilities
+│   │   │   ├── auth.py           # JWT, password hashing
+│   │   │   └── db.py             # MongoDB serialization
+│   │   ├── ai_service/           # AI/ML services
+│   │   │   ├── chatbot/
+│   │   │   │   ├── rag.py        # RAG system (Gemini + Pinecone)
+│   │   │   │   ├── embedding.py # Vector embeddings manager
+│   │   │   │   ├── crawler.py   # Web crawler for indexing
+│   │   │   │   └── pinecone_adapter.py
+│   │   │   └── classifier_report/
+│   │   │       ├── nlp_classifier.py # Report classification
+│   │   │       └── prioritizer.py    # POI-based priority
+│   │   └── internal/             # Internal/admin routes
+│   │       └── admin.py          # Admin-only endpoints
+│   │
+│   └── frontend/                 # Next.js Frontend
+│       ├── app/                  # App Router (Next.js 16)
+│       │   ├── layout.tsx        # Root layout + providers
+│       │   ├── page.tsx          # Homepage
+│       │   ├── api/              # API routes (server-side)
+│       │   └── [pages]/          # Dynamic routes
+│       ├── components/           # React components
+│       │   ├── layout/           # Header, Footer
+│       │   ├── ui/               # Reusable UI components
+│       │   ├── home/             # Homepage sections
+│       │   └── explore/          # Map/explore components
+│       ├── contexts/             # React Context providers
+│       │   └── AuthContext.tsx   # Auth state management
+│       └── types/                # TypeScript definitions
+│           ├── ngsi-ld.ts        # NGSI-LD entity types
+│           └── orion.ts          # Orion API types
 │
 ├── config/                       # Configuration
 │   ├── config.py                 # App config (env vars)
