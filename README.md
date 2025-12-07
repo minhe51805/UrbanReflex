@@ -5,7 +5,7 @@
 <h1 align="center">UrbanReflex</h1>
 
 <p align="center">
-	A smart city intelligence platform that bridges fragmented urban data sources into a unified NGSI-LD ecosystem, empowering communities and city managers with real-time infrastructure insights and open data access
+	UrbanReflex is an open-source civic-tech platform that blends real-time urban sensing with citizen reports to improve city services — from street lighting to broader infrastructure. It aggregates geo-tagged issues, applies time/context-aware prioritization, and publishes NGSI-LD open data to keep residents and city teams aligned with transparent, actionable insights.
 </p>
 
 <p align="center">
@@ -16,7 +16,7 @@
 	|
 	<a href="https://github.com/minhe51805/UrbanReflex/issues/new?template=feature_request.yml">✨ Request Feature</a>
 	|
-	<a href="https://github.com/minhe51805/UrbanReflex/discussions">💬 Join Discussion</a>
+	<a href="https://t.me/+o1X9iR9j7_czYmE1">💬 Join Discussion</a>
 	|
 	<a href="./docs/">📚 Documentation</a>
 </p>
@@ -51,13 +51,13 @@
 
 ## ✨ Highlights
 
-- 🌍 **Real-time Air Quality Monitoring** from 10,000+ global stations
-- 📝 **Citizen-Powered Infrastructure Reporting** with photo uploads & geolocation
-- 🤖 **AI-Powered Chatbot** with Gemini 2.5 Flash & RAG system
-- 🏛️ **NGSI-LD Compliant** Smart City Data Models (ETSI standard)
-- 🌐 **12-Language Support** with Google Translate integration
-- ⚡ **One-Command Setup** with Just task runner & UV package manager
-- 🔐 **Role-Based Access Control** (Citizen, City Official, Admin)
+- 🌍 **Real-time air quality and environmental monitoring** (NGSI-LD aligned)  
+- 📝 **Citizen-Powered Infrastructure Reporting** with photo uploads & geolocation  
+- 🤖 **Automated classification and prioritization** for city operations & RAG system  
+- 🏛️ **NGSI-LD Compliant Smart City Data Models** (ETSI standard)  
+- 📂 **Open Data Access** via public API & standard exports: **GeoJSON, NDJSON, CSV**  
+- ⚡ **One-Command Setup** with Just task runner & UV package manager  
+- 🔐 **Access control** for citizens, city staff, and admins  
 
 ---
 
@@ -88,12 +88,12 @@
 ## What is UrbanReflex?
 
 <p align="justify">
-UrbanReflex is an open-source smart city platform that addresses modern urban challenges through integrated, data-driven solutions. It combines real-time environmental monitoring with citizen engagement features to enable transparent, efficient, and responsive urban governance.
+UrbanReflex is an open-source smart city platform designed to address critical urban challenges through integrated data-driven solutions, combining real-time environmental monitoring with citizen engagement tools for transparent, efficient urban governance.
 </p>
 
 <blockquote>
 	<p align="justify">
-		Built on NGSI-LD standards, the platform unifies infrastructure data, air quality monitoring, and citizen reports into actionable intelligence. With open data accessibility, AI-powered analytics, and real-time insights, UrbanReflex empowers communities and city managers to make informed decisions that support sustainable development and promote transparent urban governance.
+Built on NGSI-LD standards, the platform unifies infrastructure data, air quality monitoring, and citizen reports into actionable intelligence. Through open data access, AI-powered analytics, and real-time insights, it enables communities and city managers to make informed decisions that drive sustainable urban development and transparent governance.
 	</p>
 </blockquote>
 
@@ -130,50 +130,6 @@ This release focuses on **developer experience improvements**, **automation**, a
 - Fixed frontend environment file location
 
 See [CHANGELOG.md](./CHANGELOG.md) for full release notes.
-
----
-
-## ✨ Key Features
-
-### 🌍 Air Quality Intelligence
-
-- Real-time AQI from 10,000+ global monitoring stations
-- Interactive map with heatmaps and clustering
-- Health advisories based on pollution levels
-- Historical trend analysis (12-month data)
-- Location-based search for any city or region
-
-### 📝 Citizen Engagement
-
-- Report urban issues (streetlights, potholes, waste, traffic)
-- Photo uploads with automatic GPS geolocation
-- Real-time status tracking (Open → In Progress → Resolved)
-- Community voting for prioritization
-- Automated severity classification with AI
-
-### 🤖 AI Intelligence
-
-- Natural language chatbot powered by Gemini 2.5 Flash
-- Semantic vector search using Pinecone
-- RAG (Retrieval-Augmented Generation) system
-- Context-aware responses with data citations
-- Intelligent report classification with NLP
-
-### 🏛️ Smart City Infrastructure
-
-- NGSI-LD compliant data models (ETSI standard)
-- Orion Context Broker for real-time context management
-- Road segment & streetlight monitoring
-- Open data export (GeoJSON, NDJSON)
-
-### 🔐 Role-Based Access Control
-
-| Role              | Permissions                                       |
-| ----------------- | ------------------------------------------------- |
-| **Citizen**       | Submit reports, view air quality, access chatbot  |
-| **City Official** | Manage reports, assign tasks, analytics dashboard |
-| **Admin**         | Full system access, user management               |
-| **Developer**     | REST API with OpenAPI documentation               |
 
 ---
 
@@ -277,29 +233,6 @@ open http://localhost:3000
 
 ---
 
-## 🔐 Demo Credentials
-
-### Pre-configured Test Accounts
-
-| Role              | Email                    | Password        | Permissions        |
-| ----------------- | ------------------------ | --------------- | ------------------ |
-| **Admin**         | admin@urbanreflex.dev    | Admin@123456    | Full system access |
-| **City Official** | official@urbanreflex.dev | Official@123456 | Report management  |
-| **Citizen**       | citizen@urbanreflex.dev  | Citizen@123456  | Standard user      |
-
-### Service URLs
-
-| Service                     | URL                         |
-| --------------------------- | --------------------------- |
-| Frontend Application        | http://localhost:3000       |
-| Backend API                 | http://localhost:8000       |
-| API Documentation (Swagger) | http://localhost:8000/docs  |
-| API Documentation (ReDoc)   | http://localhost:8000/redoc |
-| Orion Context Broker        | http://localhost:1026       |
-| MongoDB                     | localhost:27017             |
-
----
-
 ## 🛠️ Technology Stack
 
 ### Backend
@@ -338,45 +271,7 @@ open http://localhost:3000
 
 ## 📊 System Architecture
 
-```mermaid
-graph TB
-    subgraph "Client Layer"
-        WEB[Web App<br/>Next.js 16]
-        MOBILE[Mobile Browser]
-    end
-
-    subgraph "API Gateway"
-        AUTH[Authentication<br/>JWT & API Keys]
-    end
-
-    subgraph "Application Layer"
-        BACKEND[FastAPI Server<br/>Python 3.10+]
-        AI[AI Service<br/>Gemini + Pinecone]
-    end
-
-    subgraph "Data Layer"
-        MONGO[(MongoDB)]
-        ORION[(Orion-LD<br/>NGSI-LD)]
-        PINECONE[(Pinecone<br/>Vector DB)]
-    end
-
-    subgraph "External Services"
-        OPENAQ[OpenAQ API]
-        GEMINI[Gemini AI]
-        OSM[OpenStreetMap]
-    end
-
-    WEB --> AUTH
-    MOBILE --> AUTH
-    AUTH --> BACKEND
-    BACKEND --> AI
-    BACKEND --> MONGO
-    BACKEND --> ORION
-    AI --> PINECONE
-    AI --> GEMINI
-    BACKEND --> OPENAQ
-    BACKEND --> OSM
-```
+<img loading="lazy" src="https://media.discordapp.net/attachments/1048439092154740836/1447263130039357480/Gemini_Generated_Image_vht8b3vht8b3vht8.png?ex=6936fc53&is=6935aad3&hm=727d081965f355ce91da79f44b8067d930f44e06ec2cb5850f763d219f9435d1&=&format=webp&quality=lossless" alt="UrbanReflex Banner" width="100%">
 
 ---
 
@@ -460,35 +355,6 @@ just clean           # Clean build artifacts
 
 ---
 
-## 📈 Project Status
-
-**Current Version**: v0.2.0 (Stable)  
-**Development Status**: Production Ready  
-**Target Competition**: Vietnam Open Source Software Competition 2025
-
-### ✅ Completed Features
-
-- [x] Air quality monitoring (10,000+ stations)
-- [x] Citizen reporting with photo uploads
-- [x] AI chatbot with Gemini integration
-- [x] Administrative dashboard
-- [x] NGSI-LD compliance
-- [x] JWT authentication with RBAC
-- [x] 12-language support
-- [x] One-command setup automation
-- [x] Docker Compose deployment
-- [x] Comprehensive documentation
-
-### 🔮 Planned Features (v1.0)
-
-- [ ] Real-time push notifications (WebSocket)
-- [ ] Native mobile applications (iOS/Android)
-- [ ] Email and SMS alert system
-- [ ] Predictive analytics with ML models
-- [ ] Kubernetes deployment manifests
-
----
-
 ## 🌟 Use Cases
 
 ### For Citizens
@@ -514,51 +380,27 @@ just clean           # Clean build artifacts
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
-We welcome contributions! Please read our guidelines before submitting.
+### 📖 Contributing Guidelines
 
-### Quick Contribution Guide
+<p align="justify">
+We are excited that you are interested in contributing to this project! Before submitting your contribution, please make sure to take a moment and read through the following guidelines:
+</p>
 
-```bash
-# 1. Fork and clone
-git clone https://github.com/YOUR_USERNAME/UrbanReflex.git
-cd UrbanReflex
+<p align="justify">
+Read through our <a href="./CONTRIBUTING.md">contributing guidelines</a> to learn about our submission process, coding rules, and more.
+</p>
 
-# 2. Create feature branch
-git checkout -b feature/your-feature-name
+### 💁 Want to Help?
 
-# 3. Install and develop
-just install
-just dev
-
-# 4. Make changes and test
-just format
-just lint
-just test
-
-# 5. Commit with conventional commits
-git commit -m "feat: add new feature"
-# Types: feat, fix, docs, style, refactor, test, chore
-
-# 6. Push and create PR
-git push origin feature/your-feature-name
-```
-
-### Code Quality Standards
-
-All code must pass:
-
-- ✅ `just format` (Black + Prettier)
-- ✅ `just lint` (Flake8 + ESLint)
-- ✅ `just test` (pytest + Jest)
-- ✅ Pre-commit hooks
-
-Read our [Contributing Guidelines](./CONTRIBUTING.md) for detailed information.
+<p align="justify">
+Want to report a bug, contribute some code, or improve the documentation? Excellent! Read up on our guidelines for <a href="./CONTRIBUTING.md">contributing</a> and then check out one of our issues labeled as <kbd><a href="https://github.com/minhe51805/UrbanReflex/labels/help%20wanted">help wanted</a></kbd> or <kbd><a href="https://github.com/minhe51805/UrbanReflex/labels/good%20first%20issue">good first issue</a></kbd>.
+</p>
 
 ---
 
-## 🏫 Support and Organization
+## Support and Organization
 
 <p align="center">
 	<a href="https://hutech.edu.vn/" target="_blank">
@@ -614,8 +456,7 @@ This project is licensed under the **GNU General Public License v3.0** - see the
 
 **UrbanReflex v0.2.0** — Smart City Intelligence Platform
 
-Built with ❤️ for Vietnam Open Source Software Competition 2025
 
-[🏠 Homepage](https://minhe51805.github.io/UrbanReflex/) • [📚 Documentation](./docs/) • [🐛 Report Bug](https://github.com/minhe51805/UrbanReflex/issues) • [💬 Discussions](https://github.com/minhe51805/UrbanReflex/discussions)
+[🏠 Homepage](https://github.com/minhe51805/UrbanReflex) • [📚 Documentation](https://minhe51805.github.io/UrbanReflex/) • [🐛 Report Bug](https://github.com/minhe51805/UrbanReflex/issues) • [💬 Discussions](https://t.me/+o1X9iR9j7_czYmE1)
 
 </div>
