@@ -359,24 +359,24 @@ just clean           # Clean build artifacts
 
 ### For Citizens
 
-- Monitor air quality before outdoor activities
-- Report infrastructure issues with photo documentation
-- Track resolution status of submitted reports
-- Access AI-powered health recommendations
+- Click any road segment on the map to view complete infrastructure information: weather conditions, air quality, streetlights, and nearby public facilities
+- Report infrastructure issues (broken streetlights, potholes, waste dumping, flooding) with automatic GPS location and photo documentation
+- Track real-time resolution status of submitted reports with automatic updates and notifications
+- Explore open data to gain deeper insights about your neighborhood and make informed decisions
 
 ### For City Officials
 
-- Real-time monitoring of citizen-reported issues
-- Data-driven prioritization of maintenance tasks
-- Analysis of pollution patterns across districts
-- Export capabilities for urban planning reports
+- Real-time dashboard displaying all citizen reports on an interactive map with powerful filtering capabilities
+- AI-powered automatic issue classification and priority adjustment based on proximity to schools, hospitals, and sensitive areas
+- Data-driven task management and maintenance assignment, optimizing resource allocation and response times
+- Export open data in multiple formats (NDJSON, CSV, GeoJSON) for deep analysis and urban planning
 
 ### For Developers
 
-- Access to open air quality data via REST API
-- Integration with NGSI-LD compliant systems
-- Custom dashboard development using provided APIs
-- Contribution to open-source smart city initiatives
+- Access complete NGSI-LD entities (RoadSegment, WeatherObserved, AirQualityObserved, Streetlight, PointOfInterest, CitizenReport) via standard REST API
+- Build custom applications leveraging Linked Open Data (LOD) relationships between entities
+- Integrate with other smart city systems through FiWARE Smart Data Models and SOSA/SSN ontology compliance
+- Contribute to open-source smart city platform with comprehensive, ready-to-use open datasets
 
 ---
 
