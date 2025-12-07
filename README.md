@@ -277,14 +277,14 @@ pip install uv
 git clone https://github.com/minhe51805/UrbanReflex.git
 cd UrbanReflex
 
-# 2. Install all dependencies (one command)
+# 2. Install all dependencies (UV + backend + frontend)
 just install
 
 # 3. Setup environment files
 just setup-env
 ```
 
-Then start services and you're done!
+Then edit `.env`, start services, and you're done!
 
 ### Detailed Setup Steps
 
@@ -298,16 +298,15 @@ cd UrbanReflex
 #### Step 2: Install All Dependencies (Just)
 
 ```bash
-# ONE COMMAND installs backend + frontend dependencies
+# ONE COMMAND installs UV + backend + frontend dependencies
 just install
 ```
 
-Equivalent to:
+This automatically:
 
-```bash
-uv sync --all-extras       # Backend (Python)
-npm install --prefix src/frontend  # Frontend (JavaScript)
-```
+1. Installs UV package manager (if not already installed)
+2. Installs Python backend dependencies via `uv sync --all-extras`
+3. Installs frontend dependencies via `npm install`
 
 #### Step 3: Setup Environment Files (Just)
 
@@ -396,7 +395,7 @@ just info       # Show project info
 
 ```bash
 # Setup
-just install               # Install all dependencies
+just install               # Install UV + backend + frontend dependencies
 just setup-env            # Create .env files
 
 # Backend Development

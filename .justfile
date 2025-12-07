@@ -77,15 +77,24 @@ frontend-lint:
 # INSTALLATION & SETUP
 # ============================================================================
 
-# Install all dependencies
-install: frontend-install
+# Install all dependencies (UV + backend + frontend)
+install:
+    @echo "Installing all dependencies..."
+    @echo "1. Installing UV package manager..."
+    @powershell -Command "irm https://astral.sh/uv/install.ps1 | iex"
+    @echo "2. Installing Python backend dependencies..."
+    uv sync --all-extras
+    @echo "3. Installing frontend dependencies..."
+    cd src/frontend; npm install
     @echo "All dependencies installed!"
 
 # Setup environment files
 setup-env:
     @echo "Setting up environment files..."
     @powershell -Command "if (-not (Test-Path .env)) { Copy-Item .env.example .env; Write-Host '.env created from .env.example' }"
-    @echo "Please edit .env with your configuration"
+    @powershell -Command "if (-not (Test-Path src/frontend/.env.local)) { Copy-Item src/frontend/.env.local.example src/frontend/.env.local; Write-Host 'src/frontend/.env.local created from .env.local.example' }"
+    @echo "Environment files created!"
+    @echo "Please edit .env and src/frontend/.env.local with your configuration"
 
 # ============================================================================
 # DEVELOPMENT HELPERS
