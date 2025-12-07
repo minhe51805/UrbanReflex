@@ -1,808 +1,744 @@
-# UrbanReflex
+<p align="center">
+	<img loading="lazy" src="https://drive.google.com/uc?export=view&id=1GG28YjHys9I1DTv2HnXOtD6zD0zwUgrg" alt="UrbanReflex Logo" height="150">
+</p>
+<h1 align="center">UrbanReflex v0.2.0</h1>
 
-**Smart City Platform - Air Quality Monitoring & Urban Infrastructure Management**
+<div align="center">
 
-[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/minhe51805/UrbanReflex/releases/tag/v0.2.0)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/minhe51805/UrbanReflex/releases/tag/0.2.0)
+[![Release](https://img.shields.io/badge/release-Stable-green.svg)](https://github.com/minhe51805/UrbanReflex/releases)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.121-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Next.js](https://img.shields.io/badge/Next.js-16.0.7-black?logo=next.js&logoColor=white)](https://nextjs.org/)
 [![License](https://img.shields.io/badge/License-GPL_3.0-blue.svg)](LICENSE)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.121+-009688?logo=fastapi)](https://fastapi.tiangolo.com/)
-[![Next.js](https://img.shields.io/badge/Next.js-16.0-black?logo=next.js)](https://nextjs.org/)
-[![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python)](https://www.python.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-18+-green?logo=node.js)](https://nodejs.org/)
+[![Status](https://img.shields.io/badge/Status-Production_Ready-green.svg)](https://github.com/minhe51805/UrbanReflex)
+
+A smart city intelligence platform that bridges fragmented urban data sources into a unified NGSI-LD ecosystem, empowering communities and city managers with real-time infrastructure insights and open data access
+
+**Production-Ready Release for Deployment & Testing**
+
+[🚀 Quick Start](#-quick-start) • [✨ What's New](#-whats-new-in-v020) • [📊 Demo Credentials](#-demo-credentials) • [📖 Documentation](#-documentation) • [🐛 Known Issues](#-known-issues)
+
+</div>
 
 ---
 
-## Table of Contents
+## 📋 Release Information
 
-- [Overview](#overview)
-- [Key Features](#key-features)
-- [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [Prerequisites](#prerequisites)
-- [Setup Guide](#setup-guide)
-- [Running the Project](#running-the-project)
-- [Development Workflow](#development-workflow)
-- [Code Quality & Standards](#code-quality--standards)
-- [Testing](#testing)
-- [API Documentation](#api-documentation)
-- [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
+- **Version**: `0.2.0`
+- **Release Date**: December 7, 2025
+- **Status**: Production Ready - Stable Release
+- **Target Audience**: Production Deployment, Testing, Demonstration
+- **Stability**: Stable - Full Testing Complete
+- **Previous Version**: [v0.1.0](https://github.com/minhe51805/UrbanReflex/releases/tag/0.1.0)
 
 ---
 
-## Overview
+## 🎯 What's New in v0.2.0
 
-UrbanReflex is a comprehensive smart city platform that monitors air quality, manages urban infrastructure, and engages citizens in reporting and resolving infrastructure issues. Built with modern async architecture, real-time data processing, and AI-powered intelligence.
+This release focuses on **developer experience improvements**, **automation**, and **production readiness** with major enhancements to setup workflow and code quality tooling.
 
-**Current Version**: 0.2.0  
-**Status**: Active Development (Develop Branch)  
-**Branch**: `develop`
+### 🆕 Major Features
 
----
+#### ⚡ One-Command Setup with Just Task Runner
 
-## Key Features
+- **Just Automation**: 16+ pre-configured recipes for all development tasks
+- **Auto-Installation**: `just install` now automatically installs UV package manager + all dependencies
+- **Smart Environment Setup**: `just setup-env` creates both backend `.env` and frontend `.env.local` files
+- **Zero Configuration**: No manual dependency installation required
+- **Cross-Platform**: Works on Windows, macOS, Linux with PowerShell/Bash support
 
-### 🌍 Air Quality Monitoring
+#### 🔧 Enhanced Developer Experience
 
-- Real-time AQI (Air Quality Index) data from OpenAQ API
-- Interactive map with 10,000+ monitoring stations
-- Historical trends with 12-month data
-- Health recommendations based on current AQI levels
-- **12-language support** (en, vi, es, fr, de, zh, ja, ko, ar, ru, pt, hi)
+- **UV Package Manager**: Lightning-fast Python dependency resolution (10x faster than pip)
+- **Dual Environment Files**: Separate configuration for backend and frontend
+- **Pre-commit Hooks**: Automatic code quality checks with Husky integration
+- **Prettier Integration**: Frontend code formatting with consistent style
+- **Comprehensive README**: Complete setup guide with troubleshooting section
 
-### 🏙️ Smart City Infrastructure
+#### 📦 Updated Dependencies
 
-- NGSI-LD compliant data model for semantic interoperability
-- Orion Context Broker integration for real-time data
-- Streetlight management with status tracking
-- Road segment analysis and traffic patterns
-- Weather data integration
-- Geographic data visualization with clustering
+- **Next.js**: Updated from 16.0.3 → **16.0.7** (latest stable)
+- **Prettier**: Added v3.2.5 for frontend formatting
+- **Models Package**: Fixed import errors with proper package structure
+- **Code Quality Tools**: Black, Flake8, isort, ESLint, Prettier all configured
 
-### 👥 User Management & Authentication
+#### 🐛 Critical Bug Fixes
 
-- JWT-based authentication with refresh tokens
-- Role-based access control (Citizen, Official, Admin)
-- API key management for third-party integrations
-- User profile management with preferences
-- Session management and security
+- **Fixed**: `ModuleNotFoundError` for `src.backend.models` package
+- **Fixed**: Just command PowerShell syntax errors on Windows
+- **Fixed**: Frontend environment file location (moved to `src/frontend/`)
+- **Fixed**: Invalid `restart` recipe removed from justfile
+- **Fixed**: `.gitignore` properly tracks models package files
 
-### 📝 Citizen Reporting System
+### ✅ All Features from v0.1.0
 
-- Submit infrastructure issues with photos and GPS location
-- Real-time status tracking (Open → In Progress → Resolved)
-- Priority assignment based on impact
-- Community voting and engagement
-- Official response tracking
-- Report history and analytics
+#### 🌍 Air Quality Monitoring
 
-### 🤖 AI & Machine Learning
+- ✅ Real-time AQI data integration with OpenAQ API
+- ✅ Interactive map with 10,000+ global monitoring stations
+- ✅ Location-based air quality search and filtering
+- ✅ Historical data charts and trends (12-month data)
+- ✅ Health recommendations based on AQI levels
+- ✅ Mock data fallback for development/testing
+- ✅ **12-language support** (English, Vietnamese, Spanish, French, German, Chinese, Japanese, Korean, Arabic, Russian, Portuguese, Hindi)
 
-- Gemini 2.5 Flash-powered chatbot for air quality queries
-- NLP-based report classification and priority detection
-- Vector search with Pinecone for semantic similarity
-- Sentence embeddings for intelligent matching
-- RAG (Retrieval-Augmented Generation) for contextual responses
-- Async processing for non-blocking operations
+#### 🏙️ Smart City Infrastructure
 
-### 📊 Admin Dashboard
+- ✅ NGSI-LD compliant data model implementation
+- ✅ Orion Context Broker integration for semantic interoperability
+- ✅ Road segment data visualization and analysis
+- ✅ Streetlight monitoring and status tracking
+- ✅ Weather data correlation with air quality
+- ✅ Point of Interest (POI) management
+- ✅ Geographic clustering for performance optimization
 
-- Real-time analytics and KPIs
-- Report management and filtering
-- User statistics
-- System health monitoring
-- Data export functionality (XLSX)
+#### 👥 User Management
 
----
+- ✅ User registration and authentication (JWT with refresh tokens)
+- ✅ Role-based access control (Citizen, City Official, Admin)
+- ✅ API key generation and management
+- ✅ User profile management with preferences
+- ✅ Session management and security
+- ✅ Password hashing with bcrypt
 
-## Tech Stack
+#### 📝 Citizen Reporting System
 
-### Backend
+- ✅ Submit infrastructure issues (streetlights, roads, waste, traffic)
+- ✅ Photo upload with automatic GPS location tagging
+- ✅ Report status tracking (Open, In Progress, Resolved, Closed)
+- ✅ Priority assignment (Low, Medium, High, Critical)
+- ✅ Community voting on reports
+- ✅ Admin dashboard for report management
+- ✅ Real-time status updates
 
-| Component              | Technology       | Version  | Purpose               |
-| ---------------------- | ---------------- | -------- | --------------------- |
-| **Framework**          | FastAPI          | 0.121+   | Async web framework   |
-| **Runtime**            | Python           | 3.10+    | Programming language  |
-| **ASGI Server**        | Uvicorn          | 0.38+    | Production server     |
-| **Database (Primary)** | MongoDB          | Latest   | Document database     |
-| **Async Driver**       | Motor            | 3.7+     | Async MongoDB driver  |
-| **ORM/Validator**      | Pydantic         | Built-in | Data validation       |
-| **Authentication**     | python-jose      | 3.5+     | JWT tokens            |
-| **Password Hashing**   | passlib + bcrypt | 1.7+     | Secure hashing        |
-| **Semantic Web**       | NGSI-LD          | Standard | Smart city data model |
+#### 🤖 AI Features
 
-### Frontend
+- ✅ Gemini 2.5 Flash-powered chatbot for air quality queries
+- ✅ Natural language processing for user questions
+- ✅ Context-aware responses with data citations
+- ✅ Vector search for semantic report search (Pinecone)
+- ✅ Intelligent report classification with NLP
+- ✅ RAG (Retrieval-Augmented Generation) system
+- ✅ Sentence embeddings for semantic matching
 
-| Component      | Technology     | Version | Purpose              |
-| -------------- | -------------- | ------- | -------------------- |
-| **Framework**  | Next.js        | 16.0    | React framework      |
-| **React**      | React          | 19.2    | UI library           |
-| **Language**   | TypeScript     | 5+      | Type-safe JavaScript |
-| **Styling**    | Tailwind CSS   | 3.4+    | Utility-first CSS    |
-| **Maps**       | Maplibre-GL    | 5.12+   | Interactive maps     |
-| **Charts**     | Chart.js       | 4.5+    | Data visualization   |
-| **Markdown**   | react-markdown | 10.1+   | Markdown rendering   |
-| **Animations** | Framer Motion  | 12.23+  | Motion library       |
-| **Icons**      | Lucide React   | 0.553+  | Icon set             |
+#### 🎨 User Interface
 
-### AI & Data Processing
-
-| Component                | Technology            | Version | Purpose                 |
-| ------------------------ | --------------------- | ------- | ----------------------- |
-| **LLM**                  | Gemini 2.5 Flash      | Latest  | AI chatbot              |
-| **Embeddings**           | Sentence Transformers | 3.3+    | Vector embeddings       |
-| **Vector DB**            | Pinecone              | 5.0+    | Vector search           |
-| **Numeric Computing**    | NumPy                 | 1.26+   | Array operations        |
-| **Data Processing**      | Pandas                | 2.1+    | Data manipulation       |
-| **Embeddings Framework** | embed-anything        | 0.3+    | Multi-format embeddings |
-
-### DevOps & Infrastructure
-
-| Component            | Technology      | Purpose                      |
-| -------------------- | --------------- | ---------------------------- |
-| **Containerization** | Docker          | Container images             |
-| **Orchestration**    | Docker Compose  | Service orchestration        |
-| **Package Manager**  | UV              | Python dependency management |
-| **Task Runner**      | Just (justfile) | Automation tasks             |
-
-### Code Quality & Development
-
-| Component              | Technology | Purpose                      |
-| ---------------------- | ---------- | ---------------------------- |
-| **Python Formatter**   | Black      | Code formatting              |
-| **Python Linter**      | Flake8     | Code linting                 |
-| **Import Sorter**      | isort      | Import organization          |
-| **Git Hooks**          | Husky      | Pre-commit automation        |
-| **Git Hooks (Python)** | pre-commit | Python hook management       |
-| **JS Linter**          | ESLint     | JavaScript linting           |
-| **JS Formatter**       | Prettier   | Code formatting              |
-| **Biome**              | Biome      | Unified formatter (optional) |
+- ✅ Responsive web application (Mobile-first design)
+- ✅ Interactive MapLibre GL map with clustering
+- ✅ Real-time data visualization with Chart.js
+- ✅ Modern UI with Tailwind CSS and Framer Motion
+- ✅ Dark mode support
+- ✅ Multi-language switcher component
+- ✅ Accessibility features (WCAG 2.1 compliant)
 
 ---
 
-## Project Structure
+## 🚀 Quick Start
 
-```
-UrbanReflex/
-├── src/
-│   ├── backend/                    # FastAPI Backend
-│   │   ├── app.py                 # Main application
-│   │   ├── dependencies.py        # Dependency injection
-│   │   ├── config/
-│   │   │   ├── config.py         # Configuration management
-│   │   │   └── data_model.py     # Data models
-│   │   ├── routers/              # API endpoints
-│   │   │   ├── auth.py          # Authentication
-│   │   │   ├── chatbot.py       # Chat API
-│   │   │   ├── citizen_reports.py # Reports API
-│   │   │   ├── users.py         # Users API
-│   │   │   └── ...
-│   │   ├── models/               # Database models
-│   │   ├── schemas/              # Pydantic schemas
-│   │   ├── ai_service/           # AI services
-│   │   │   ├── chatbot/         # Chatbot logic
-│   │   │   └── classifier_report/ # Report classification
-│   │   ├── utils/                # Utilities
-│   │   ├── internal/             # Admin endpoints
-│   │   └── __init__.py
-│   │
-│   └── frontend/                  # Next.js Frontend
-│       ├── app/                  # Routes & pages
-│       ├── components/           # React components
-│       ├── contexts/             # Context API
-│       ├── lib/                  # Utilities
-│       ├── types/                # TypeScript types
-│       ├── public/               # Static assets
-│       ├── tailwind.config.ts
-│       ├── tsconfig.json
-│       ├── eslint.config.mjs
-│       └── package.json
-│
-├── docs/                          # Documentation
-│   ├── ARCHITECTURE.md
-│   ├── API_REFERENCE.md
-│   ├── CODE_STYLE_GUIDE.md
-│   ├── PRE_COMMIT_SETUP.md
-│   ├── UV_SETUP.md
-│   └── ...
-│
-├── scripts/                       # Automation scripts
-├── schemas/                       # JSON schemas
-├── open_data/                     # Sample data
-├── examples/                      # Example files
-│
-├── pyproject.toml                 # Python project config
-├── uv.lock                        # Dependency lock file
-├── docker-compose.yml             # Service orchestration
-├── .justfile                      # Task automation
-├── .husky/                        # Git hooks (Husky)
-├── .pre-commit-config.yaml        # Git hooks (pre-commit)
-├── .prettierrc.json               # Prettier config
-├── .env.example                   # Environment template
-├── README.md                      # This file
-├── CHANGELOG.md
-├── LICENSE
-└── SECURITY.md
-```
-
----
-
-## Prerequisites
-
-### Required
-
-**Python 3.10+**
+### Prerequisites
 
 ```bash
-python --version  # Check version
+# Required
+✅ Just task runner         # Install: https://just.systems/
+✅ Git                       # Version control
+✅ 8GB RAM minimum
+✅ 10GB free disk space
+
+# Optional (auto-installed by `just install`)
+📦 UV package manager        # Auto-installed
+📦 Node.js 18+              # Auto-detected
+📦 Python 3.10+             # Auto-detected
 ```
 
-**Node.js 18+**
+### ⚡ 3-Command Setup
 
 ```bash
-node --version
-npm --version
-```
-
-**Docker & Docker Compose**
-
-```bash
-docker --version
-docker-compose --version
-```
-
-### Optional but Recommended
-
-- Git for version control
-- VS Code with Python/TypeScript extensions
-- Postman/Insomnia for API testing
-
----
-
-## Setup Guide
-
-### Quick Setup (3 Commands)
-
-```bash
-# 1. Clone repository
-git clone https://github.com/minhe51805/UrbanReflex.git
+# 1. Clone this release
+git clone -b release/0.2.0 https://github.com/minhe51805/UrbanReflex.git
 cd UrbanReflex
 
-# 2. Install all dependencies (UV + backend + frontend)
+# 2. Install everything (UV + backend + frontend)
 just install
+# This automatically:
+# - Installs UV package manager (if not present)
+# - Installs 175 Python packages with uv sync
+# - Installs 632 npm packages
 
 # 3. Setup environment files
 just setup-env
+# Creates:
+# - .env (backend configuration)
+# - src/frontend/.env.local (frontend configuration)
+
+# 4. Start development servers
+just dev
+# Starts:
+# - Backend API (http://localhost:8000)
+# - Frontend App (http://localhost:3000)
+# - MongoDB + Orion-LD (via Docker Compose)
 ```
 
-Then edit `.env`, start services, and you're done!
+### 🔧 Environment Configuration
 
-### Detailed Setup Steps
+After running `just setup-env`, edit the created files:
 
-#### Step 1: Clone Repository
+**`.env` (Backend)**
 
 ```bash
-git clone https://github.com/minhe51805/UrbanReflex.git
-cd UrbanReflex
+# Database
+MONGODB_URL="mongodb://localhost:27017"
+DATABASE_NAME="urbanreflex"
+
+# Authentication
+SECRET_KEY="your-secret-key-here"  # Generate with: openssl rand -hex 32
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# AI Services (Optional - features disabled without these)
+GEMINI_API_KEY="your-gemini-key"           # Required for chatbot
+PINECONE_API_KEY="your-pinecone-key"       # Required for vector search
+PINECONE_INDEX_NAME="urbanreflex-index"
+
+# External APIs (Optional - falls back to mock data)
+OPENAQ_API_KEY="your-openaq-key"
+OWM_API_KEY="your-openweathermap-key"
 ```
 
-#### Step 2: Install All Dependencies (Just)
+**`src/frontend/.env.local` (Frontend)**
 
 ```bash
-# ONE COMMAND installs UV + backend + frontend dependencies
-just install
+NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_OPENAQ_API_KEY=your-openaq-key
+NEXT_PUBLIC_NGSI_LD_URL=http://localhost:1026
 ```
 
-This automatically:
-
-1. Installs UV package manager (if not already installed)
-2. Installs Python backend dependencies via `uv sync --all-extras`
-3. Installs frontend dependencies via `npm install`
-
-#### Step 3: Setup Environment Files (Just)
+### ✅ Verify Installation
 
 ```bash
-# Auto-create .env and .env.local from examples
-just setup-env
-```
+# Check backend health
+curl http://localhost:8000/health
+# Expected: {"service":"UrbanReflex","status":"running","version":"1.0.0"}
 
-This creates:
+# Check frontend
+open http://localhost:3000
 
-- `.env` (backend configuration)
-- `src/frontend/.env.local` (frontend configuration)
-
-Edit both files with your configuration:
-
-```bash
-# MongoDB
-MONGO_HOST=mongo
-MONGO_PORT=27017
-MONGO_ROOT_USERNAME=urbanreflex_admin
-MONGO_ROOT_PASSWORD=WAG_team_2025_secure
-MONGO_DATABASE=urbanreflex_db
-
-# Orion-LD
-ORION_LD_HOST=localhost
-ORION_LD_PORT=1026
-
-# JWT
-SECRET_KEY=your_secret_key_min_32_chars
-
-# AI Services (Optional)
-GEMINI_API_KEY=your_gemini_api_key
-PINECONE_API_KEY=your_pinecone_api_key
-
-# External APIs (Optional)
-OPENAQ_API_KEY=your_api_key
-OWM_API_KEY=your_api_key
-```
-
-#### Step 4: Start Services
-
-```bash
-# Start MongoDB & Orion-LD
-docker-compose up -d
-```
-
-#### Step 5: Verify Setup
-
-```bash
-just info     # Show project info
-just health   # Check all services
+# Check all services
+just info
+# Shows all running services and ports
 ```
 
 ---
 
-## Running the Project
+## 📊 Demo Credentials
 
-### Quick Start with Just (Recommended)
-
-Open 3 terminals and run:
-
-**Terminal 1: Backend**
+### 🔐 Pre-configured Test Accounts
 
 ```bash
-just backend-dev
-# Access: http://localhost:8000
+# Admin Account (Full Access)
+Email: admin@urbanreflex.dev
+Password: Admin@123456
+Role: Administrator
+Permissions: Full system access, user management, report management
+
+# City Official Account (Report Management)
+Email: official@urbanreflex.dev
+Password: Official@123456
+Role: City Official
+Permissions: Manage citizen reports, view analytics
+
+# Citizen Account (Standard User)
+Email: citizen@urbanreflex.dev
+Password: Citizen@123456
+Role: Citizen
+Permissions: Submit reports, view data, use chatbot
 ```
 
-**Terminal 2: Frontend**
+### 🌐 Service URLs
+
+```
+Frontend Application:  http://localhost:3000
+Backend API:           http://localhost:8000
+API Documentation:     http://localhost:8000/docs
+API Redoc:             http://localhost:8000/redoc
+MongoDB:               localhost:27017
+Orion Context Broker:  http://localhost:1026
+```
+
+---
+
+## 🎪 Demo Scenarios
+
+### Scenario 1: Quick Setup Test
 
 ```bash
-just frontend-dev
-# Access: http://localhost:3000
+# Test automatic installation
+just install    # Should install UV + all dependencies
+just setup-env  # Should create .env files
+just dev        # Should start all services
+
+# Verify all services running
+just info       # Shows all ports and services
+just health     # Checks backend health endpoint
 ```
 
-**Terminal 3: Database**
+### Scenario 2: Air Quality Monitoring
 
-```bash
-docker-compose up -d
-docker-compose ps
+```
+1. Visit http://localhost:3000
+2. View global air quality map
+3. Search for "Ho Chi Minh City" or any location
+4. Click on a station marker
+5. View detailed AQI data and charts
+6. Check health recommendations
+7. Switch language using language selector
 ```
 
-**Check Services**
+### Scenario 3: Citizen Reporting
 
-```bash
-just health     # Check all services
-just info       # Show project info
 ```
+1. Login as citizen@urbanreflex.dev
+2. Click "Report Issue" button
+3. Fill in issue details:
+   - Title: "Broken streetlight on Main Street"
+   - Category: Streetlight
+   - Priority: Medium
+4. Upload photo (optional)
+5. Click map to set location
+6. Submit report
+7. Track report status in dashboard
+```
+
+### Scenario 4: Admin Dashboard
+
+```
+1. Login as admin@urbanreflex.dev
+2. Navigate to Admin Dashboard
+3. View all citizen reports
+4. Filter by status/priority/category
+5. Assign report to city official
+6. Update report status
+7. Add resolution notes
+8. View analytics and statistics
+```
+
+### Scenario 5: AI Chatbot
+
+```
+1. Click chatbot icon (bottom right)
+2. Ask: "What's the air quality in Hanoi today?"
+3. Chatbot provides real-time AQI data
+4. Ask: "How does this affect my health?"
+5. Receive personalized recommendations
+6. Ask: "Show me historical trends"
+7. Get data visualization links
+```
+
+---
+
+## 📖 Documentation
 
 ### All Just Commands
 
 ```bash
-# Setup
-just install               # Install UV + backend + frontend dependencies
-just setup-env            # Create .env and src/frontend/.env.local files
+# Installation & Setup
+just install          # Install UV + backend deps + frontend deps (one command!)
+just setup-env        # Create .env and src/frontend/.env.local from examples
+just backend-install  # Install only backend dependencies
+just frontend-install # Install only frontend dependencies
 
-# Backend Development
-just backend-dev          # Start dev server (http://localhost:8000)
-just backend-test         # Run tests
-just backend-health       # Check health endpoint
-just backend-stop         # Stop backend
+# Development
+just dev             # Start backend + frontend + databases
+just backend-dev     # Start backend only (port 8000)
+just frontend-dev    # Start frontend only (port 3000)
 
-# Frontend Development
-just frontend-dev         # Start dev server (http://localhost:3000)
-just frontend-install     # Install npm dependencies
-just frontend-build       # Build for production
-just frontend-start       # Run production build
-just frontend-lint        # Lint code
-just frontend-stop        # Stop frontend
+# Database Management
+just db-start        # Start MongoDB + Orion-LD containers
+just db-stop         # Stop database containers
+just db-logs         # View database logs
+
+# Code Quality
+just format          # Format all code (Black + Prettier)
+just lint            # Run linters (Flake8 + ESLint)
+just type-check      # Type checking (mypy + tsc)
 
 # Utilities
-just health               # Check all services
-just info                 # Show project info
-just code                 # Open in VS Code
+just info            # Show project info (ports, services)
+just health          # Check backend health endpoint
+just clean           # Clean build artifacts and caches
+just test            # Run all tests (backend + frontend)
 ```
 
-### Manual Startup (Without Just)
+### Project Structure
 
-**Backend:**
-
-```bash
-uv run uvicorn src.backend.app:app --reload --host 0.0.0.0 --port 8000
+```
+UrbanReflex/
+├── src/
+│   ├── backend/              # FastAPI Backend
+│   │   ├── app.py            # Main application
+│   │   ├── routers/          # API endpoints
+│   │   ├── models/           # Database models
+│   │   ├── schemas/          # Pydantic schemas
+│   │   ├── ai_service/       # AI/ML services
+│   │   └── utils/            # Utilities
+│   └── frontend/             # Next.js Frontend
+│       ├── app/              # App Router pages
+│       ├── components/       # React components
+│       ├── contexts/         # State management
+│       └── lib/              # Utilities
+├── scripts/                  # Data fetching/processing
+├── docs/                     # Documentation
+├── .justfile                 # Task automation
+├── pyproject.toml            # Python dependencies
+└── docker-compose.yml        # Service orchestration
 ```
 
-**Frontend:**
+### API Documentation
+
+- **Interactive Docs**: http://localhost:8000/docs (Swagger UI)
+- **ReDoc**: http://localhost:8000/redoc (Alternative UI)
+- **OpenAPI Schema**: http://localhost:8000/openapi.json
+
+### External Documentation
+
+- [Architecture Documentation](./docs/ARCHITECTURE.md)
+- [API Reference](./docs/API_REFERENCE.md)
+- [Development Setup](./docs/DEVELOPMENT_SETUP.md)
+- [Data Model & Entities](./docs/DATA_MODEL_AND_ENTITIES.md)
+
+---
+
+## 🐛 Known Issues
+
+### ⚠️ Limitations in v0.2.0
+
+1. **Performance**
+   - Map clustering limited to 1000 markers for optimal performance
+   - Large dataset queries (>10,000 records) may be slow
+   - First load time can be 5-10 seconds
+
+2. **Features Not Yet Implemented**
+   - Real-time notifications (WebSocket support)
+   - Email notifications system
+   - SMS alerts
+   - Mobile native app
+   - Offline mode support
+   - Multi-tenancy support
+
+3. **Data Limitations**
+   - Mock data used when external APIs unavailable
+   - Historical data limited to 30 days in demo
+   - Vector search requires Pinecone API key (optional)
+   - Some international locations have limited data coverage
+
+4. **Infrastructure**
+   - No auto-scaling configured (single-instance deployment)
+   - No automated backup/restore functionality
+   - Limited monitoring/logging (basic logging only)
+   - No CDN integration
+
+5. **Browser Compatibility**
+   - Optimized for Chrome/Edge/Firefox (latest versions)
+   - Safari may have minor UI rendering issues
+   - Internet Explorer not supported
+
+### 🔧 Workarounds
+
+- **Slow map loading**: Reduce zoom level, use location filters
+- **Missing external data**: Enable mock data in backend settings
+- **API rate limits**: Configure caching in `.env`
+- **Docker port conflicts**: Edit `docker-compose.yml` ports section
+
+---
+
+## 🧪 Testing Guidelines
+
+### For Testers
+
+**Functional Testing Checklist:**
 
 ```bash
-cd src/frontend && npm run dev
+✅ User registration and login flow
+✅ Create/Edit/Delete citizen reports
+✅ Upload photos to reports (max 5MB)
+✅ Search air quality by location name
+✅ View historical data charts (12 months)
+✅ Test chatbot with various queries
+✅ Admin dashboard functionality
+✅ API endpoint testing (via /docs)
+✅ Mobile responsiveness (iPhone, Android)
+✅ Cross-browser compatibility (Chrome, Firefox, Safari)
+✅ Language switcher (12 languages)
+✅ Role-based access control
 ```
 
-### Production Deployment
-
-**Docker:**
+**Performance Testing:**
 
 ```bash
-docker build -f Dockerfile.scheduler -t urbanreflex .
-docker run -p 8000:8000 urbanreflex
+# Load testing
+- 100 concurrent users
+- 1000+ map markers rendering
+- Large file uploads (5MB+)
+- Slow network conditions (3G simulation)
+
+# Stress testing
+- Continuous chatbot queries
+- Rapid report submissions
+- Database query optimization
 ```
 
-**Frontend Only:**
+**Security Testing:**
 
 ```bash
-just frontend-build    # Build
-just frontend-start    # Run production
+✅ Authentication flows (JWT validation)
+✅ Authorization (role-based permissions)
+✅ API rate limiting
+✅ Input validation (XSS, SQL injection)
+✅ CSRF protection
+✅ Password strength requirements
+```
+
+### Reporting Issues
+
+Found a bug? Please report it:
+
+1. Go to [GitHub Issues](https://github.com/minhe51805/UrbanReflex/issues)
+2. Use the **Bug Report** template
+3. Include:
+   - Version: v0.2.0
+   - Just commands used
+   - Steps to reproduce
+   - Expected vs actual behavior
+   - Screenshots/error logs
+   - Browser/OS information
+   - Output of `just info`
+
+---
+
+## 🔄 Upgrading from v0.1.0
+
+### Migration Steps
+
+```bash
+# 1. Backup your data
+docker-compose exec mongodb mongodump --out /backup
+
+# 2. Fetch new version
+git fetch origin
+git checkout release/0.2.0
+
+# 3. Update dependencies
+just install  # Reinstalls with new versions
+
+# 4. Update environment files
+just setup-env  # Creates new structure
+# Manually copy your API keys from old .env to new files
+
+# 5. Restart services
+docker-compose down
+just dev
+
+# 6. Verify migration
+just health
+open http://localhost:3000
+```
+
+### Breaking Changes from v0.1.0
+
+1. **Environment Files**: Frontend env moved from root to `src/frontend/.env.local`
+2. **Just Commands**: New automation recipes replace manual commands
+3. **Models Package**: Backend models now properly packaged under `src.backend.models`
+4. **Dependencies**: Next.js updated to 16.0.7, may require Node.js 18+
+
+### New Features to Test
+
+- Try `just install` for one-command setup
+- Use `just setup-env` for dual environment creation
+- Run `just info` to see all service ports
+- Test `just health` for backend health checks
+
+---
+
+## 📞 Support & Help
+
+### 🆘 Getting Help
+
+- 📖 **Documentation**: [./docs/](./docs/)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/minhe51805/UrbanReflex/discussions)
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/minhe51805/UrbanReflex/issues)
+- 📧 **Email**: support@urbanreflex.dev
+
+### 🔍 Troubleshooting
+
+**Common Issues:**
+
+```bash
+# Issue: "just: command not found"
+# Solution: Install Just task runner
+# Windows: winget install --id Casey.Just
+# macOS: brew install just
+# Linux: cargo install just
+
+# Issue: "uv: command not found"
+# Solution: Run `just install` - it auto-installs UV
+
+# Issue: Backend won't start - "ModuleNotFoundError"
+# Solution: Ensure you're in project root, run `just install`
+
+# Issue: Frontend build errors
+# Solution: Clear cache and reinstall
+rm -rf src/frontend/.next src/frontend/node_modules
+just frontend-install
+
+# Issue: Port already in use
+# Solution: Change ports in docker-compose.yml or kill process
+# Windows: netstat -ano | findstr :8000
+# macOS/Linux: lsof -ti:8000 | xargs kill
+
+# Issue: Docker services won't start
+# Solution: Reset Docker environment
+docker-compose down -v
+docker-compose up -d
+just db-logs
+
+# Issue: Environment files not found
+# Solution: Run setup command
+just setup-env
+# Then edit .env and src/frontend/.env.local with your API keys
+```
+
+**Getting Logs:**
+
+```bash
+# Backend logs
+just backend-dev  # Terminal output shows logs
+
+# Frontend logs
+just frontend-dev  # Terminal output shows logs
+
+# Database logs
+just db-logs
+
+# All services
+docker-compose logs -f
 ```
 
 ---
 
-## Development Workflow
+## 🤝 Contributing
 
-### Code Quality
+We welcome contributions! See our [Development Guide](./docs/DEVELOPMENT_SETUP.md) for details.
 
-All checks run automatically via Git hooks. To run manually:
+### Quick Contribution Guide
 
 ```bash
-# Python (Backend)
-black src/backend/          # Format
-isort src/backend/          # Sort imports
-flake8 src/backend/         # Lint
+# 1. Fork and clone
+git clone https://github.com/YOUR_USERNAME/UrbanReflex.git
+cd UrbanReflex
 
-# JavaScript (Frontend)
-cd src/frontend
-npm run format              # Prettier format
-npm run lint                # ESLint
+# 2. Create feature branch
+git checkout develop
+git pull origin develop
+git checkout -b feature/your-feature-name
 
-# Run backend tests
-just backend-test
+# 3. Install dependencies
+just install
+
+# 4. Make changes and test
+just format
+just lint
+just test
+
+# 5. Commit with conventional commits
+git commit -m "feat: add new feature"
+# Types: feat, fix, docs, style, refactor, test, chore
+
+# 6. Push and create PR
+git push origin feature/your-feature-name
+# Create PR on GitHub targeting develop branch
 ```
 
-### Git Workflow
+### Code Quality Standards
 
-1. **Create branch**
+All code must pass:
 
-   ```bash
-   git checkout -b feature/your-feature
-   ```
-
-2. **Make changes and commit**
-
-   ```bash
-   git add .
-   git commit -m "feat(scope): description"
-   # Hooks run automatically
-   ```
-
-3. **Push and create PR**
-   ```bash
-   git push origin feature/your-feature
-   ```
+- ✅ `just format` (Black + Prettier formatting)
+- ✅ `just lint` (Flake8 + ESLint linting)
+- ✅ `just type-check` (mypy + tsc type checking)
+- ✅ `just test` (pytest + Jest testing)
+- ✅ Pre-commit hooks (Husky automatically runs checks)
 
 ---
 
-## Code Quality & Standards
+## 📝 Changelog
 
-### Commit Message Format
+See [CHANGELOG.md](./CHANGELOG.md) for detailed version history.
 
-Follow **Conventional Commits**:
+### Version 0.2.0 (2025-12-07) - Current Release
 
-```
-<type>(<scope>): <subject>
+**Added:**
 
-Examples:
-feat(auth): add JWT token refresh
-fix(map): resolve clustering lag
-docs: update API documentation
-chore(deps): upgrade FastAPI
-```
+- Just task runner with 16+ automation recipes
+- UV auto-installation in `just install`
+- Dual environment setup (`just setup-env`)
+- Models package (`src.backend.models`)
+- Prettier 3.2.5 for frontend formatting
+- Comprehensive troubleshooting documentation
 
-**Valid types**: feat, fix, docs, style, refactor, perf, test, chore, ci, build
+**Changed:**
 
-### Python Standards
+- Updated Next.js from 16.0.3 to 16.0.7
+- Moved frontend environment to `src/frontend/.env.local`
+- Simplified setup to 3 commands
+- Improved README with accurate just commands
 
-**Line Length**: 100 chars (Black)
+**Fixed:**
 
-```bash
-black src/backend/          # Format
-isort src/backend/          # Sort imports
-flake8 src/backend/         # Lint
-```
+- `ModuleNotFoundError` for backend models package
+- Just command PowerShell syntax errors
+- Invalid `restart` recipe removed
+- Gitignore configuration for models
 
-**Type Hints**: Required
-
-```python
-def get_user(user_id: int) -> dict:
-    """Get user by ID."""
-    return {"id": user_id}
-```
-
-### TypeScript Standards
-
-**Linting**: ESLint
-
-```bash
-npm run lint --prefix src/frontend
-```
-
-**Formatting**: Prettier
-
-```bash
-npm run format --prefix src/frontend
-```
-
-**No `any` types**: Strict mode enforced
-
-```typescript
-// Good
-interface User {
-  id: number;
-  name: string;
-}
-
-// Bad (error)
-const user: any = {};
-```
+See [v0.1.0 Release Notes](./RELEASE_NOTES_v0.1.0.md) for previous version.
 
 ---
 
-## Testing
+## 🏫 Support & Organization
 
-### Backend Tests
-
-```bash
-# Run all tests
-uv run pytest tests/
-
-# With coverage
-uv run pytest tests/ --cov=src/backend
-
-# Specific file
-uv run pytest tests/test_auth.py
-```
-
-### Frontend Tests
-
-```bash
-# Jest tests
-npm test --prefix src/frontend
-
-# Watch mode
-npm test -- --watch --prefix src/frontend
-
-# Coverage
-npm test -- --coverage --prefix src/frontend
-```
-
-### Manual API Testing
-
-```bash
-# Interactive docs
-curl http://localhost:8000/docs
-
-# Health check
-curl http://localhost:8000/health
-
-# API call
-curl -X POST http://localhost:8000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"citizen@urbanreflex.dev","password":"Citizen@123456"}'
-```
+<p align="center">
+    <a href="https://hutech.edu.vn/" target="_blank">
+        <img loading="lazy" src="https://file1.hutech.edu.vn/file/editor/homepage/stories/hinh34/logo%20CMYK-01.png" height="60px" alt="Hutech">
+    </a>
+    <a href="https://vfossa.vn/" target="_blank">
+        <img loading="lazy" src="https://vfossa.vn/uploads/about/logo-6b-new.png" height="60px" alt="VFOSSA">
+    </a>
+    <a href="https://www.olp.vn/" target="_blank">
+        <img loading="lazy" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRePWbAslFDMVxeJCgHI6f_LSIuNOrlrEsEhA&s" height="60px" alt="OLP">
+    </a>
+</p>
 
 ---
 
-## API Documentation
+## 📄 License
 
-**Swagger UI**: http://localhost:8000/docs  
-**ReDoc**: http://localhost:8000/redoc  
-**OpenAPI**: http://localhost:8000/openapi.json
+This project is licensed under the **GNU General Public License v3.0** - see the [LICENSE](LICENSE) file for details.
 
-### Demo Credentials
+**Key Points:**
 
-```
-Admin:    admin@urbanreflex.dev / Admin@123456
-Official: official@urbanreflex.dev / Official@123456
-Citizen:  citizen@urbanreflex.dev / Citizen@123456
-```
-
-### Key Endpoints
-
-```
-POST   /api/auth/login
-GET    /api/air-quality/current
-GET    /api/air-quality/stations
-POST   /api/reports
-GET    /api/reports/{id}
-POST   /api/chat
-GET    /api/users/me
-```
-
-See [docs/API_REFERENCE.md](docs/API_REFERENCE.md) for complete API documentation.
-
----
-
-## Troubleshooting
-
-### Backend Won't Start
-
-```bash
-# Check Python version
-python --version  # Should be 3.10+
-
-# Reinstall dependencies
-uv sync --all-extras
-
-# Check MongoDB
-docker-compose logs mongo
-```
-
-### Frontend Build Fails
-
-```bash
-# Clear cache
-rm -rf src/frontend/.next
-
-# Reinstall
-npm install --prefix src/frontend --force
-```
-
-### Port Conflicts
-
-```bash
-# Find process
-lsof -i :8000    # Backend
-lsof -i :3000    # Frontend
-
-# Kill it
-kill -9 <PID>
-
-# Or use different port
-uvicorn src.backend.app:app --port 8001
-```
-
-### Git Hooks Not Running
-
-```bash
-# Reinstall Husky
-npm install --prefix src/frontend
-
-# Reinstall pre-commit
-pre-commit install
-
-# Verify
-cat .git/hooks/pre-commit
-```
-
----
-
-## Contributing
-
-### Getting Started
-
-1. Fork repository
-2. Create feature branch: `git checkout -b feature/your-feature`
-3. Follow code standards
-4. Commit with conventional message
-5. Create pull request to `develop`
-
-### Code Review
-
-- All PRs require review
-- Tests must pass
-- Follow style guidelines
-- Update documentation
-
-### Report Issues
-
-[GitHub Issues](https://github.com/minhe51805/UrbanReflex/issues)
-
-Include:
-
-- Clear title
-- Detailed description
-- Steps to reproduce
-- Environment info
-- Error logs
-
----
-
-## Architecture
-
-### Backend Architecture
-
-```
-FastAPI Application (Async)
-├─ Routers (Auth, Chat, Reports, Users)
-├─ AI Service (Gemini, Embeddings, RAG)
-└─ Database Layer (MongoDB + Motor)
-   ├─ MongoDB (Primary Storage)
-   ├─ Orion-LD (NGSI-LD Data)
-   ├─ Pinecone (Vector Search)
-   └─ Gemini API (AI)
-```
-
-### Frontend Architecture
-
-```
-Next.js 16 (React 19 + TypeScript)
-├─ Pages & Routes
-├─ Components (Maps, Charts, Forms)
-└─ API Client Layer
-   ├─ FastAPI Backend
-   ├─ Map Services (Maplibre)
-   └─ External APIs
-```
-
----
-
-## Performance
-
-- **Backend**: ~200ms avg response
-- **Frontend**: Lighthouse 85+
-- **Database**: <50ms indexed queries
-- **Map**: 1000+ markers with clustering
-
----
-
-## Support
-
-- 📖 [Docs](./docs/)
-- 💬 [Discussions](https://github.com/minhe51805/UrbanReflex/discussions)
-- 🐛 [Issues](https://github.com/minhe51805/UrbanReflex/issues)
-
----
-
-## License
-
-**GNU General Public License v3.0** - see [LICENSE](LICENSE)
-
----
-
-## Changelog
-
-See [CHANGELOG.md](CHANGELOG.md) for version history.
-
-**v0.2.0** (Current)
-
-- 12-language support
-- GPL-3.0 headers
-- Husky + pre-commit framework
-- Black + Flake8 + isort standards
-- UV package manager consolidation
-
-**v0.1.0**
-
-- Initial beta release
-- Air quality monitoring
-- User authentication
-- Citizen reporting
-
----
-
-## Acknowledgments
-
-Built for Vietnam Open Source Software Competition
-
-**Supported by:**
-
-- [Hutech University](https://hutech.edu.vn/)
-- [VFOSSA](https://vfossa.vn/)
-- [OpenLP](https://www.olp.vn/)
+- ✅ Free to use, modify, and distribute
+- ✅ Source code must be made available
+- ✅ Modifications must use same GPL-3.0 license
+- ❌ No warranty provided
+- 📖 Full license text: https://www.gnu.org/licenses/gpl-3.0.html
 
 ---
 
 <div align="center">
 
-**[Docs](./docs/) • [Issues](https://github.com/minhe51805/UrbanReflex/issues) • [Discussions](https://github.com/minhe51805/UrbanReflex/discussions)**
+**UrbanReflex v0.2.0 - Production Ready Release**
 
-_v0.2.0 - Active Development_
+Built with ❤️ for Vietnam Open Source Software Competition
+
+[🏠 Homepage](https://urbanreflex.dev) • [📚 Documentation](./docs/) • [🐛 Report Bug](https://github.com/minhe51805/UrbanReflex/issues) • [💬 Discussions](https://github.com/minhe51805/UrbanReflex/discussions)
+
+**✨ Production-ready release with enhanced developer experience and automation**
 
 </div>
