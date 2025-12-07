@@ -5,7 +5,7 @@
 <h1 align="center">UrbanReflex</h1>
 
 <p align="center">
-	UrbanReflex is an open-source civic-tech platform that blends real-time urban sensing with citizen reports to improve city services — from street lighting to broader infrastructure. It aggregates geo-tagged issues, applies time/context-aware prioritization, and publishes NGSI-LD open data to keep residents and city teams aligned with transparent, actionable insights.
+	A smart city intelligence platform that bridges fragmented urban data sources into a unified NGSI-LD ecosystem, empowering communities and city managers with real-time infrastructure insights and open data access
 </p>
 
 <p align="center">
