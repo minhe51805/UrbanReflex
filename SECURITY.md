@@ -6,8 +6,9 @@ We release patches for security vulnerabilities in the following versions:
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 1.0.x   | :white_check_mark: |
-| < 1.0   | :x:                |
+| 0.2.x   | :white_check_mark: |
+| 0.1.x   | :warning: Limited  |
+| < 0.1   | :x:                |
 
 ## Reporting a Vulnerability
 
@@ -118,25 +119,21 @@ We support safe harbor for security researchers who:
 ### In Case of a Security Incident
 
 1. **Immediate Assessment**
-
    - Assess the scope and impact of the incident
    - Document the incident with timestamps and details
    - Determine if user data was compromised
 
 2. **Containment**
-
    - Stop the attack vector if still active
    - Preserve evidence for investigation
    - Implement temporary mitigations
 
 3. **Communication**
-
    - Notify affected users if personal data was compromised
    - Provide clear information about what happened and what we're doing
    - Update status on GitHub and relevant channels
 
 4. **Recovery**
-
    - Fix the vulnerability
    - Deploy security patches
    - Monitor for additional attacks
