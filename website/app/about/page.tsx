@@ -703,12 +703,6 @@ may consider it more useful to permit linking proprietary applications with
 the library.  If this is what you want to do, use the GNU Lesser General
 Public License instead of this License.  But first, please read
 <https://www.gnu.org/licenses/why-not-lgpl.html>.`;
-  'Apache License 2.0',
-  'Copyright 2025 The UrbanReflex Authors',
-  'Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0',
-  'Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.',
-  'See the License for the specific language governing permissions and limitations under the License.',
-];
 
 export default function AboutPage() {
   return (
@@ -819,7 +813,6 @@ export default function AboutPage() {
               <h2 className="text-3xl font-bold text-gray-900 mb-4">Open Source License</h2>
               <p className="max-w-3xl mx-auto text-gray-600">
                 UrbanReflex is released under the GNU General Public License (GPL) Version 3, ensuring it remains free and open for anyone to use, modify, and distribute.
-                UrbanReflex is released under the Apache License 2.0, ensuring it remains free and open for anyone to use, modify, and distribute.
               </p>
             </div>
             <div className="max-w-4xl mx-auto bg-white rounded-xl border border-gray-200 shadow-soft">
