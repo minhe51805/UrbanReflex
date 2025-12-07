@@ -270,17 +270,50 @@ pip install uv
 
 ## Setup Guide
 
-### Step 1: Clone Repository
+### Quick Setup (3 Commands)
+
+```bash
+# 1. Clone repository
+git clone https://github.com/minhe51805/UrbanReflex.git
+cd UrbanReflex
+
+# 2. Install all dependencies (one command)
+just install
+
+# 3. Setup environment files
+just setup-env
+```
+
+Then start services and you're done!
+
+### Detailed Setup Steps
+
+#### Step 1: Clone Repository
 
 ```bash
 git clone https://github.com/minhe51805/UrbanReflex.git
 cd UrbanReflex
 ```
 
-### Step 2: Environment Configuration
+#### Step 2: Install All Dependencies (Just)
 
 ```bash
-cp .env.example .env
+# ONE COMMAND installs backend + frontend dependencies
+just install
+```
+
+Equivalent to:
+
+```bash
+uv sync --all-extras       # Backend (Python)
+npm install --prefix src/frontend  # Frontend (JavaScript)
+```
+
+#### Step 3: Setup Environment Files (Just)
+
+```bash
+# Auto-create .env from example
+just setup-env
 ```
 
 Edit `.env` with your configuration:
@@ -309,140 +342,149 @@ OPENAQ_API_KEY=your_api_key
 OWM_API_KEY=your_api_key
 ```
 
-### Step 3: Install Backend Dependencies
+#### Step 4: Start Services
 
 ```bash
-# All dependencies (production + dev)
-uv sync --all-extras
-
-# Or production only
-uv sync --no-dev
-```
-
-### Step 4: Install Frontend Dependencies
-
-```bash
-npm install --prefix src/frontend
-```
-
-### Step 5: Start Services
-
-**Option A: Docker Compose** (Recommended)
-
-```bash
+# Start MongoDB & Orion-LD
 docker-compose up -d
-docker-compose ps
 ```
 
-**Option B: Manual (if services already running)**
-
-Skip Docker and use existing MongoDB/Orion-LD.
-
-### Step 6: Verify Setup
+#### Step 5: Verify Setup
 
 ```bash
-python --version      # 3.10+
-node --version        # 18+
-uv pip list          # Check packages
+just info     # Show project info
+just health   # Check all services
 ```
 
 ---
 
 ## Running the Project
 
-### Quick Start (2-3 Terminal Windows)
+### Quick Start with Just (Recommended)
+
+Open 3 terminals and run:
 
 **Terminal 1: Backend**
 
 ```bash
 just backend-dev
-# Runs: uv run uvicorn src.backend.app:app --reload
 # Access: http://localhost:8000
 ```
 
 **Terminal 2: Frontend**
 
 ```bash
-cd src/frontend
-npm run dev
+just frontend-dev
 # Access: http://localhost:3000
 ```
 
-**Terminal 3: Database** (if needed)
+**Terminal 3: Database**
 
 ```bash
 docker-compose up -d
 docker-compose ps
 ```
 
-### Manual Startup
+**Check Services**
+
+```bash
+just health     # Check all services
+just info       # Show project info
+```
+
+### All Just Commands
+
+```bash
+# Setup
+just install               # Install all dependencies
+just setup-env            # Create .env files
+
+# Backend Development
+just backend-dev          # Start dev server (http://localhost:8000)
+just backend-test         # Run tests
+just backend-health       # Check health endpoint
+just backend-stop         # Stop backend
+
+# Frontend Development
+just frontend-dev         # Start dev server (http://localhost:3000)
+just frontend-install     # Install npm dependencies
+just frontend-lint        # Lint code
+just frontend-stop        # Stop frontend
+
+# Frontend Production
+just frontend-build       # Build for production
+just frontend-start       # Run production build
+
+# Utilities
+just health               # Check all services
+just info                 # Show project info
+just code                 # Open in VS Code
+```
+
+### Manual Startup (Without Just)
 
 **Backend:**
 
 ```bash
-# Using uv run
 uv run uvicorn src.backend.app:app --reload --host 0.0.0.0 --port 8000
-
-# Or with virtual environment
-source .venv/bin/activate  # macOS/Linux
-.venv\Scripts\activate     # Windows
-uvicorn src.backend.app:app --reload
 ```
 
 **Frontend:**
 
 ```bash
-cd src/frontend
-npm run dev -- -p 3000
+cd src/frontend && npm run dev
 ```
 
-### Production Build
+### Production Deployment
 
-**Backend:**
+**Docker:**
 
 ```bash
 docker build -f Dockerfile.scheduler -t urbanreflex .
 docker run -p 8000:8000 urbanreflex
 ```
 
-**Frontend:**
+**Frontend Only:**
 
 ```bash
-cd src/frontend
-npm run build
-npm start
+just frontend-build    # Build
+just frontend-start    # Run production
 ```
 
 ---
 
 ## Development Workflow
 
-### Code Quality (Automatic on Commit)
-
-All checks run via Git hooks. To run manually:
+### Code Quality with Just (Recommended)
 
 ```bash
-# Format code
-npm run format              # Prettier + Black + isort
+# Format all code (Python + JavaScript)
+just format
 
-# Check formatting
-npm run format:check        # Dry-run
+# Lint all code (ESLint + Flake8)
+just lint
 
-# Lint code
-npm run lint                # ESLint + Flake8
+# Run backend tests
+just backend-test
 
-# All at once
+# Check both
 just lint && just format
 ```
 
-### Using Just Commands
+### Code Quality Manual Commands
+
+All checks run automatically via Git hooks. To run manually:
 
 ```bash
-just backend-dev            # Start backend
-just frontend-dev           # Start frontend
-just backend-test           # Run backend tests
-just lint                   # Lint all
-just format                 # Format all
+# Python (Backend)
+black src/backend/          # Format
+isort src/backend/          # Sort imports
+flake8 src/backend/         # Lint
+
+# JavaScript (Frontend)
+cd src/frontend
+npm run format              # Prettier
+npm run lint                # ESLint
 ```
 
 ### Git Workflow
