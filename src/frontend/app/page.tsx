@@ -58,8 +58,8 @@ export default function Home() {
 
       {/* 5. AQI Hub Section */}
       <FeatureSection
-        title="Air Quality Index Hub"
-        description="Visit the UrbanReflex AQI Hub to learn about the methodologies different countries use to build their most important air quality communications tool."
+        title="UrbanReflex Platform"
+        description="Visit UrbanReflex to discover how integrated smart city solutions combine environmental monitoring, infrastructure data, and citizen engagement tools to transform urban management and improve quality of life."
         buttonText="Visit the AQI Hub"
         buttonHref="/aqi-hub"
         imageSide="right"
@@ -91,4 +91,4 @@ export default function Home() {
     </main>
   );
 }
- 
+

@@ -174,22 +174,27 @@ const looksLikeBase64 = (str: string): boolean => {
   return base64Regex.test(str);
 };
 
-// Convert base64 string to data URL if needed
+// Convert base64 string to data URL if needed, or hash to API URL
 const normalizeImageUrl = (value: string): string => {
   const trimmed = value.trim();
-  
+
   // If already a valid URL, return as is
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/') || trimmed.startsWith('data:image/')) {
     return trimmed;
   }
-  
+
+  // If SHA256 hash (64 character hex), convert to API URL
+  if (/^[a-f0-9]{64}$/i.test(trimmed)) {
+    return `/api/images/${trimmed}`;
+  }
+
   // If pure base64, convert to data URL
   if (looksLikeBase64(trimmed)) {
     // Try to detect image type from string start or default to jpeg
     // Base64 usually starts with certain patterns
     return `data:image/jpeg;base64,${trimmed}`;
   }
-  
+
   return trimmed;
 };
 
@@ -204,6 +209,8 @@ const isValidImageUrl = (value: any): value is string => {
   if (url.startsWith('data:image/')) return true;
   // Accept pure base64 (will be normalized to data URL)
   if (looksLikeBase64(url)) return true;
+  // Accept SHA256 hashes (64 character hex string) - will be converted to API URL
+  if (/^[a-f0-9]{64}$/i.test(url)) return true;
   return false;
 };
 
@@ -213,7 +220,7 @@ const extractImages = (report: any): string[] => {
   console.log('[extractImages] Processing report:', report.id);
   console.log('[extractImages] report.images:', report.images);
   console.log('[extractImages] report.imageCount:', report.imageCount);
-  
+
   // Một số kiểu thường gặp: NGSI-LD images.value, metadata.images, imageUrls, photos...
   let raw =
     report?.images?.value ||
@@ -292,7 +299,7 @@ export default function ReportsListSidebar({ location, radius = 1, onClose, onAp
         // Map ALL reports for sidebar, also normalize images
         const mappedReports: Report[] = reportsList.map((report: any) => {
           const imageArray = extractImages(report);
-          
+
           // Debug: log to check image data from API
           if (imageArray.length > 0) {
             console.log(`[ReportsListSidebar] Report ${report.id} has ${imageArray.length} images:`, imageArray);
@@ -427,472 +434,472 @@ export default function ReportsListSidebar({ location, radius = 1, onClose, onAp
   const modalPortal =
     selectedReport && typeof window !== 'undefined'
       ? createPortal(
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center z-[9999] p-6"
+          onClick={() => setSelectedReport(null)}
+        >
           <div
-            className="fixed inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center z-[9999] p-6"
-            onClick={() => setSelectedReport(null)}
+            className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[95vh] flex flex-col overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
           >
-            <div
-              className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[95vh] flex flex-col overflow-hidden"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Header - Fixed */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <AlertTriangle className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900">Report Details</h3>
-                    <p className="text-xs text-gray-500 mt-0.5">ID: {selectedReport.id.substring(0, 20)}...</p>
-                  </div>
+            {/* Header - Fixed */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <AlertTriangle className="w-5 h-5 text-blue-600" />
                 </div>
-                <button
-                  onClick={() => setSelectedReport(null)}
-                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">Report Details</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">ID: {selectedReport.id.substring(0, 20)}...</p>
+                </div>
               </div>
+              <button
+                onClick={() => setSelectedReport(null)}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-              {/* Content - Scrollable */}
-              <div className="flex-1 overflow-y-auto px-6 py-6">
-                <div className="space-y-6">
-                  {/* Title */}
-                  <div className="bg-gradient-to-br from-gray-50 to-white p-5 rounded-lg border border-gray-200">
+            {/* Content - Scrollable */}
+            <div className="flex-1 overflow-y-auto px-6 py-6">
+              <div className="space-y-6">
+                {/* Title */}
+                <div className="bg-gradient-to-br from-gray-50 to-white p-5 rounded-lg border border-gray-200">
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                    Title
+                  </label>
+                  <h4 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <span className="text-2xl">{getCategoryIcon(selectedReport.category.value)}</span>
+                    {selectedReport.title.value}
+                  </h4>
+                </div>
+
+                {/* Status and Priority Row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-lg border border-gray-200">
                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                      Title
+                      Status
                     </label>
-                    <h4 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                      <span className="text-2xl">{getCategoryIcon(selectedReport.category.value)}</span>
-                      {selectedReport.title.value}
-                    </h4>
+                    {(() => {
+                      const status =
+                        STATUS_CONFIG[selectedReport.status.value as keyof typeof STATUS_CONFIG] ||
+                        STATUS_CONFIG.pending;
+                      const StatusIcon = status.icon;
+                      return (
+                        <span
+                          className={`inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg border ${status.color}`}
+                        >
+                          <StatusIcon className="w-4 h-4 mr-2" />
+                          {status.label}
+                        </span>
+                      );
+                    })()}
                   </div>
-
-                  {/* Status and Priority Row */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-lg border border-gray-200">
-                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                        Status
-                      </label>
-                      {(() => {
-                        const status =
-                          STATUS_CONFIG[selectedReport.status.value as keyof typeof STATUS_CONFIG] ||
-                          STATUS_CONFIG.pending;
-                        const StatusIcon = status.icon;
-                        return (
-                          <span
-                            className={`inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg border ${status.color}`}
-                          >
-                            <StatusIcon className="w-4 h-4 mr-2" />
-                            {status.label}
-                          </span>
-                        );
-                      })()}
-                    </div>
-                    <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-lg border border-gray-200">
-                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                        Priority
-                      </label>
-                      {(() => {
-                        const priority =
-                          PRIORITY_CONFIG[selectedReport.priority.value as keyof typeof PRIORITY_CONFIG] ||
-                          PRIORITY_CONFIG.unassigned;
-                        return (
-                          <span
-                            className={`inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg border ${priority.bg} ${priority.border} ${priority.color}`}
-                          >
-                            <span className={`w-2 h-2 rounded-full ${priority.dot} mr-2`}></span>
-                            {priority.label}
-                          </span>
-                        );
-                      })()}
-                    </div>
-                  </div>
-
-                  {/* Description */}
-                  <div className="bg-gradient-to-br from-gray-50 to-white p-5 rounded-lg border border-gray-200">
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                      Detailed Description
+                  <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-lg border border-gray-200">
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      Priority
                     </label>
-                    <div className="prose prose-sm max-w-none">
-                      <p className="text-sm text-gray-900 leading-relaxed whitespace-pre-wrap">
-                        {selectedReport.description.value || (
-                          <span className="text-gray-400 italic">No description</span>
-                        )}
-                      </p>
-                    </div>
+                    {(() => {
+                      const priority =
+                        PRIORITY_CONFIG[selectedReport.priority.value as keyof typeof PRIORITY_CONFIG] ||
+                        PRIORITY_CONFIG.unassigned;
+                      return (
+                        <span
+                          className={`inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg border ${priority.bg} ${priority.border} ${priority.color}`}
+                        >
+                          <span className={`w-2 h-2 rounded-full ${priority.dot} mr-2`}></span>
+                          {priority.label}
+                        </span>
+                      );
+                    })()}
                   </div>
+                </div>
 
-                  {/* Images Gallery */}
-                  {(() => {
-                    // Debug: log ra để kiểm tra dữ liệu ảnh khi render modal
-                    console.log('[Modal] selectedReport.images:', selectedReport.images);
-                    console.log('[Modal] selectedReport.images?.value:', selectedReport.images?.value);
-                    
-                    const validImages = Array.isArray(selectedReport.images?.value)
-                      ? selectedReport.images.value.filter(isValidImageUrl)
-                      : [];
-                    
-                    console.log('[Modal] validImages count:', validImages.length);
-                    console.log('[Modal] validImages:', validImages);
-                    
-                    if (validImages.length === 0) return null;
-                    
-                    return (
-                      <div className="bg-gradient-to-br from-gray-50 to-white p-5 rounded-lg border border-gray-200">
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
-                          <Camera className="w-4 h-4" />
-                          <span>Images ({validImages.length})</span>
-                        </label>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                          {validImages.map((img, idx) => {
-                            const normalizedUrl = normalizeImageUrl(img);
-                            return (
-                              <div
-                                key={idx}
-                                className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-50 group cursor-pointer"
-                              >
-                                <Image
-                                  src={normalizedUrl}
-                                  alt={`Report image ${idx + 1}`}
-                                  fill
-                                  className="object-cover group-hover:scale-105 transition-transform"
-                                  unoptimized={normalizedUrl.startsWith('data:')} // Disable optimization for data URLs
-                                />
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })()}
+                {/* Description */}
+                <div className="bg-gradient-to-br from-gray-50 to-white p-5 rounded-lg border border-gray-200">
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                    Detailed Description
+                  </label>
+                  <div className="prose prose-sm max-w-none">
+                    <p className="text-sm text-gray-900 leading-relaxed whitespace-pre-wrap">
+                      {selectedReport.description.value || (
+                        <span className="text-gray-400 italic">No description</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
 
-                  {/* Location */}
-                  {selectedReport.location &&
-                    selectedReport.location.value &&
-                    selectedReport.location.value.coordinates && (
-                      <div className="bg-gradient-to-br from-green-50 to-white p-5 rounded-lg border border-green-100">
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center space-x-2">
-                          <MapPin className="w-4 h-4 text-green-600" />
-                          <span>Report Location</span>
-                        </label>
-                        <div className="space-y-2">
-                          <div className="bg-white p-3 rounded border border-gray-200">
-                            <p className="text-xs text-gray-500 mb-1">Coordinates</p>
-                            <p className="text-sm font-mono text-gray-900">
-                              [{selectedReport.location.value.coordinates.join(', ')}]
-                            </p>
-                          </div>
-                          {selectedReport.location.value.coordinates.length >= 2 && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const [lng, lat] = selectedReport.location.value.coordinates;
-                                if (onFocusLocation) {
-                                  onFocusLocation([lng, lat], selectedReport.title?.value || 'Citizen report');
-                                }
-                              }}
-                              className="inline-flex items-center space-x-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
+                {/* Images Gallery */}
+                {(() => {
+                  // Debug: log ra để kiểm tra dữ liệu ảnh khi render modal
+                  console.log('[Modal] selectedReport.images:', selectedReport.images);
+                  console.log('[Modal] selectedReport.images?.value:', selectedReport.images?.value);
+
+                  const validImages = Array.isArray(selectedReport.images?.value)
+                    ? selectedReport.images.value.filter(isValidImageUrl)
+                    : [];
+
+                  console.log('[Modal] validImages count:', validImages.length);
+                  console.log('[Modal] validImages:', validImages);
+
+                  if (validImages.length === 0) return null;
+
+                  return (
+                    <div className="bg-gradient-to-br from-gray-50 to-white p-5 rounded-lg border border-gray-200">
+                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+                        <Camera className="w-4 h-4" />
+                        <span>Images ({validImages.length})</span>
+                      </label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {validImages.map((img, idx) => {
+                          const normalizedUrl = normalizeImageUrl(img);
+                          return (
+                            <div
+                              key={idx}
+                              className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-50 group cursor-pointer"
                             >
-                              <MapPin className="w-4 h-4" />
-                              <span>View on map</span>
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                  {/* Category and Dates Row */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-gradient-to-br from-blue-50 to-white p-4 rounded-lg border border-blue-100">
-                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                        Category
-                      </label>
-                      <p className="text-sm font-medium text-gray-900 capitalize">
-                        {getCategoryLabel(selectedReport.category.value)}
-                      </p>
-                    </div>
-                    <div className="bg-gradient-to-br from-purple-50 to-white p-4 rounded-lg border border-purple-100">
-                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center space-x-1">
-                        <Clock className="w-3 h-3" />
-                        <span>Created Date</span>
-                      </label>
-                      <p className="text-sm font-medium text-gray-900">
-                        {new Date(selectedReport.dateCreated.value['@value']).toLocaleDateString('vi-VN', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
+                              <Image
+                                src={normalizedUrl}
+                                alt={`Report image ${idx + 1}`}
+                                fill
+                                className="object-cover group-hover:scale-105 transition-transform"
+                                unoptimized={normalizedUrl.startsWith('data:')} // Disable optimization for data URLs
+                              />
+                            </div>
+                          );
                         })}
-                      </p>
+                      </div>
                     </div>
-                    <div className="bg-gradient-to-br from-indigo-50 to-white p-4 rounded-lg border border-indigo-100">
-                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center space-x-1">
-                        <User className="w-3 h-3" />
-                        <span>Reporter</span>
+                  );
+                })()}
+
+                {/* Location */}
+                {selectedReport.location &&
+                  selectedReport.location.value &&
+                  selectedReport.location.value.coordinates && (
+                    <div className="bg-gradient-to-br from-green-50 to-white p-5 rounded-lg border border-green-100">
+                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center space-x-2">
+                        <MapPin className="w-4 h-4 text-green-600" />
+                        <span>Report Location</span>
                       </label>
-                      <p className="text-sm font-medium text-gray-900">
-                        {selectedReport.reporterName.value}
-                      </p>
+                      <div className="space-y-2">
+                        <div className="bg-white p-3 rounded border border-gray-200">
+                          <p className="text-xs text-gray-500 mb-1">Coordinates</p>
+                          <p className="text-sm font-mono text-gray-900">
+                            [{selectedReport.location.value.coordinates.join(', ')}]
+                          </p>
+                        </div>
+                        {selectedReport.location.value.coordinates.length >= 2 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const [lng, lat] = selectedReport.location.value.coordinates;
+                              if (onFocusLocation) {
+                                onFocusLocation([lng, lat], selectedReport.title?.value || 'Citizen report');
+                              }
+                            }}
+                            className="inline-flex items-center space-x-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
+                          >
+                            <MapPin className="w-4 h-4" />
+                            <span>View on map</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
-                  {/* Full Report ID */}
-                  <div className="bg-gray-900 p-4 rounded-lg">
-                    <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-                      Full ID
+                {/* Category and Dates Row */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-gradient-to-br from-blue-50 to-white p-4 rounded-lg border border-blue-100">
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      Category
                     </label>
-                    <p className="text-xs font-mono text-gray-300 break-all">{selectedReport.id}</p>
+                    <p className="text-sm font-medium text-gray-900 capitalize">
+                      {getCategoryLabel(selectedReport.category.value)}
+                    </p>
+                  </div>
+                  <div className="bg-gradient-to-br from-purple-50 to-white p-4 rounded-lg border border-purple-100">
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center space-x-1">
+                      <Clock className="w-3 h-3" />
+                      <span>Created Date</span>
+                    </label>
+                    <p className="text-sm font-medium text-gray-900">
+                      {new Date(selectedReport.dateCreated.value['@value']).toLocaleDateString('vi-VN', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </p>
+                  </div>
+                  <div className="bg-gradient-to-br from-indigo-50 to-white p-4 rounded-lg border border-indigo-100">
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center space-x-1">
+                      <User className="w-3 h-3" />
+                      <span>Reporter</span>
+                    </label>
+                    <p className="text-sm font-medium text-gray-900">
+                      {selectedReport.reporterName.value}
+                    </p>
                   </div>
                 </div>
-              </div>
 
-              {/* Footer - Fixed */}
-              <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
-                <div className="flex items-center space-x-2">
-                  {selectedReport.location &&
-                    selectedReport.location.value &&
-                    selectedReport.location.value.coordinates &&
-                    selectedReport.location.value.coordinates.length >= 2 && (
-                      <a
-                        href={`https://www.google.com/maps?q=${selectedReport.location.value.coordinates[1]},${selectedReport.location.value.coordinates[0]}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                      >
-                        <MapPin className="w-4 h-4" />
-                        <span>View on map</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    )}
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(selectedReport.id);
-                    }}
-                    className="inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                    title="Copy ID"
-                  >
-                    <Copy className="w-4 h-4" />
-                    <span>Copy ID</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (navigator.share) {
-                        navigator.share({
-                          title: selectedReport.title.value,
-                          text: selectedReport.description.value,
-                          url: window.location.href,
-                        }).catch(() => {});
-                      } else {
-                        navigator.clipboard.writeText(window.location.href);
-                      }
-                    }}
-                    className="inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                    title="Share"
-                  >
-                    <Share2 className="w-4 h-4" />
-                    <span>Share</span>
-                  </button>
+                {/* Full Report ID */}
+                <div className="bg-gray-900 p-4 rounded-lg">
+                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                    Full ID
+                  </label>
+                  <p className="text-xs font-mono text-gray-300 break-all">{selectedReport.id}</p>
                 </div>
-                <button
-                  onClick={() => setSelectedReport(null)}
-                  className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
-                >
-                  Close
-                </button>
               </div>
             </div>
-          </div>,
-          document.body
-        )
+
+            {/* Footer - Fixed */}
+            <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
+              <div className="flex items-center space-x-2">
+                {selectedReport.location &&
+                  selectedReport.location.value &&
+                  selectedReport.location.value.coordinates &&
+                  selectedReport.location.value.coordinates.length >= 2 && (
+                    <a
+                      href={`https://www.google.com/maps?q=${selectedReport.location.value.coordinates[1]},${selectedReport.location.value.coordinates[0]}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <MapPin className="w-4 h-4" />
+                      <span>View on map</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(selectedReport.id);
+                  }}
+                  className="inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  title="Copy ID"
+                >
+                  <Copy className="w-4 h-4" />
+                  <span>Copy ID</span>
+                </button>
+                <button
+                  onClick={() => {
+                    if (navigator.share) {
+                      navigator.share({
+                        title: selectedReport.title.value,
+                        text: selectedReport.description.value,
+                        url: window.location.href,
+                      }).catch(() => { });
+                    } else {
+                      navigator.clipboard.writeText(window.location.href);
+                    }
+                  }}
+                  className="inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  title="Share"
+                >
+                  <Share2 className="w-4 h-4" />
+                  <span>Share</span>
+                </button>
+              </div>
+              <button
+                onClick={() => setSelectedReport(null)}
+                className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )
       : null;
 
   return (
     <>
       <div className={`fixed ${rightClass} z-40 w-[420px] bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 flex flex-col overflow-hidden pointer-events-auto transition-transform duration-300`}>
-      {/* Header - Clean White/Transparent Design */}
-      <div className="bg-white/80 backdrop-blur-md border-b border-gray-200/50">
-        <div className="px-6 py-5">
-          {/* Title and Close */}
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-50 rounded-xl">
-                <AlertTriangle className="h-5 w-5 text-blue-600" />
+        {/* Header - Clean White/Transparent Design */}
+        <div className="bg-white/80 backdrop-blur-md border-b border-gray-200/50">
+          <div className="px-6 py-5">
+            {/* Title and Close */}
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-50 rounded-xl">
+                  <AlertTriangle className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg text-gray-900 mb-1">Area Reports</h3>
+                  <p className="text-sm text-gray-600 flex items-center gap-1.5">
+                    <MapPin className="h-3.5 w-3.5" />
+                    <span>{filteredReports.length} reports within {radius}km</span>
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-lg text-gray-900 mb-1">Area Reports</h3>
-                <p className="text-sm text-gray-600 flex items-center gap-1.5">
-                  <MapPin className="h-3.5 w-3.5" />
-                  <span>{filteredReports.length} reports within {radius}km</span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setCollapsed(true)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-gray-700 flex items-center gap-1 text-xs font-semibold"
+                  aria-label="Collapse"
+                >
+                  <Minus className="h-4 w-4" />
+                  <span>Hide</span>
+                </button>
+                <button
+                  onClick={onClose}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-gray-700"
+                  aria-label="Close"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Filter Tabs - Clean Design */}
+            <div className="flex gap-2">
+              {[
+                { key: 'all', label: 'All', count: reports.length },
+                { key: 'pending', label: 'Pending', count: reports.filter(r => r.status.value === 'pending').length },
+                { key: 'urgent', label: 'Urgent', count: reports.filter(r => r.priority.value === 'urgent').length },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setFilter(tab.key as any)}
+                  className={`flex-1 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 ${filter === tab.key
+                    ? 'bg-gray-900 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <span>{tab.label}</span>
+                    {tab.count > 0 && (
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${filter === tab.key
+                        ? 'bg-white/20 text-white'
+                        : 'bg-white text-gray-600'
+                        }`}>
+                        {tab.count}
+                      </span>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Reports List - Scrollable */}
+        <div className="flex-1 overflow-y-auto">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-16 px-6">
+              <Loader2 className="h-10 w-10 text-gray-400 animate-spin mb-4" />
+              <p className="text-sm font-semibold text-gray-700">Loading reports...</p>
+              <p className="text-xs text-gray-500 mt-1">Please wait</p>
+            </div>
+          ) : filteredReports.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+              <div className="p-4 bg-gray-100 rounded-full mb-4">
+                <AlertCircle className="h-12 w-12 text-gray-400" />
+              </div>
+              <h4 className="text-base font-bold text-gray-900 mb-2">No reports found</h4>
+              <p className="text-sm text-gray-600 mb-4">No issues reported in this area</p>
+              <div className="px-4 py-2 bg-gray-50 rounded-lg border border-gray-200">
+                <p className="text-xs text-gray-500 font-medium">
+                  Showing reports within {radius}km radius
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setCollapsed(true)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-gray-700 flex items-center gap-1 text-xs font-semibold"
-                aria-label="Collapse"
-              >
-                <Minus className="h-4 w-4" />
-                <span>Hide</span>
-              </button>
-              <button
-                onClick={onClose}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-gray-700"
-                aria-label="Close"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
+          ) : (
+            <div className="p-4 space-y-3">
+              {filteredReports.map((report) => {
+                const priority = PRIORITY_CONFIG[report.priority.value as keyof typeof PRIORITY_CONFIG] || PRIORITY_CONFIG.unassigned;
+                const status = STATUS_CONFIG[report.status.value as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pending;
+                const StatusIcon = status.icon;
 
-          {/* Filter Tabs - Clean Design */}
-          <div className="flex gap-2">
-            {[
-              { key: 'all', label: 'All', count: reports.length },
-              { key: 'pending', label: 'Pending', count: reports.filter(r => r.status.value === 'pending').length },
-              { key: 'urgent', label: 'Urgent', count: reports.filter(r => r.priority.value === 'urgent').length },
-            ].map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setFilter(tab.key as any)}
-                className={`flex-1 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 ${filter === tab.key
-                    ? 'bg-gray-900 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-              >
-                <div className="flex items-center justify-center gap-2">
-                  <span>{tab.label}</span>
-                  {tab.count > 0 && (
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${filter === tab.key
-                        ? 'bg-white/20 text-white'
-                        : 'bg-white text-gray-600'
-                      }`}>
-                      {tab.count}
-                    </span>
-                  )}
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Reports List - Scrollable */}
-      <div className="flex-1 overflow-y-auto">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-16 px-6">
-            <Loader2 className="h-10 w-10 text-gray-400 animate-spin mb-4" />
-            <p className="text-sm font-semibold text-gray-700">Loading reports...</p>
-            <p className="text-xs text-gray-500 mt-1">Please wait</p>
-          </div>
-        ) : filteredReports.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-            <div className="p-4 bg-gray-100 rounded-full mb-4">
-              <AlertCircle className="h-12 w-12 text-gray-400" />
-            </div>
-            <h4 className="text-base font-bold text-gray-900 mb-2">No reports found</h4>
-            <p className="text-sm text-gray-600 mb-4">No issues reported in this area</p>
-            <div className="px-4 py-2 bg-gray-50 rounded-lg border border-gray-200">
-              <p className="text-xs text-gray-500 font-medium">
-                Showing reports within {radius}km radius
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="p-4 space-y-3">
-            {filteredReports.map((report) => {
-              const priority = PRIORITY_CONFIG[report.priority.value as keyof typeof PRIORITY_CONFIG] || PRIORITY_CONFIG.unassigned;
-              const status = STATUS_CONFIG[report.status.value as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pending;
-              const StatusIcon = status.icon;
-
-              return (
-                <div
-                  key={report.id}
-                  className="group bg-white border border-gray-200 rounded-xl p-4 hover:border-gray-300 hover:shadow-md transition-all duration-200 cursor-pointer"
-                  onClick={() => setSelectedReport(report)}
-                >
-                  {/* Header - Title and Priority */}
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-lg">{getCategoryIcon(report.category.value)}</span>
-                        <h4 className="font-bold text-sm text-gray-900 line-clamp-2">
-                          {report.title.value}
-                        </h4>
-                      </div>
-                      <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">
-                        {report.description.value}
-                      </p>
-                    </div>
-                    <div className={`flex-shrink-0 px-2.5 py-1 rounded-lg border ${priority.bg} ${priority.border}`}>
-                      <div className="flex items-center gap-1.5">
-                        <span className={`w-1.5 h-1.5 rounded-full ${priority.dot}`}></span>
-                        <span className={`text-xs font-bold ${priority.color}`}>{priority.label}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Images Gallery */}
-                  {report.images?.value && report.images.value.length > 0 && (
-                    <div className="flex gap-2 mb-3">
-                      {report.images.value
-                        .filter(isValidImageUrl)
-                        .map(normalizeImageUrl)
-                        .slice(0, 3)
-                        .map((img, idx) => (
-                          <div
-                            key={idx}
-                            className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 bg-gray-50"
-                          >
-                            <Image
-                              src={img}
-                              alt={`Report image ${idx + 1}`}
-                              fill
-                              className="object-cover"
-                              unoptimized={img.startsWith('data:')} // Disable optimization for data URLs
-                            />
-                          </div>
-                        ))}
-                      {report.imageCount && report.imageCount.value > 3 && (
-                        <div className="w-20 h-20 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center text-xs font-bold text-gray-600">
-                          +{report.imageCount.value - 3}
+                return (
+                  <div
+                    key={report.id}
+                    className="group bg-white border border-gray-200 rounded-xl p-4 hover:border-gray-300 hover:shadow-md transition-all duration-200 cursor-pointer"
+                    onClick={() => setSelectedReport(report)}
+                  >
+                    {/* Header - Title and Priority */}
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-lg">{getCategoryIcon(report.category.value)}</span>
+                          <h4 className="font-bold text-sm text-gray-900 line-clamp-2">
+                            {report.title.value}
+                          </h4>
                         </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Status and Time */}
-                  <div className="flex items-center justify-between gap-3 mb-3">
-                    <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border ${status.color}`}>
-                      <StatusIcon className="h-3.5 w-3.5" />
-                      <span className="text-xs font-semibold">{status.label}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                      <Clock className="h-3.5 w-3.5" />
-                      <span className="font-medium">{formatDate(report.dateCreated.value['@value'])}</span>
-                    </div>
-                  </div>
-
-                  {/* Footer - Reporter and Category */}
-                  <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 bg-gray-100 rounded-lg">
-                        <User className="h-3.5 w-3.5 text-gray-600" />
+                        <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">
+                          {report.description.value}
+                        </p>
                       </div>
-                      <span className="text-xs font-medium text-gray-700">{report.reporterName.value}</span>
+                      <div className={`flex-shrink-0 px-2.5 py-1 rounded-lg border ${priority.bg} ${priority.border}`}>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`w-1.5 h-1.5 rounded-full ${priority.dot}`}></span>
+                          <span className={`text-xs font-bold ${priority.color}`}>{priority.label}</span>
+                        </div>
+                      </div>
                     </div>
-                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                      {getCategoryLabel(report.category.value)}
-                    </span>
+
+                    {/* Images Gallery */}
+                    {report.images?.value && report.images.value.length > 0 && (
+                      <div className="flex gap-2 mb-3">
+                        {report.images.value
+                          .filter(isValidImageUrl)
+                          .map(normalizeImageUrl)
+                          .slice(0, 3)
+                          .map((img, idx) => (
+                            <div
+                              key={idx}
+                              className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 bg-gray-50"
+                            >
+                              <Image
+                                src={img}
+                                alt={`Report image ${idx + 1}`}
+                                fill
+                                className="object-cover"
+                                unoptimized={img.startsWith('data:')} // Disable optimization for data URLs
+                              />
+                            </div>
+                          ))}
+                        {report.imageCount && report.imageCount.value > 3 && (
+                          <div className="w-20 h-20 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center text-xs font-bold text-gray-600">
+                            +{report.imageCount.value - 3}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Status and Time */}
+                    <div className="flex items-center justify-between gap-3 mb-3">
+                      <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border ${status.color}`}>
+                        <StatusIcon className="h-3.5 w-3.5" />
+                        <span className="text-xs font-semibold">{status.label}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                        <Clock className="h-3.5 w-3.5" />
+                        <span className="font-medium">{formatDate(report.dateCreated.value['@value'])}</span>
+                      </div>
+                    </div>
+
+                    {/* Footer - Reporter and Category */}
+                    <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 bg-gray-100 rounded-lg">
+                          <User className="h-3.5 w-3.5 text-gray-600" />
+                        </div>
+                        <span className="text-xs font-medium text-gray-700">{report.reporterName.value}</span>
+                      </div>
+                      <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        {getCategoryLabel(report.category.value)}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
         {/* Footer - Info */}
         {!loading && filteredReports.length > 0 && (
