@@ -13,20 +13,6 @@ default:
 # FULL PROJECT COMMANDS
 # ============================================================================
 
-# Run the entire project (backend + frontend)
-dev: backend-dev frontend-dev
-    @echo "UrbanReflex is running!"
-    @echo "Frontend: http://localhost:3000"
-    @echo "Backend: http://localhost:8000"
-
-# Stop all services
-stop: backend-stop frontend-stop
-    @echo "All services stopped!"
-
-# Full setup from scratch
-setup: install setup-env
-    @echo "Project setup complete!"
-
 # ============================================================================
 # BACKEND COMMANDS (FastAPI)
 # ============================================================================
