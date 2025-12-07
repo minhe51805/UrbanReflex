@@ -1,0 +1,25 @@
+{
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.2",
+    "prettier": "^3.7.4"
+  },
+  "scripts": {
+    "prepare": "husky",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md,py}\"",
+    "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,md,py}\""
+  },
+  "lint-staged": {
+    "src/frontend/**/*.{js,jsx,ts,tsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "src/backend/**/*.py": [
+      "black --line-length=100",
+      "isort"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
+  }
+}
