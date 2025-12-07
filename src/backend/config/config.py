@@ -26,12 +26,24 @@ from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 load_dotenv()
 
 # Database configuration
-MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
-DATABASE_NAME = os.getenv("DATABASE_NAME", "urbanreflex")
+MONGO_ROOT_USERNAME = os.getenv("MONGO_ROOT_USERNAME", "urbanreflex_admin")
+MONGO_ROOT_PASSWORD = os.getenv("MONGO_ROOT_PASSWORD", "password")
+MONGO_DATABASE = os.getenv("MONGO_DATABASE", "urbanreflex_db")
+MONGO_HOST = os.getenv("MONGO_HOST", "localhost")
+MONGO_PORT = int(os.getenv("MONGO_PORT", "27017"))
+
+# Build MongoDB URL from components
+MONGODB_URL = f"mongodb://{MONGO_ROOT_USERNAME}:{MONGO_ROOT_PASSWORD}@{MONGO_HOST}:{MONGO_PORT}/{MONGO_DATABASE}?authSource=admin"
+DATABASE_NAME = MONGO_DATABASE
+
+# Orion-LD configuration
+ORION_LD_HOST = os.getenv("ORION_LD_HOST", "localhost")
+ORION_LD_PORT = int(os.getenv("ORION_LD_PORT", "1026"))
+ORION_LD_URL = f"http://{ORION_LD_HOST}:{ORION_LD_PORT}"
 
 # Authentication configuration
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here")
-ALGORITHM = "HS256"
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 
 # AI Service configuration
