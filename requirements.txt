@@ -24,3 +24,8 @@ python-dotenv==1.0.0
 
 # Scheduler
 APScheduler==3.10.4
+
+# Code Style & Linting
+black==24.1.1
+flake8==7.0.0
+isort==5.13.2

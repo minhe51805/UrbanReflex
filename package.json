@@ -16,7 +16,8 @@
     ],
     "src/backend/**/*.py": [
       "black --line-length=100",
-      "isort"
+      "isort",
+      "flake8"
     ],
     "*.{json,md}": [
       "prettier --write"
