@@ -1,0 +1,65 @@
+{
+  "id": "urn:ngsi-ld:CitizenReport:HCMC-20251115-001",
+  "type": "CitizenReport",
+  "@context": [
+    "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"
+  ],
+  "location": {
+    "type": "GeoProperty",
+    "value": {
+      "type": "Point",
+      "coordinates": [106.7008, 10.7747]
+    }
+  },
+  "category": {
+    "type": "Property",
+    "value": "streetlight_broken"
+  },
+  "status": {
+    "type": "Property",
+    "value": "submitted"
+  },
+  "title": {
+    "type": "Property",
+    "value": "Đèn đường hỏng trên đường Nguyễn Huệ"
+  },
+  "description": {
+    "type": "Property",
+    "value": "Đèn đường gần ngã tư Nguyễn Huệ - Hồ Tùng Mậu không sáng từ 3 ngày nay. Khu vực tối, ảnh hưởng an toàn giao thông."
+  },
+  "dateCreated": {
+    "type": "Property",
+    "value": {
+      "@type": "DateTime",
+      "@value": "2025-11-15T08:30:00Z"
+    }
+  },
+  "dateModified": {
+    "type": "Property",
+    "value": {
+      "@type": "DateTime",
+      "@value": "2025-11-15T08:30:00Z"
+    }
+  },
+  "refRoadSegment": {
+    "type": "Relationship",
+    "object": "urn:ngsi-ld:RoadSegment:HCMC-nguyen-hue-001"
+  },
+  "refStreetlight": {
+    "type": "Relationship",
+    "object": "urn:ngsi-ld:Streetlight:HCMC-nguyen-hue-sl-001"
+  },
+  "priority": {
+    "type": "Property",
+    "value": "high"
+  },
+  "reporterName": {
+    "type": "Property",
+    "value": "Nguyễn Văn A"
+  },
+  "reporterContact": {
+    "type": "Property",
+    "value": "+84 90 123 4567"
+  }
+}
+

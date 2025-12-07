@@ -56,14 +56,6 @@ import {
   ExternalLink,
   ChevronLeft,
   ChevronRight,
-  Bot,
-  CheckCircle2,
-  X as XIcon,
-  FileCheck,
-  Sparkles,
-  AlertCircle,
-  HelpCircle,
-  Circle,
 } from 'lucide-react';
 
 interface UserForAdmin {
@@ -582,19 +574,6 @@ export default function AdminPage() {
   const handleChangePassword = async () => {
     if (!selectedUser) return;
 
-    // Get user ID - try multiple possible fields (same strategy as delete user)
-    const userId =
-      selectedUser.id ||
-      (selectedUser as any)._id ||
-      (selectedUser as any).user_id ||
-      (selectedUser as any).userId;
-
-    if (!userId) {
-      setEditError('User ID not found. Please refresh the page and try again.');
-      console.error('Change password error: missing user id', selectedUser);
-      return;
-    }
-
     // Validation
     if (!newPassword || newPassword.length < 6) {
       setEditError('Password must be at least 6 characters');
@@ -615,13 +594,7 @@ export default function AdminPage() {
         throw new Error('No authentication token');
       }
 
-      console.log('Changing password for user:', {
-        userId,
-        hasToken: !!token,
-      });
-
-      // Admin endpoint for changing user password (no old_password required)
-      const response = await fetch(`http://163.61.183.90:8001/admin/users/${encodeURIComponent(userId)}/password`, {
+      const response = await fetch(`http://163.61.183.90:8001/admin/users/${selectedUser.id}/password`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -1644,56 +1617,62 @@ export default function AdminPage() {
       {/* Report Detail Modal */}
       {showReportModal && selectedReport && (
         <div 
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
           onClick={() => setShowReportModal(false)}
         >
           <div 
-            className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[85vh] flex flex-col overflow-hidden"
+            className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-blue-100 rounded-xl">
-                  <FileText className="w-5 h-5 text-blue-600" />
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
+              <div className="flex items-center space-x-2">
+                <div className="p-1.5 bg-blue-100 rounded-lg">
+                  <FileText className="w-4 h-4 text-blue-600" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900">Report Details</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">ID: {selectedReport.id.substring(0, 20)}...</p>
+                  <h3 className="text-lg font-bold text-gray-900">Chi tiết báo cáo</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">ID: {selectedReport.id.substring(0, 15)}...</p>
                 </div>
               </div>
               <button
                 onClick={() => setShowReportModal(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Content - Scrollable */}
-            <div className="flex-1 overflow-y-auto px-6 py-4">
-              <div className="space-y-4">
+            <div className="flex-1 overflow-y-auto px-4 py-3">
+              <div className="space-y-3">
                 {/* Title */}
-                <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-xl border border-gray-200">
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                    TITLE
+                <div className="bg-gradient-to-br from-gray-50 to-white p-3 rounded-lg border border-gray-200">
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                    Tiêu đề
                   </label>
-                  <h4 className="text-base font-bold text-gray-900">
+                  <h4 className="text-base font-bold text-gray-900 line-clamp-2">
                     {selectedReport.title || selectedReport.description || 'No title'}
+                    {selectedReport.title || selectedReport.description || 'Không có tiêu đề'}
                   </h4>
                 </div>
 
                 {/* Status and Priority Row - Editable */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="bg-gradient-to-br from-gray-50 to-white p-3 rounded-xl border border-gray-200">
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                      STATUS
-                    </label>
+                  <div className="bg-gradient-to-br from-gray-50 to-white p-3 rounded-lg border border-gray-200">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        Trạng thái
+                      </label>
+                      {editingStatus !== selectedReport.status && (
+                        <span className="text-xs text-orange-600 font-medium">● Đã thay đổi</span>
+                      )}
+                    </div>
                     <select
                       value={editingStatus}
                       onChange={(e) => setEditingStatus(e.target.value)}
-                      className={`w-full px-3 py-2 text-sm border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white font-semibold ${
-                        editingStatus !== selectedReport.status ? 'border-orange-400 bg-orange-50' : 'border-gray-300'
+                      className={`w-full px-3 py-2 text-sm border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white font-medium ${
+                        editingStatus !== selectedReport.status ? 'border-orange-400' : 'border-gray-300'
                       }`}
                     >
                       <option value="submitted">{formatStatus('submitted')}</option>
@@ -1706,22 +1685,31 @@ export default function AdminPage() {
                     </select>
                     {/* Status Description */}
                     {editingStatus && STATUS_CONFIG[editingStatus as ReportStatus] && (
-                      <p className="mt-1.5 text-xs text-gray-600">
+                      <p className="mt-1.5 text-xs text-gray-500">
                         {STATUS_CONFIG[editingStatus as ReportStatus].description}
                       </p>
                     )}
                   </div>
-                  <div className="bg-gradient-to-br from-gray-50 to-white p-3 rounded-xl border border-gray-200">
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                      PRIORITY
-                    </label>
+                  <div className="bg-gradient-to-br from-gray-50 to-white p-3 rounded-lg border border-gray-200">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        Độ ưu tiên
+                      </label>
+                      {editingPriority !== selectedReport.priority && (
+                        <span className="text-xs text-orange-600 font-medium">● Đã thay đổi</span>
+                      )}
+                    </div>
                     <select
                       value={editingPriority}
                       onChange={(e) => setEditingPriority(e.target.value)}
-                      className={`w-full px-3 py-2 text-sm border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white font-semibold ${
-                        editingPriority !== selectedReport.priority ? 'border-orange-400 bg-orange-50' : 'border-gray-300'
+                      className={`w-full px-3 py-2 text-sm border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white font-medium ${
+                        editingPriority !== selectedReport.priority ? 'border-orange-400' : 'border-gray-300'
                       }`}
                     >
+                      <option value="low">⚪ Thấp</option>
+                      <option value="medium">🟡 Trung bình</option>
+                      <option value="high">🟠 Cao</option>
+                      <option value="urgent">🔴 Khẩn cấp</option>
                       <option value="low">Low</option>
                       <option value="medium">Medium</option>
                       <option value="high">High</option>
@@ -1743,12 +1731,12 @@ export default function AdminPage() {
                 )}
 
                 {/* Description */}
-                <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-xl border border-gray-200">
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                    DETAILED DESCRIPTION
+                <div className="bg-gradient-to-br from-gray-50 to-white p-2 rounded-lg border border-gray-200">
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                    Mô tả chi tiết
                   </label>
                   <div className="prose prose-sm max-w-none">
-                    <p className="text-sm text-gray-900 leading-relaxed whitespace-pre-wrap">
+                    <p className="text-xs text-gray-900 leading-relaxed whitespace-pre-wrap max-h-24 overflow-y-auto">
                       {selectedReport.description || (
                         <span className="text-gray-400 italic">No description</span>
                       )}
@@ -1851,41 +1839,33 @@ export default function AdminPage() {
 
                 {/* AI Classification Metrics */}
                 {(selectedReport.category || selectedReport.metadata?.categoryConfidence || selectedReport.metadata?.severity) && (
-                  <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 p-4 rounded-xl border border-purple-200">
-                    <label className="block text-xs font-semibold text-purple-700 uppercase tracking-wide mb-3 flex items-center gap-2">
-                      <Bot className="w-4 h-4 text-purple-600" />
-                      <span>AI CLASSIFICATION</span>
+                  <div className="bg-gradient-to-br from-purple-50 to-white p-3 rounded-lg border border-purple-200">
+                    <label className="block text-xs font-semibold text-purple-700 uppercase tracking-wide mb-2 flex items-center gap-2">
+                      <span className="text-lg">🤖</span>
+                      <span>Phân loại AI</span>
                     </label>
                     <div className="grid grid-cols-2 gap-3">
                       {/* Category */}
-                      <div className="bg-white p-2.5 rounded-xl border border-purple-100">
-                        <p className="text-xs text-gray-500 mb-1.5 font-semibold">Category</p>
-                        <div className="flex items-center gap-2">
-                          {selectedReport.category === 'pothole' && <AlertTriangle className="w-3.5 h-3.5 text-orange-600" />}
-                          {selectedReport.category === 'road_damage' && <FileText className="w-3.5 h-3.5 text-blue-600" />}
-                          {selectedReport.category === 'traffic_sign' && <AlertCircle className="w-3.5 h-3.5 text-yellow-600" />}
-                          {selectedReport.category === 'streetlight' && <Sparkles className="w-3.5 h-3.5 text-yellow-500" />}
-                          {selectedReport.category === 'drainage' && <Activity className="w-3.5 h-3.5 text-blue-500" />}
-                          {(!selectedReport.category || selectedReport.category === 'unknown') && <HelpCircle className="w-3.5 h-3.5 text-gray-500" />}
-                          <p className="text-sm font-bold text-gray-900">
-                            {selectedReport.category === 'pothole' && 'Pothole'}
-                            {selectedReport.category === 'road_damage' && 'Road Damage'}
-                            {selectedReport.category === 'traffic_sign' && 'Traffic Sign'}
-                            {selectedReport.category === 'streetlight' && 'Streetlight'}
-                            {selectedReport.category === 'drainage' && 'Drainage'}
-                            {(!selectedReport.category || selectedReport.category === 'unknown') && 'Unknown'}
-                          </p>
-                        </div>
+                      <div className="bg-white p-2.5 rounded-lg border border-purple-100">
+                        <p className="text-xs text-gray-500 mb-1">Danh mục</p>
+                        <p className="text-sm font-bold text-gray-900">
+                          {selectedReport.category === 'pothole' && '🕳️ Ổ gà'}
+                          {selectedReport.category === 'road_damage' && '🛣️ Hư hỏng đường'}
+                          {selectedReport.category === 'traffic_sign' && '🚦 Biển báo'}
+                          {selectedReport.category === 'streetlight' && '💡 Đèn đường'}
+                          {selectedReport.category === 'drainage' && '💧 Thoát nước'}
+                          {(!selectedReport.category || selectedReport.category === 'unknown') && '❓ Chưa xác định'}
+                        </p>
                       </div>
                       
                       {/* Confidence */}
                       {selectedReport.metadata?.categoryConfidence && (
-                        <div className="bg-white p-2.5 rounded-xl border border-purple-100">
-                          <p className="text-xs text-gray-500 mb-1.5 font-semibold">Confidence</p>
+                        <div className="bg-white p-2.5 rounded-lg border border-purple-100">
+                          <p className="text-xs text-gray-500 mb-1">Độ tin cậy</p>
                           <div className="flex items-center gap-2">
                             <div className="flex-1 bg-gray-200 rounded-full h-2">
                               <div 
-                                className={`h-2 rounded-full transition-all ${
+                                className={`h-2 rounded-full ${
                                   parseFloat(selectedReport.metadata.categoryConfidence) >= 0.7 
                                     ? 'bg-green-500' 
                                     : parseFloat(selectedReport.metadata.categoryConfidence) >= 0.5
@@ -1895,7 +1875,7 @@ export default function AdminPage() {
                                 style={{ width: `${parseFloat(selectedReport.metadata.categoryConfidence) * 100}%` }}
                               />
                             </div>
-                            <span className="text-sm font-bold text-gray-900 min-w-[2.5rem] text-right">
+                            <span className="text-sm font-bold text-gray-900">
                               {(parseFloat(selectedReport.metadata.categoryConfidence) * 100).toFixed(0)}%
                             </span>
                           </div>
@@ -1903,85 +1883,74 @@ export default function AdminPage() {
                       )}
                       
                       {/* Priority */}
-                      <div className="bg-white p-2.5 rounded-xl border border-purple-100">
-                        <p className="text-xs text-gray-500 mb-1.5 font-semibold">AI Priority Level</p>
-                        <div className="flex items-center gap-2">
-                          {selectedReport.priority === 'low' && <Circle className="w-3.5 h-3.5 text-gray-400" />}
-                          {selectedReport.priority === 'medium' && <AlertCircle className="w-3.5 h-3.5 text-yellow-500" />}
-                          {selectedReport.priority === 'high' && <AlertTriangle className="w-3.5 h-3.5 text-orange-500" />}
-                          {selectedReport.priority === 'urgent' && <XCircle className="w-3.5 h-3.5 text-red-500" />}
-                          <p className="text-sm font-bold text-gray-900">
-                            {selectedReport.priority === 'low' && 'Low'}
-                            {selectedReport.priority === 'medium' && 'Medium'}
-                            {selectedReport.priority === 'high' && 'High'}
-                            {selectedReport.priority === 'urgent' && 'Urgent'}
-                          </p>
-                        </div>
+                      <div className="bg-white p-2.5 rounded-lg border border-purple-100">
+                        <p className="text-xs text-gray-500 mb-1">Mức độ ưu tiên AI</p>
+                        <p className="text-sm font-bold text-gray-900">
+                          {selectedReport.priority === 'low' && '⚪ Thấp'}
+                          {selectedReport.priority === 'medium' && '🟡 Trung bình'}
+                          {selectedReport.priority === 'high' && '🟠 Cao'}
+                          {selectedReport.priority === 'urgent' && '🔴 Khẩn cấp'}
+                        </p>
                       </div>
                       
                       {/* Severity */}
                       {selectedReport.metadata?.severity && (
-                        <div className="bg-white p-2.5 rounded-xl border border-purple-100">
-                          <p className="text-xs text-gray-500 mb-1.5 font-semibold">Severity Level</p>
-                          <div className="flex items-center gap-2">
-                            {selectedReport.metadata.severity === 'low' && <Circle className="w-3.5 h-3.5 text-gray-400" />}
-                            {selectedReport.metadata.severity === 'medium' && <AlertCircle className="w-3.5 h-3.5 text-yellow-500" />}
-                            {selectedReport.metadata.severity === 'high' && <AlertTriangle className="w-3.5 h-3.5 text-orange-500" />}
-                            {selectedReport.metadata.severity === 'critical' && <XCircle className="w-3.5 h-3.5 text-red-500" />}
-                            <p className="text-sm font-bold text-gray-900 capitalize">
-                              {selectedReport.metadata.severity === 'low' && 'Low'}
-                              {selectedReport.metadata.severity === 'medium' && 'Medium'}
-                              {selectedReport.metadata.severity === 'high' && 'High'}
-                              {selectedReport.metadata.severity === 'critical' && 'Critical'}
-                            </p>
-                          </div>
+                        <div className="bg-white p-2.5 rounded-lg border border-purple-100">
+                          <p className="text-xs text-gray-500 mb-1">Mức độ nghiêm trọng</p>
+                          <p className="text-sm font-bold text-gray-900 capitalize">
+                            {selectedReport.metadata.severity === 'low' && '⚪ Nhẹ'}
+                            {selectedReport.metadata.severity === 'medium' && '🟡 Vừa'}
+                            {selectedReport.metadata.severity === 'high' && '🟠 Nặng'}
+                            {selectedReport.metadata.severity === 'critical' && '🔴 Nghiêm trọng'}
+                          </p>
                         </div>
                       )}
                     </div>
                     
                     {/* Auto-approval conditions check */}
                     {selectedReport.metadata?.categoryConfidence && (
-                      <div className="mt-3 p-3 bg-white rounded-xl border border-purple-200">
-                        <p className="text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wide">Auto-approval Conditions:</p>
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2.5 text-sm">
+                      <div className="mt-3 p-2.5 bg-white rounded-lg border border-purple-100">
+                        <p className="text-xs font-semibold text-gray-700 mb-2">Điều kiện tự động duyệt:</p>
+                        <div className="space-y-1.5">
+                          <div className="flex items-center gap-2 text-xs">
                             {parseFloat(selectedReport.metadata.categoryConfidence) >= 0.7 ? (
-                              <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <span className="text-green-600">✅</span>
                             ) : (
-                              <XIcon className="w-4 h-4 text-red-600 flex-shrink-0" />
+                              <span className="text-red-600">❌</span>
                             )}
-                            <span className="text-gray-900 font-medium">
-                              Confidence ≥ 70% ({(parseFloat(selectedReport.metadata.categoryConfidence) * 100).toFixed(0)}%)
+                            <span className="text-gray-700">
+                              Độ tin cậy ≥ 70% ({(parseFloat(selectedReport.metadata.categoryConfidence) * 100).toFixed(0)}%)
                             </span>
                           </div>
-                          <div className="flex items-center gap-2.5 text-sm">
+                          <div className="flex items-center gap-2 text-xs">
                             {['low', 'medium'].includes(selectedReport.priority) ? (
-                              <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <span className="text-green-600">✅</span>
                             ) : (
-                              <XIcon className="w-4 h-4 text-red-600 flex-shrink-0" />
+                              <span className="text-red-600">❌</span>
                             )}
-                            <span className="text-gray-900 font-medium">
-                              Low/Medium priority ({selectedReport.priority})
+                            <span className="text-gray-700">
+                              Ưu tiên thấp/trung bình ({selectedReport.priority})
                             </span>
                           </div>
-                          <div className="flex items-center gap-2.5 text-sm">
+                          <div className="flex items-center gap-2 text-xs">
                             {selectedReport.metadata?.severity && ['low', 'medium'].includes(selectedReport.metadata.severity) ? (
-                              <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <span className="text-green-600">✅</span>
                             ) : (
-                              <XIcon className="w-4 h-4 text-red-600 flex-shrink-0" />
+                              <span className="text-red-600">❌</span>
                             )}
-                            <span className="text-gray-900 font-medium">
-                              Low/Medium severity ({selectedReport.metadata?.severity || 'N/A'})
+                            <span className="text-gray-700">
+                              Mức độ nhẹ/vừa ({selectedReport.metadata?.severity || 'N/A'})
                             </span>
                           </div>
-                          <div className="flex items-center gap-2.5 text-sm">
+                          <div className="flex items-center gap-2 text-xs">
                             {normalizeImages(selectedReport.metadata?.images).length > 0 ? (
-                              <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <span className="text-green-600">✅</span>
                             ) : (
-                              <XIcon className="w-4 h-4 text-red-600 flex-shrink-0" />
+                              <span className="text-red-600">❌</span>
                             )}
-                            <span className="text-gray-900 font-medium">
+                            <span className="text-gray-700">
                               Has images ({normalizeImages(selectedReport.metadata?.images).length} images)
+                              Có hình ảnh ({normalizeImages(selectedReport.metadata?.images).length} ảnh)
                             </span>
                           </div>
                         </div>
@@ -1991,9 +1960,10 @@ export default function AdminPage() {
                 )}
 
                 {/* Workflow Timeline */}
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 p-4 rounded-xl border border-blue-200">
+                <div className="bg-gradient-to-br from-blue-50 to-white p-3 rounded-lg border border-blue-200">
                   <label className="block text-xs font-semibold text-blue-700 uppercase tracking-wide mb-3 flex items-center gap-2">
-                    <FileCheck className="w-4 h-4 text-blue-600" />
+                    <span className="text-lg">📋</span>
+                    <span>Quy trình xử lý</span>
                     <span>PROCESSING WORKFLOW</span>
                   </label>
                   
@@ -2004,14 +1974,10 @@ export default function AdminPage() {
                     <div className="space-y-4">
                       {/* Step 1: Submitted */}
                       <div className="relative flex items-start gap-3">
-                        <div className={`relative z-10 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm ${
+                        <div className={`relative z-10 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
                           selectedReport.status ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-500'
                         }`}>
-                          {selectedReport.status ? (
-                            <CheckCircle2 className="w-4 h-4" />
-                          ) : (
-                            <span className="text-xs font-bold">1</span>
-                          )}
+                          {selectedReport.status ? '✓' : '1'}
                         </div>
                         <div className="flex-1 pb-2">
                           <p className="text-sm font-bold text-gray-900">Report Submitted</p>
@@ -2026,18 +1992,14 @@ export default function AdminPage() {
                       
                       {/* Step 2: AI Processing */}
                       <div className="relative flex items-start gap-3">
-                        <div className={`relative z-10 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm ${
+                        <div className={`relative z-10 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
                           selectedReport.metadata?.categoryConfidence !== undefined && selectedReport.metadata?.categoryConfidence !== ''
                             ? 'bg-green-500 text-white' 
                             : selectedReport.status === 'ai_processing'
                             ? 'bg-yellow-500 text-white animate-pulse'
                             : 'bg-gray-300 text-gray-500'
                         }`}>
-                          {selectedReport.metadata?.categoryConfidence !== undefined && selectedReport.metadata?.categoryConfidence !== '' ? (
-                            <CheckCircle2 className="w-4 h-4" />
-                          ) : (
-                            <span className="text-xs font-bold">2</span>
-                          )}
+                          {selectedReport.metadata?.categoryConfidence !== undefined && selectedReport.metadata?.categoryConfidence !== '' ? '✓' : '2'}
                         </div>
                         <div className="flex-1 pb-2">
                           <p className="text-sm font-bold text-gray-900">AI Classification</p>
@@ -2054,22 +2016,14 @@ export default function AdminPage() {
                       
                       {/* Step 3: Auto Approval or Review */}
                       <div className="relative flex items-start gap-3">
-                        <div className={`relative z-10 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm ${
+                        <div className={`relative z-10 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
                           ['auto_approved', 'approved', 'rejected', 'resolved'].includes(selectedReport.status)
                             ? 'bg-green-500 text-white'
                             : selectedReport.status === 'pending_review'
                             ? 'bg-yellow-500 text-white'
                             : 'bg-gray-300 text-gray-500'
                         }`}>
-                          {['auto_approved', 'approved', 'rejected', 'resolved'].includes(selectedReport.status) ? (
-                            selectedReport.status === 'rejected' ? (
-                              <XIcon className="w-4 h-4" />
-                            ) : (
-                              <CheckCircle2 className="w-4 h-4" />
-                            )
-                          ) : (
-                            <span className="text-xs font-bold">3</span>
-                          )}
+                          {['auto_approved', 'approved', 'rejected', 'resolved'].includes(selectedReport.status) ? '✓' : '3'}
                         </div>
                         <div className="flex-1 pb-2">
                           <p className="text-sm font-bold text-gray-900">
@@ -2084,22 +2038,22 @@ export default function AdminPage() {
                             {selectedReport.status === 'pending_review' && 'Requires manual review'}
                             {selectedReport.status === 'approved' && 'Administrator approved'}
                             {selectedReport.status === 'rejected' && 'Administrator rejected'}
+                            {selectedReport.status === 'auto_approved' && '✨ Đáp ứng điều kiện tự động duyệt'}
+                            {selectedReport.status === 'pending_review' && '⏳ Cần kiểm tra thủ công'}
+                            {selectedReport.status === 'approved' && '✅ Quản trị viên đã duyệt'}
+                            {selectedReport.status === 'rejected' && '❌ Quản trị viên đã từ chối'}
                           </p>
                         </div>
                       </div>
                       
                       {/* Step 4: Resolved (if applicable) */}
                       <div className="relative flex items-start gap-3">
-                        <div className={`relative z-10 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm ${
+                        <div className={`relative z-10 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
                           selectedReport.status === 'resolved'
                             ? 'bg-green-500 text-white'
                             : 'bg-gray-300 text-gray-500'
                         }`}>
-                          {selectedReport.status === 'resolved' ? (
-                            <CheckCircle2 className="w-4 h-4" />
-                          ) : (
-                            <span className="text-xs font-bold">4</span>
-                          )}
+                          {selectedReport.status === 'resolved' ? '✓' : '4'}
                         </div>
                         <div className="flex-1">
                           <p className="text-sm font-bold text-gray-900">Resolved</p>
@@ -2107,6 +2061,8 @@ export default function AdminPage() {
                             {selectedReport.status === 'resolved'
                               ? 'Issue has been resolved'
                               : 'Pending resolution'
+                              ? '🎉 Vấn đề đã được xử lý'
+                              : 'Chờ xử lý'
                             }
                           </p>
                         </div>
@@ -2117,15 +2073,15 @@ export default function AdminPage() {
 
                 {/* Location */}
                 {selectedReport.locationName && (
-                  <div className="bg-gradient-to-br from-green-50 to-white p-4 rounded-xl border border-green-200">
-                    <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2.5 flex items-center space-x-2">
-                      <MapPin className="w-4 h-4 text-green-600" />
-                      <span>REPORT LOCATION</span>
+                  <div className="bg-gradient-to-br from-green-50 to-white p-3 rounded-lg border border-green-100">
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center space-x-2">
+                      <MapPin className="w-3 h-3 text-green-600" />
+                      <span>Vị trí báo cáo</span>
                     </label>
                     <div className="space-y-2">
-                      <div className="bg-white p-3 rounded-lg border border-gray-200">
-                        <p className="text-xs text-gray-500 mb-1 font-semibold">Coordinates</p>
-                        <p className="text-sm font-mono text-gray-900">
+                      <div className="bg-white p-2 rounded border border-gray-200">
+                        <p className="text-xs text-gray-500 mb-1">Tọa độ</p>
+                        <p className="text-xs font-mono text-gray-900">
                           {selectedReport.locationName}
                         </p>
                       </div>
@@ -2134,11 +2090,11 @@ export default function AdminPage() {
                           href={`https://www.google.com/maps?q=${selectedReport.metadata.coordinates[1]},${selectedReport.metadata.coordinates[0]}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center space-x-2 px-4 py-2.5 bg-green-600 text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-colors shadow-sm"
+                          className="inline-flex items-center space-x-2 px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 transition-colors"
                         >
-                          <MapPin className="w-4 h-4" />
-                          <span>View on Google Maps</span>
-                          <ExternalLink className="w-3.5 h-3.5" />
+                          <MapPin className="w-3 h-3" />
+                          <span>Xem trên Google Maps</span>
+                          <ExternalLink className="w-2.5 h-2.5" />
                         </a>
                       )}
                     </div>
@@ -2202,27 +2158,29 @@ export default function AdminPage() {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between px-6 py-3 border-t border-gray-200 bg-gray-50">
+            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50">
               <button
                 onClick={() => setShowReportModal(false)}
-                className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Close
               </button>
               <button
                 onClick={handleUpdateReport}
                 disabled={updateLoading || (editingStatus === selectedReport.status && editingPriority === selectedReport.priority)}
-                className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2 shadow-md"
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
               >
                 {updateLoading ? (
                   <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                     <span>Saving...</span>
+                    <span>Đang lưu...</span>
                   </>
                 ) : (
                   <>
-                    <CheckCircle className="w-4 h-4" />
+                    <CheckCircle className="w-3.5 h-3.5" />
                     <span>Save Changes</span>
+                    <span>Lưu thay đổi</span>
                   </>
                 )}
               </button>

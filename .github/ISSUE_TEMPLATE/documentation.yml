@@ -1,0 +1,103 @@
+name: Documentation Issue
+description: Report an issue with documentation
+title: "[Docs]: "
+labels: ["documentation", "triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve our documentation! 📚
+
+        Please search existing issues first to avoid duplicates.
+
+  - type: dropdown
+    id: doc-type
+    attributes:
+      label: Documentation Type
+      description: What type of documentation needs attention?
+      options:
+        - README.md
+        - API Documentation
+        - Contributing Guidelines
+        - Installation Guide
+        - User Guide
+        - Code Comments
+        - Architecture Documentation
+        - Examples/Tutorials
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: location
+    attributes:
+      label: Location
+      description: Please specify the file path or URL where the issue exists
+      placeholder: ex. docs/API-Endpoints.md or /api-docs page
+    validations:
+      required: true
+
+  - type: dropdown
+    id: issue-type
+    attributes:
+      label: Issue Type
+      description: What kind of documentation issue is this?
+      options:
+        - Missing information
+        - Incorrect information
+        - Outdated information
+        - Unclear/confusing content
+        - Broken links
+        - Formatting issues
+        - Typos/grammar
+        - Missing examples
+        - Request for new documentation
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe the documentation issue in detail
+      placeholder: What's wrong with the current documentation? What information is missing or incorrect?
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Content
+      description: What should the documentation say instead? How should it be improved?
+      placeholder: Describe what you expected to find or how the documentation should be changed
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any other context about the documentation issue?
+      placeholder: Screenshots, links to related issues, etc.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      description: Are you willing to help improve this documentation?
+      options:
+        - label: I would be willing to submit a pull request to fix this
+        - label: I can help review proposed changes
+        - label: I can provide additional examples or use cases
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our Code of Conduct
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true

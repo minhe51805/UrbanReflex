@@ -286,6 +286,30 @@ export default function LegalPage() {
                 </p>
               </div>
 
+<<<<<<< HEAD
+              <h3 className="text-2xl font-bold text-gray-900 mt-8 mb-4">Apache License 2.0</h3>
+              <p className="text-gray-700 mb-4">
+                UrbanReflex platform code is licensed under the Apache License 2.0, a permissive open source license with patent grants.
+              </p>
+
+              <div className="bg-gray-100 p-6 rounded-lg mb-6 font-mono text-sm">
+                <p className="mb-4">Apache License 2.0</p>
+                <p className="mb-4">Copyright 2025 The UrbanReflex Authors</p>
+                <p className="mb-4">
+                  Licensed under the Apache License, Version 2.0 (the "License");
+                  you may not use this file except in compliance with the License.
+                  You may obtain a copy of the License at:
+                </p>
+                <p className="mb-4">
+                  http://www.apache.org/licenses/LICENSE-2.0
+                </p>
+                <p>
+                  Unless required by applicable law or agreed to in writing, software
+                  distributed under the License is distributed on an "AS IS" BASIS,
+                  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+                  See the License for the specific language governing permissions and
+                  limitations under the License.
+=======
               <h3 className="text-2xl font-bold text-gray-900 mt-8 mb-4">MIT License</h3>
               <p className="text-gray-700 mb-4">
                 UrbanReflex platform code is licensed under the MIT License, one of the most permissive open source licenses.
@@ -310,12 +334,17 @@ export default function LegalPage() {
                   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
                   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
                   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+>>>>>>> frontend
                 </p>
               </div>
 
               <h3 className="text-2xl font-bold text-gray-900 mt-8 mb-4">Contributing</h3>
               <p className="text-gray-700 mb-4">
+<<<<<<< HEAD
+                We welcome contributions! By contributing to UrbanReflex, you agree to license your contributions under the Apache License 2.0.
+=======
                 We welcome contributions! By contributing to UrbanReflex, you agree to license your contributions under the MIT License.
+>>>>>>> frontend
               </p>
 
               <h3 className="text-2xl font-bold text-gray-900 mt-8 mb-4">GitHub Repository</h3>

@@ -1,0 +1,76 @@
+{
+  "id": "urn:ngsi-ld:AirQualityObserved:HCMC-us-consulate-20251115T080000Z",
+  "type": "AirQualityObserved",
+  "@type": ["AirQualityObserved", "sosa:Observation"],
+  "@context": [
+    "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "https://www.w3.org/ns/sosa/context.jsonld",
+    "https://raw.githubusercontent.com/smart-data-models/dataModel.Environment/master/context.jsonld"
+  ],
+  "location": {
+    "type": "GeoProperty",
+    "@type": "sosa:hasFeatureOfInterest",
+    "value": {
+      "type": "Point",
+      "coordinates": [106.7008, 10.7747]
+    }
+  },
+  "dateObserved": {
+    "type": "Property",
+    "@type": "sosa:resultTime",
+    "value": {
+      "@type": "DateTime",
+      "@value": "2025-11-15T08:00:00Z"
+    }
+  },
+  "aqi": {
+    "type": "Property",
+    "value": 85,
+    "observedAt": "2025-11-15T08:00:00Z"
+  },
+  "pm25": {
+    "type": "Property",
+    "value": 28.5,
+    "unitCode": "GQ",
+    "observedAt": "2025-11-15T08:00:00Z"
+  },
+  "pm10": {
+    "type": "Property",
+    "value": 45.2,
+    "unitCode": "GQ",
+    "observedAt": "2025-11-15T08:00:00Z"
+  },
+  "no2": {
+    "type": "Property",
+    "value": 32.1,
+    "unitCode": "GQ",
+    "observedAt": "2025-11-15T08:00:00Z"
+  },
+  "o3": {
+    "type": "Property",
+    "value": 58.3,
+    "unitCode": "GQ",
+    "observedAt": "2025-11-15T08:00:00Z"
+  },
+  "co": {
+    "type": "Property",
+    "value": 0.6,
+    "unitCode": "GP",
+    "observedAt": "2025-11-15T08:00:00Z"
+  },
+  "so2": {
+    "type": "Property",
+    "value": 12.4,
+    "unitCode": "GQ",
+    "observedAt": "2025-11-15T08:00:00Z"
+  },
+  "airQualityLevel": {
+    "type": "Property",
+    "value": "moderate"
+  },
+  "source": {
+    "type": "Property",
+    "value": "OpenAQ - US Consulate HCMC"
+  }
+}
+

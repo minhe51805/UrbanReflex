@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$schemaVersion": "0.3.1",
+  "modelTags": "IUDX",
+  "$id": "https://smart-data-models.github.io/dataModel.PointOfInterest/PointOfInterest/schema.json",
+  "title": "Smart Data Models - Point of Interest schema",
+  "description": "This entity contains a harmonised geographic description of a Point of Interest",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "https://smart-data-models.github.io/data-models/common-schema.json#/definitions/GSMA-Commons"
+    },
+    {
+      "$ref": "https://smart-data-models.github.io/data-models/common-schema.json#/definitions/Location-Commons"
+    },
+    {
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "PointOfInterest"
+          ],
+          "description": "Property. NGSI Entity type. It has to be PointOfInterest"
+        },
+        "category": {
+          "type": "array",
+          "description": "Property. Model:'https://schema.org/Text'. Category of this point of interest",
+          "items": {
+            "type": "string"
+          }
+        },
+        "contactPoint": {
+          "$ref": "https://smart-data-models.github.io/data-models/common-schema.json#/definitions/Contact-Commons/properties/contactPoint"
+        },
+        "refSeeAlso": {
+          "type": "array",
+          "description": "Property. Model:'https://schema.org/URL'. List of references to one or more related entities",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "https://smart-data-models.github.io/data-models/common-schema.json#/definitions/EntityIdentifierType"
+              }
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "wardId": {
+          "type": "string",
+          "description": "Property. Ward ID of the entity corresponding to this observation"
+        },
+        "zoneId": {
+          "type": "string",
+          "description": "Property. Zone ID of the entity corresponding to this observation"
+        },
+        "additionalInfoURL": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "pattern": "^[\\w\\-\\.\\{\\}\\$\\+\\*\\[\\]`|~^@!,:\\\\]+$",
+              "description": "Property. Identifier format of any NGSI entity"
+            },
+            {
+              "type": "string",
+              "format": "uri",
+              "description": "Property. Identifier format of any NGSI entity"
+            }
+          ],
+          "description": "Relationship. URL from which additional information of the subject can be obtained"
+        },
+        "zoneName": {
+          "type": "string",
+          "description": "Property. Zone name of the entity corresponding to this observation"
+        },
+        "municipalityInfo": {
+          "type": "object",
+          "description": "Property. Model:'https://schema.org/Text. Municipality information corresponding to this observation.",
+          "properties": {
+            "district": {
+              "type": "string",
+              "description": "Property. Model:'https://schema.org/Text'. District name corresponding to this observation."
+            },
+            "ulbName": {
+              "type": "string",
+              "description": "Property. Model:'https://schema.org/Text'. Name of the Urban Local Body corresponding to this observation."
+            },
+            "cityID": {
+              "type": "string",
+              "description": "Property. Model:'https://schema.org/Text'. City ID corresponding to this observation."
+            },
+            "wardID": {
+              "type": "string",
+              "description": "Property. Model:'https://schema.org/Text'. Ward ID corresponding to this observation."
+            },
+            "stateName": {
+              "type": "string",
+              "description": "Property. Model:'https://schema.org/Text'. Name of the state corresponding to this observation."
+            },
+            "cityName": {
+              "type": "string",
+              "description": "Property. Model:'https://schema.org/Text'. City name corresponding to this observation"
+            },
+            "zoneName": {
+              "type": "string",
+              "description": "Property. Model:'https://schema.org/Text'. Zone name corresponding to this observation."
+            },
+            "zoneID": {
+              "type": "string",
+              "description": "Property. Model:'https://schema.org/Text'. Zone ID corresponding to this observation."
+            },
+            "wardName": {
+              "type": "string",
+              "description": "Property. Model:'https://schema.org/Text'. Ward name corresponding to this observation."
+            },
+            "wardNum": {
+              "type": "number",
+              "description": "Property. Model:'https://schema.org/Number'. Ward number corresponding to this observation."
+            }
+          }
+        },
+        "title": {
+          "type": "string",
+          "description": "Property. This property contains a name given to the Point of interest beyond specific name."
+        },
+        "relevance": {
+          "type": "number",
+          "description": "Property. Relevance of the point of interest in order to be presented in different zoom levels. 0 is best larger values means lower relevance"
+        },
+        "image": {
+          "$ref": "https://smart-data-models.github.io/data-models/common-schema.json#/definitions/PhysicalObject-Commons/properties/image"
+        },
+        "priceRange": {
+          "type": "string",
+          "description": "Property. String describing the range of prices of the access to the Point of Interest"
+        },
+        "capacity": {
+          "type": "number",
+          "description": "Property. The total number of people which can be allocated at the same time"
+        },
+        "occupancy": {
+          "type": "number",
+          "description": "Property. The count of people in the in the point of Interest. It should be smaller than capacity"
+        }
+      }
+    }
+  ],
+  "required": [
+    "id",
+    "type",
+    "name"
+  ]
+}

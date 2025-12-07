@@ -1,0 +1,80 @@
+{
+  "id": "urn:ngsi-ld:CitizenReport:HCMC-NEW001",
+  "type": "CitizenReport",
+  "@context": [
+    "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"
+  ],
+  "title": {
+    "type": "Property",
+    "value": "Đèn đường không hoạt động"
+  },
+  "description": {
+    "type": "Property",
+    "value": "Đèn cột số 15 tại ngã tư Nguyễn Huệ và Lê Lợi không sáng 3 ngày nay, gây nguy hiểm cho giao thông."
+  },
+  "reporterName": {
+    "type": "Property",
+    "value": "Nguyễn Văn A"
+  },
+  "reporterContact": {
+    "type": "Property",
+    "value": "+84 90 123 4567"
+  },
+  "reporterEmail": {
+    "type": "Property",
+    "value": "nguyenvana@email.com"
+  },
+  "dateCreated": {
+    "type": "Property",
+    "value": {
+      "@type": "DateTime",
+      "@value": "2025-01-21T10:00:00.000Z"
+    }
+  },
+  "location": {
+    "type": "GeoProperty",
+    "value": {
+      "type": "Point",
+      "coordinates": [106.70098, 10.77689]
+    }
+  },
+  "refRoadSegment": {
+    "type": "Relationship",
+    "object": "urn:ngsi-ld:RoadSegment:HCMC-32576911"
+  },
+  "imageUrl": {
+    "type": "Property",
+    "value": "https://media.istockphoto.com/id/184086176/photo/broken-pole.jpg?s=612x612&w=0&k=20&c=ovVKvjEHEdgmHOzslxP-h_ifF5TpNZ4vsV46cV4wSHU="
+  },
+  "verified": {
+    "type": "Property",
+    "value": false
+  },
+  "category": {
+    "type": "Property",
+    "value": ""
+  },
+  "categoryConfidence": {
+    "type": "Property",
+    "value": ""
+  },
+  "priority": {
+    "type": "Property",
+    "value": ""
+  },
+  "severity": {
+    "type": "Property",
+    "value": ""
+  },
+  "status": {
+    "type": "Property",
+    "value": "submitted"
+  },
+  "dateModified": {
+    "type": "Property",
+    "value": {
+      "@type": "DateTime",
+      "@value": "2025-01-21T10:00:00.000Z"
+    }
+  }
+}
