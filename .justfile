@@ -13,6 +13,54 @@ default:
 # FULL PROJECT COMMANDS
 # ============================================================================
 
+# Start all services (backend + frontend + databases)
+dev:
+    @echo "Starting all services..."
+    @echo ""
+    @echo "Step 1: Starting databases..."
+    docker-compose up -d mongo orion-ld
+    @echo ""
+    @echo "Step 2: Please start backend and frontend in separate terminals:"
+    @echo "  Terminal 2: just backend-dev"
+    @echo "  Terminal 3: just frontend-dev"
+    @echo ""
+    @echo "Or run everything with Docker:"
+    @echo "  docker-compose up -d"
+
+# ============================================================================
+# DATABASE COMMANDS
+# ============================================================================
+
+# Start databases (MongoDB + Orion-LD)
+db-start:
+    @echo "Starting databases..."
+    docker-compose up -d mongo orion-ld
+    @echo "Databases started!"
+    @echo "MongoDB: localhost:27017"
+    @echo "Orion-LD: http://localhost:1026"
+
+# Stop databases
+db-stop:
+    @echo "Stopping databases..."
+    docker-compose stop mongo orion-ld
+    @echo "Databases stopped!"
+
+# Restart databases
+db-restart:
+    @echo "Restarting databases..."
+    docker-compose restart mongo orion-ld
+    @echo "Databases restarted!"
+
+# View database logs
+db-logs:
+    @echo "Viewing database logs (Ctrl+C to exit)..."
+    docker-compose logs -f mongo orion-ld
+
+# Clean database data (WARNING: removes all data!)
+db-clean:
+    @echo "WARNING: This will delete all database data!"
+    @powershell -Command "$confirmation = Read-Host 'Type YES to confirm'; if ($confirmation -eq 'YES') { docker-compose down -v; Write-Host 'Database data cleaned!' } else { Write-Host 'Cancelled.' }"
+
 # ============================================================================
 # BACKEND COMMANDS (FastAPI)
 # ============================================================================
@@ -25,7 +73,7 @@ backend-dev:
 # Stop backend (for Windows)
 backend-stop:
     @echo "Stopping backend..."
-    @powershell -Command "Get-Process | Where-Object {$_.ProcessName -eq 'python'} | Stop-Process -Force" || echo "No backend process found"
+    @powershell -Command "Get-Process | Where-Object {$_.ProcessName -eq 'python'} | Stop-Process -Force" 2>$null || echo "No backend process found"
 
 # Test backend
 backend-test:
@@ -33,7 +81,7 @@ backend-test:
     uv run pytest
 
 # Check backend health
-backend-health:
+health:
     @echo "Checking backend health..."
     curl http://localhost:8000/health
 
@@ -66,12 +114,22 @@ frontend-start:
 # Stop frontend (for Windows)
 frontend-stop:
     @echo "Stopping frontend..."
-    @powershell -Command "Get-Process | Where-Object {$_.ProcessName -eq 'node'} | Stop-Process -Force" || echo "No frontend process found"
+    @powershell -Command "Get-Process | Where-Object {$_.ProcessName -eq 'node'} | Stop-Process -Force" 2>$null || echo "No frontend process found"
 
 # Lint frontend code
 frontend-lint:
     @echo "Linting frontend code..."
     cd src/frontend; npm run lint
+
+# Format frontend code
+frontend-format:
+    @echo "Formatting frontend code..."
+    cd src/frontend; npm run format
+
+# Type check frontend
+frontend-typecheck:
+    @echo "Type checking frontend..."
+    cd src/frontend; npm run type-check
 
 # ============================================================================
 # INSTALLATION & SETUP
@@ -113,13 +171,58 @@ info:
     @echo "Frontend: Next.js 16 + React 19"
     @echo "Database: MongoDB 4.4 + Orion-LD 1.5.1"
     @echo "============================================"
-    @echo "Ports:"
-    @echo "  - Frontend: http://localhost:3000"
-    @echo "  - Backend: http://localhost:8000"
-    @echo "  - Orion-LD: http://localhost:1026"
-    @echo "  - MongoDB: localhost:27017"
+    @echo "Services:"
+    @echo "  Frontend:  http://localhost:3000"
+    @echo "  Backend:   http://localhost:8000"
+    @echo "  API Docs:  http://localhost:8000/docs"
+    @echo "  Orion-LD:  http://localhost:1026"
+    @echo "  MongoDB:   localhost:27017"
+    @echo "============================================"
+    @echo ""
+    @echo "Quick Start:"
+    @echo "  1. just install      # Install all dependencies"
+    @echo "  2. just setup-env    # Setup environment files"
+    @echo "  3. just dev          # Start databases"
+    @echo "  4. just backend-dev  # Start backend (new terminal)"
+    @echo "  5. just frontend-dev # Start frontend (new terminal)"
     @echo "============================================"
 
-# Check all services health
-health: backend-health
-    @echo "Health check complete!"
+# Clean build artifacts
+clean:
+    @echo "Cleaning build artifacts..."
+    @powershell -Command "if (Test-Path src/frontend/.next) { Remove-Item -Recurse -Force src/frontend/.next }"
+    @powershell -Command "if (Test-Path src/frontend/node_modules) { Remove-Item -Recurse -Force src/frontend/node_modules }"
+    @powershell -Command "Get-ChildItem -Recurse -Filter '__pycache__' | Remove-Item -Recurse -Force"
+    @powershell -Command "Get-ChildItem -Recurse -Filter '*.pyc' | Remove-Item -Force"
+    @echo "Cleaned!"
+
+# Format all code (backend + frontend)
+format:
+    @echo "Formatting backend code..."
+    uv run black src/backend
+    uv run isort src/backend
+    @echo "Formatting frontend code..."
+    cd src/frontend; npm run format
+    @echo "All code formatted!"
+
+# Lint all code
+lint:
+    @echo "Linting backend..."
+    uv run flake8 src/backend
+    @echo "Linting frontend..."
+    cd src/frontend; npm run lint
+    @echo "Linting complete!"
+
+# Run all tests
+test:
+    @echo "Running backend tests..."
+    uv run pytest
+    @echo "Backend tests complete!"
+
+# Stop all services
+stop-all:
+    @echo "Stopping all services..."
+    just backend-stop
+    just frontend-stop
+    docker-compose stop
+    @echo "All services stopped!"
