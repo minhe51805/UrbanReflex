@@ -181,7 +181,12 @@ export default function FloatingChatButton() {
     setIsTyping(true);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_AI_BACKEND_URL || 'http://163.61.183.90:8001'}/ai-service/chatbot/chat`, {
+      const baseUrl = process.env.NEXT_PUBLIC_AI_BACKEND_URL;
+      if (!baseUrl) {
+        throw new Error('NEXT_PUBLIC_AI_BACKEND_URL is required and must be HTTPS base URL (no path).');
+      }
+
+      const response = await fetch(`${baseUrl}/ai-service/chatbot/chat`, {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
