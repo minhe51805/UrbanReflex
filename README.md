@@ -161,15 +161,58 @@ just install
 
 # 4. Setup environment files
 just setup-env
-# Edit .env and src/frontend/.env.local with your API keys (optional)
+# ✅ Creates .env and src/frontend/.env.local from examples
 
-# 5. Start services (3 terminals)
-just dev                # Terminal 1: Databases
-just backend-dev        # Terminal 2: Backend
-just frontend-dev       # Terminal 3: Frontend
+# 5. Start all services (one command!)
+just dev
+# ✅ Starts MongoDB, Orion-LD, and Scheduler with Docker Compose
 ```
 
-**Done!** 🎉 Open http://localhost:3000
+**Done!** 🎉
+
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8000/docs
+- **Orion-LD**: http://localhost:1026
+
+> **Note**: To run backend/frontend locally (without Docker), use separate terminals:
+>
+> ```bash
+> just backend-dev    # Terminal 2: Backend dev server
+> just frontend-dev   # Terminal 3: Frontend dev server
+> ```
+
+### Troubleshooting
+
+<details>
+<summary>❌ UV installation error on Windows</summary>
+
+If `just install` fails with UV path errors:
+
+```powershell
+# Option 1: Restart terminal and try again
+just install
+
+# Option 2: Install backend separately
+just backend-install
+
+# Option 3: Manual UV installation
+irm https://astral.sh/uv/install.ps1 | iex
+# Restart terminal, then: uv sync --all-extras
+```
+
+</details>
+
+<details>
+<summary>❌ Database connection error</summary>
+
+Make sure databases are running:
+
+```bash
+just db-start
+just db-logs  # Check for errors
+```
+
+</details>
 
 ### Environment Variables (Optional)
 
@@ -281,7 +324,9 @@ just setup-env        # Create .env and src/frontend/.env.local from examples
 
 ```bash
 just dev              # Start databases + show instructions for backend/frontend
+just backend-install  # Install backend dependencies only
 just backend-dev      # Start backend API (port 8000)
+just frontend-install # Install frontend dependencies only
 just frontend-dev     # Start frontend app (port 3000)
 ```
 

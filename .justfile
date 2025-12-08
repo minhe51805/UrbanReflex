@@ -15,17 +15,15 @@ default:
 
 # Start all services (backend + frontend + databases)
 dev:
-    @echo "Starting all services..."
+    @echo "Starting all services with docker-compose"
+    docker-compose up -d
     @echo ""
-    @echo "Step 1: Starting databases..."
-    docker-compose up -d mongo orion-ld
+    @echo "Services requested from docker-compose.yml:"
+    @echo "  - mongo"
+    @echo "  - orion-ld"
+    @echo "  - scheduler"
     @echo ""
-    @echo "Step 2: Please start backend and frontend in separate terminals:"
-    @echo "  Terminal 2: just backend-dev"
-    @echo "  Terminal 3: just frontend-dev"
-    @echo ""
-    @echo "Or run everything with Docker:"
-    @echo "  docker-compose up -d"
+    @echo "Use 'docker-compose ps' to check status. Ctrl+C does nothing here."
 
 # ============================================================================
 # DATABASE COMMANDS
@@ -64,6 +62,11 @@ db-clean:
 # ============================================================================
 # BACKEND COMMANDS (FastAPI)
 # ============================================================================
+
+# Install backend dependencies only
+backend-install:
+    @echo "Installing backend dependencies..."
+    @powershell -Command "& $env:USERPROFILE\.local\bin\uv.exe sync --all-extras"
 
 # Run backend in development mode
 backend-dev:
@@ -140,11 +143,19 @@ install:
     @echo "Installing all dependencies..."
     @echo "1. Installing UV package manager..."
     @powershell -Command "irm https://astral.sh/uv/install.ps1 | iex"
+    @echo ""
     @echo "2. Installing Python backend dependencies..."
-    uv sync --all-extras
+    @powershell -Command "& $env:USERPROFILE\.local\bin\uv.exe sync --all-extras"
+    @echo ""
     @echo "3. Installing frontend dependencies..."
     cd src/frontend; npm install
+    @echo ""
     @echo "All dependencies installed!"
+    @echo ""
+    @echo "Next steps:"
+    @echo "  1. Run 'just setup-env' to create environment files"
+    @echo "  2. Edit .env and src/frontend/.env.local with your API keys (optional)"
+    @echo "  3. Run 'just dev' to start all services"
 
 # Setup environment files
 setup-env:
