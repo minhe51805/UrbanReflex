@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://minhe51805.github.io/UrbanReflex/" rel="dofollow" target="blank"><strong>Explore the docs »</strong></a>
+  <a href="https://urbanreflex.org" rel="dofollow" target="blank"><strong>Explore the platform »</strong></a>
 	<br/>
 	<br/>
 	<a href="https://github.com/minhe51805/UrbanReflex/issues/new?template=bug_report.yml">🐛 Report Bug</a>
