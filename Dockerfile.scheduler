@@ -23,11 +23,21 @@ FROM python:3.11-slim
 WORKDIR /app
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    UV_LINK_MODE=copy \
+    UV_COMPILE_BYTECODE=1
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Install uv for reproducible installs from pyproject/uv.lock
+RUN pip install --no-cache-dir uv
 
+# Only copy dependency manifests first for better build cache
+COPY pyproject.toml uv.lock ./ 
+RUN uv sync --no-dev --frozen --python /usr/local/bin/python
+
+# Make virtualenv available on PATH
+ENV PATH="/app/.venv/bin:${PATH}"
+
+# Copy the rest of the source
 COPY . .
 
 CMD ["python", "scripts/run_scheduler.py"]
