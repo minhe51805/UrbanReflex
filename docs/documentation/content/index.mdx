@@ -1,9 +1,16 @@
 ---
 title: UrbanReflex
-description: Enterprise-Grade Smart City Platform for Air Quality Monitoring & Urban Infrastructure Management
+description: Smart City intelligence platform — overview, setup, and docs map
 ---
 
 # UrbanReflex
+
+<img
+  src="https://lh3.googleusercontent.com/d/13S8-5iyJ0gnvT_wIFRnAVPxeNz8_7E5Q"
+  alt="UrbanReflex Banner"
+  style={{ width: "100%", marginTop: "12px", borderRadius: "8px" }}
+/>
+
 
 {/* prettier-ignore-start */}
 
@@ -45,323 +52,118 @@ description: Enterprise-Grade Smart City Platform for Air Quality Monitoring & U
     />
   </a>
 </div>
-{/* prettier-ignore-end */}
 
-**Enterprise-Grade Smart City Platform for Air Quality Monitoring & Urban Infrastructure Management**
+## Highlights
 
-[Features](#features) • [Quick Start](#quick-start) • [Documentation](#documentation) • [Architecture](#architecture) • [API Reference](#api-reference) • [Contributing](#contributing)
-
----
-
-## Overview
-
-**UrbanReflex** is a production-ready smart city platform that integrates **air quality monitoring** with **urban infrastructure management**. Built on NGSI-LD standards and modern web technologies, it delivers real-time insights into environmental conditions and city infrastructure.
-
-### Key Capabilities
-
-<img
-  src="https://img.shields.io/badge/Feature-Air%20Quality%20Monitoring-blue"
-  alt="Air Quality"
-/>
-**Air Quality Monitoring** - Real-time AQI data from OpenAQ with interactive visualizations
-
-<img
-  src="https://img.shields.io/badge/Feature-Smart%20City%20Integration-green"
-  alt="Smart City"
-/>
-**Smart City Integration** - NGSI-LD compliant data from Orion Context Broker
-
-<img
-  src="https://img.shields.io/badge/Feature-Advanced%20Mapping-orange"
-  alt="Mapping"
-/>
-**Advanced Mapping** - Road networks, streetlights, and POI visualization with clustering
-
-<img
-  src="https://img.shields.io/badge/Feature-Analytics%20Dashboard-purple"
-  alt="Analytics"
-/>
-**Analytics Dashboard** - Comprehensive admin panel for data management
-
-<img src="https://img.shields.io/badge/Feature-Open%20APIs-red" alt="APIs" />
-**Open APIs** - RESTful endpoints with authentication and rate limiting
-
-<img
-  src="https://img.shields.io/badge/Feature-Responsive%20Design-yellow"
-  alt="Responsive"
-/>
-**Responsive Design** - Mobile-first approach with modern UI/UX
-
----
-
-## Features
-
-### Air Quality Monitoring
-
-- **Real-time Data** - Live AQI measurements from 10,000+ global stations
-- **Interactive Maps** - MapLibre GL with clustering and heatmaps
-- **Location Details** - Historical charts, health recommendations, data export
-- **Advanced Search** - Filter by location, parameters, and time range
-
-### Smart City Infrastructure
-
-- **Road Networks** - Real-time road segment data visualization
-- **Streetlights** - Infrastructure monitoring and management
-- **Weather Integration** - Live weather data correlated with air quality
-- **Citizen Reports** - Community-driven issue reporting system
-
-### Developer Tools
-
-- **API Keys Management** - Generate, revoke, and monitor API usage
-- **Comprehensive Documentation** - Interactive examples in 4 languages
-- **OpenAPI Specification** - Auto-generated API docs
-- **Testing Tools** - Built-in endpoint testing utilities
-
-### Admin Dashboard
-
-- **Report Management** - Track and resolve citizen-submitted issues
-- **Analytics** - Real-time statistics and trends
-- **User Management** - Role-based access control
-- **Data Quality** - Automated anomaly detection
+- Real-time NGSI-LD context (RoadSegment, Streetlight, WeatherObserved, AirQualityObserved, POI, CitizenReport).
+- Citizen reporting: create/list/update/delete + NLP classification and POI-based priority.
+- AI chatbot: streaming/non-streaming; optional vector search (Pinecone) for RAG.
+- Admin health/stats endpoints; Swagger/ReDoc/OpenAPI schema.
+- One-command setup with Just + UV + Docker Compose (MongoDB, Orion-LD).
 
 ---
 
 ## Quick Start
 
-### Prerequisites
-
-- Node.js 18+ and npm/pnpm
-- OpenAQ API key (optional, uses mock data in dev)
-- Access to NGSI-LD Context Broker (optional)
-
-### Installation
-
 ```bash
-# Clone the repository
+# 1) Clone
 git clone https://github.com/minhe51805/UrbanReflex.git
-cd UrbanReflex/urbanreflex-fe
+cd UrbanReflex
 
-# Install dependencies
-npm install
+# 2) Install all deps (UV + backend + frontend)
+just install
 
-# Configure environment
-cp .env.example .env.local
-# Edit .env.local with your API keys
+# 3) Generate env files
+just setup-env   # .env and src/frontend/.env.local
 
-# Run development server
-npm run dev
+# 4) Run dev stack (MongoDB, Orion-LD, scheduler if configured, backend/frontend)
+just dev
+```
+Services: Frontend http://localhost:3000 • Backend http://localhost:8000 (Swagger /docs) • Orion-LD http://localhost:1026 • MongoDB localhost:27017.  
+Run separately: `just backend-dev`, `just frontend-dev`, DB only: `just db-start`.
+
+Minimal env (backend):
+```bash
+MONGODB_URI=mongodb://localhost:27017
+MONGODB_DB_NAME=urbanreflex
+ORION_LD_URL=http://localhost:1026
+GEMINI_API_KEY=        # optional for chatbot
+PINECONE_API_KEY=      # optional for RAG
+OPENAQ_API_KEY=        # optional, mock if absent
+OPENWEATHER_API_KEY=   # optional, mock if absent
+SECRET_KEY=change_me
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8000
+```
+Frontend `.env.local`:
+```bash
+NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
-Visit `http://localhost:3000` to see the application.
+---
 
-### Environment Variables
+## Services & URLs
 
-```env
-# OpenAQ API (Optional - falls back to mock data)
-NEXT_PUBLIC_OPENAQ_API_KEY=your_openaq_key
-
-# NGSI-LD Context Broker (Optional)
-NEXT_PUBLIC_NGSILAD_BROKER_URL=http://103.178.233.233:1026
-
-# Application
-NEXT_PUBLIC_API_BASE_URL=http://localhost:3000
-```
+- Base (dev): `http://localhost:8000`
+- Docs: `/docs` (Swagger), `/redoc`, schema `/openapi.json`
+- API namespace: `/api/v1/`
+- Orion-LD: `http://localhost:1026/ngsi-ld/v1` (direct NGSI-LD operations)
 
 ---
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    Frontend (Next.js 16)                 │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐ │
-│  │   Pages     │  │ Components  │  │  Data Viz       │ │
-│  │  (App Dir)  │  │ (React 19)  │  │ MapLibre/Charts │ │
-│  └──────┬──────┘  └──────┬──────┘  └────────┬────────┘ │
-│         └─────────────────┴──────────────────┘          │
-└──────────────────────────┬──────────────────────────────┘
-                           │
-          ┌────────────────┼────────────────┐
-          ▼                ▼                ▼
-    ┌──────────┐    ┌──────────┐    ┌──────────┐
-    │ OpenAQ   │    │ NGSI-LD  │    │  Custom  │
-    │   API    │    │  Broker  │    │   APIs   │
-    └──────────┘    └──────────┘    └──────────┘
-```
+- **Backend:** FastAPI, async, Pydantic, OpenAPI, SSE chatbot.
+- **Data layer:** MongoDB; Orion-LD for NGSI-LD; Pinecone optional; Redis (planned) for cache/rate-limit.
+- **AI:** Gemini Pro; RAG optional with vector search.
+- **Docs/frontend:** Next.js 15 static export (Fumadocs), Tailwind 4; GitHub Pages basePath supported (`GITHUB_PAGES=true` → `/UrbanReflex`).
 
-### Tech Stack
+See full diagrams in [`ARCHITECTURE.md`](https://github.com/minhe51805/UrbanReflex/blob/main/docs/ARCHITECTURE.md).
 
-**Frontend**
+<img
+  src="https://media.discordapp.net/attachments/1048439092154740836/1447263130039357480/Gemini_Generated_Image_vht8b3vht8b3vht8.png?ex=6936fc53&is=6935aad3&hm=727d081965f355ce91da79f44b8067d930f44e06ec2cb5850f763d219f9435d1&=&format=webp&quality=lossless"
+  alt="UrbanReflex Architecture"
+  style={{ width: "100%", marginTop: "12px", borderRadius: "8px" }}
+/>
 
-- Next.js 16 (App Router)
-- React 19
-- TypeScript 5
-- Tailwind CSS 3.4
-- Framer Motion
+---
 
-**Data Visualization**
+## Tech Stack
 
-- MapLibre GL (maps)
-- Chart.js (charts)
-- Supercluster (clustering)
-
-**Smart City Integration**
-
-- NGSI-LD (ETSI standard)
-- Orion Context Broker
-- Smart Data Models
-
-**APIs**
-
-- OpenAQ (air quality)
-- Custom RESTful endpoints
-- API key authentication
-
-For detailed architecture, see [ARCHITECTURE.md](https://github.com/minhe51805/UrbanReflex/blob/main/urbanreflex-fe/docs/ARCHITECTURE.md).
+- **Backend:** FastAPI, Python 3.10+, httpx, Pydantic 2, Uvicorn, APScheduler (planned).
+- **Data/Context:** MongoDB, Orion-LD (NGSI-LD), Pinecone (optional vectors).
+- **AI:** Gemini Pro (google-generativeai).
+- **Docs/UI:** Next.js 15, React 18, Tailwind 4, Fumadocs MDX; static export.
 
 ---
 
 ## Documentation
 
-Comprehensive documentation is available in the `/urbanreflex-fe/docs` folder:
-
-### Core Documentation
-
-- **[System Architecture](https://github.com/minhe51805/UrbanReflex/blob/main/urbanreflex-fe/docs/ARCHITECTURE.md)** - Technical architecture and data flows
-- **[API Endpoints](https://github.com/minhe51805/UrbanReflex/blob/main/urbanreflex-fe/docs/API-Endpoints.md)** - Complete API reference
-- **[Admin Dashboard](https://github.com/minhe51805/UrbanReflex/blob/main/urbanreflex-fe/docs/ADMIN-DASHBOARD.md)** - Admin panel usage guide
-- **[NGSI-LD Integration](https://github.com/minhe51805/UrbanReflex/blob/main/urbanreflex-fe/docs/NGSI-LD-Integration.md)** - Smart city data integration
-
-### Developer Guides
-
-- **[Code Examples](https://github.com/minhe51805/UrbanReflex/blob/main/urbanreflex-fe/docs/Code-Examples.md)** - Copy-paste ready examples
-- **[Testing Guide](https://github.com/minhe51805/UrbanReflex/blob/main/urbanreflex-fe/docs/Testing-Guide.md)** - Testing strategies and tools
-- **[Security Best Practices](https://github.com/minhe51805/UrbanReflex/blob/main/urbanreflex-fe/docs/Security-Best-Practices.md)** - Security guidelines
-- **[Deployment Guide](https://github.com/minhe51805/UrbanReflex/blob/main/urbanreflex-fe/docs/Deployment-Guide.md)** - Production deployment steps
-
-### Quick References
-
-- **[Documentation Index](https://github.com/minhe51805/UrbanReflex/blob/main/urbanreflex-fe/docs/INDEX.md)** - Complete docs table of contents
-- **[API Endpoints](https://github.com/minhe51805/UrbanReflex/blob/main/urbanreflex-fe/docs/API_ENDPOINTS.md)** - Quick API reference
-- **[Migration Guide](https://github.com/minhe51805/UrbanReflex/blob/main/urbanreflex-fe/docs/MIGRATION_GUIDE.md)** - Version migration instructions
+- Setup: [`DEVELOPMENT_SETUP.md`](https://github.com/minhe51805/UrbanReflex/blob/main/docs/DEVELOPMENT_SETUP.md)
+- API: [`API_REFERENCE.md`](https://github.com/minhe51805/UrbanReflex/blob/main/docs/API_REFERENCE.md)
+- Data model: [`DATA_MODEL_AND_ENTITIES.md`](https://github.com/minhe51805/UrbanReflex/blob/main/docs/DATA_MODEL_AND_ENTITIES.md)
+- User guide: [`USER_GUIDE.md`](https://github.com/minhe51805/UrbanReflex/blob/main/docs/USER_GUIDE.md)
+- Architecture: [`ARCHITECTURE.md`](https://github.com/minhe51805/UrbanReflex/blob/main/docs/ARCHITECTURE.md)
+- Code style: [`CODE_STYLE_GUIDE.md`](https://github.com/minhe51805/UrbanReflex/blob/main/docs/CODE_STYLE_GUIDE.md)
 
 ---
 
-## Live Demo
-
-### Explore Key Features
-
-- **Homepage**: Air quality overview with featured locations
-- **Map Explorer**: `/explore` - Interactive global map
-- **Location Details**: `/locations/[id]` - Detailed air quality data
-- **Admin Dashboard**: `/admin` - Management interface
-- **API Docs**: `/api-docs` - Interactive API documentation
-- **Live Data**: `/live-data` - Real-time NGSI-LD data
-
----
-
-## Development
-
-### Project Structure
-
-```
-urbanreflex-fe/
-├── app/                    # Next.js App Router pages
-│   ├── api/               # API routes
-│   │   ├── aqi/          # Air quality endpoints
-│   │   ├── ngsi-ld/      # NGSI-LD proxy
-│   │   ├── roads/        # Roads infrastructure
-│   │   └── admin/        # Admin endpoints
-│   ├── explore/          # Map explorer page
-│   ├── admin/            # Admin dashboard
-│   └── ...               # Other pages
-├── components/            # React components
-│   ├── home/             # Homepage sections
-│   ├── explore/          # Map components
-│   ├── admin/            # Admin components
-│   └── ui/               # Reusable UI components
-├── lib/                   # Utilities and APIs
-│   ├── api/              # API clients
-│   └── utils/            # Helper functions
-├── types/                 # TypeScript definitions
-├── docs/                  # Documentation
-└── public/                # Static assets
-```
-
-### Available Scripts
+## Commands (Just)
 
 ```bash
-npm run dev      # Start development server
-npm run build    # Build for production
-npm start        # Start production server
-npm run lint     # Run ESLint
+just install       # Install UV + backend + frontend deps
+just setup-env     # Create .env and .env.local
+just dev           # Start DBs + show backend/frontend instructions
+just backend-dev   # FastAPI dev server (8000)
+just frontend-dev  # Frontend dev server (3000)
+just db-start      # MongoDB + Orion-LD
+just db-logs       # Tail DB logs
+just test          # Backend tests
+just format        # Black + Prettier
+just lint          # Flake8 + ESLint
 ```
-
-### Key Technologies
-
-- **State Management**: React Context API
-- **Styling**: Tailwind CSS with custom design system
-- **Maps**: MapLibre GL with custom layers
-- **Charts**: Chart.js with responsive configuration
-- **Icons**: Lucide React
-- **Animations**: Framer Motion
-
----
-
-## Security
-
-- **API Authentication**: API key-based with rate limiting
-- **Role-Based Access**: Admin/user role separation
-- **Input Validation**: Comprehensive validation on all endpoints
-- **CORS Configuration**: Secure cross-origin policies
-- **Environment Variables**: Sensitive data in env files
-
-See [Security Best Practices](https://github.com/minhe51805/UrbanReflex/blob/main/urbanreflex-fe/docs/Security-Best-Practices.md) for details.
-
----
-
-## Deployment
-
-### Vercel (Recommended)
-
-```bash
-npx vercel
-```
-
-### Docker
-
-```bash
-docker build -t urbanreflex .
-docker run -p 3000:3000 urbanreflex
-```
-
-### Traditional Hosting
-
-```bash
-npm run build
-npm start
-```
-
-See full deployment guide: [Deployment Guide](https://github.com/minhe51805/UrbanReflex/blob/main/urbanreflex-fe/docs/Deployment-Guide.md)
-
----
-
-## Contribution
-
-Thanks to all contributors, your help is greatly appreciated!
-
-Contributions are welcome! Please read the contribution guidelines and code of conduct to learn how to participate.
-
----
-
-## Support
-
-If you like this project, please give it a ⭐ star.
-
-If you have any issues or feature requests, please create an [issue](https://github.com/minhe51805/UrbanReflex/issues).
 
 ---
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](https://github.com/minhe51805/UrbanReflex/blob/main/LICENSE) file for details.
+GPL-3.0. See [`LICENSE`](https://github.com/minhe51805/UrbanReflex/blob/main/LICENSE). Contributions welcome—PRs are appreciated.

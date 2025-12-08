@@ -7,69 +7,138 @@ description: Installation and setup guide
 
 ## Prerequisites
 
+- Python 3.10+
+- Node.js 18+
+- Docker + Docker Compose
+- Just task runner (recommended)
+- UV (auto-installed by `just install`; manual install optional)
+- ≥8GB RAM (per README)
+
+---
+
+## Quick Setup (recommended)
+
 ```bash
-Python 3.10+          # Backend
-Node.js 18+           # Frontend
-Docker & Compose      # Containers
-uv package manager    # Python deps
-```
-
-## Installation
-
-### 1. Clone Repository
-
-```bash
+# 1) Clone
 git clone https://github.com/minhe51805/UrbanReflex.git
 cd UrbanReflex
+
+# 2) Install everything (UV + Python deps + npm deps)
+just install
+
+# 3) Generate env files
+just setup-env
+# -> .env (backend), src/frontend/.env.local (frontend)
+
+# 4) Start all services (MongoDB, Orion-LD, scheduler, backend, frontend)
+just dev
 ```
 
-### 2. Environment Setup
+Services (defaults):
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000 (Swagger at /docs, ReDoc at /redoc)
+- Orion-LD: http://localhost:1026
+- MongoDB: localhost:27017
+
+Run separately (optional):
+- `just backend-dev` (port 8000)
+- `just frontend-dev` (port 3000)
+- Database only: `just db-start`, logs: `just db-logs`
+
+---
+
+## Manual Setup (compact)
 
 ```bash
+# Clone
+git clone https://github.com/minhe51805/UrbanReflex.git
+cd UrbanReflex
+
+# Backend deps (UV recommended)
+uv sync --all-extras        # or: pip install -e .
+
+# Frontend deps
+cd src/frontend && npm install && cd ../..
+
+# Env files
 cp .env.example .env
+cp src/frontend/.env.local.example src/frontend/.env.local
 ```
 
-### 3. Install Dependencies
-
+Run backend:
 ```bash
-just setup  # Or: uv sync && cd website && npm install
+uv run uvicorn src.backend.app:app --reload --host 0.0.0.0 --port 8000
+```
+Run frontend:
+```bash
+cd src/frontend && npm run dev -- --port 3000
 ```
 
-### 4. Start Development
+---
 
+## Environment Variables (minimal)
+
+`.env` (backend):
 ```bash
-just dev    # Backend: 8000, Frontend: 3000
-```
+MONGODB_URI=mongodb://localhost:27017
+MONGODB_DB_NAME=urbanreflex
+ORION_LD_URL=http://localhost:1026
 
-## Environment Variables
+# Optional services
+GEMINI_API_KEY=
+PINECONE_API_KEY=
+OPENAQ_API_KEY=
+OPENWEATHER_API_KEY=
 
-```bash
-# Database
-MONGODB_URL="mongodb://localhost:27017"
-DATABASE_NAME="urbanreflex"
-
-# Authentication
-SECRET_KEY="your-secret-key"
+# Security
+SECRET_KEY=change_me
+ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
-
-# Orion-LD
-ORION_LD_URL="http://localhost:1026"
 ```
 
-## Verify Installation
+`src/frontend/.env.local`:
+```bash
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
+(Frontend works without API keys; backend falls back to mock data if keys are missing.)
+
+---
+
+## Verify
 
 ```bash
 curl http://localhost:8000/health
-# {"status": "healthy"}
+# {"status": "healthy", ...}
+
+curl http://localhost:8000/docs   # Swagger UI
 ```
 
-## Project Structure
+---
+
+## Project Structure (top-level)
 
 ```
 UrbanReflex/
-├── app/              # FastAPI Backend
-├── website/          # Next.js Frontend
-├── config/           # Configuration
-├── scripts/          # Automation
-└── docker-compose.yml
+├── src/
+│   ├── backend/         # FastAPI app, routers, models, schemas, ai_service
+│   └── frontend/        # Next.js app (App Router)
+├── docs/                # Documentation (Markdown + MDX)
+├── scripts/             # Data jobs, utilities
+├── open_data/           # GeoJSON/NDJSON exports
+├── schemas/             # JSON schemas
+├── docker-compose.yml   # MongoDB, Orion-LD, scheduler
+├── .justfile            # Task runner recipes
+├── pyproject.toml       # Python deps
+└── package.json         # Docs/website deps
 ```
+
+---
+
+## Troubleshooting (quick)
+
+- UV on Windows error: restart shell and rerun `just install`, or run `just backend-install`. Manual: `irm https://astral.sh/uv/install.ps1 | iex`.
+- Ports in use: change backend port `--port 8001`, frontend `npm run dev -- --port 3001`.
+- Orion-LD/Mongo not up: `just db-start`, check `just db-logs`.
+- DB connection errors: ensure Docker running; retry `just db-restart`.
+
+For detailed steps and FAQs, see [`DEVELOPMENT_SETUP.md`](https://github.com/minhe51805/UrbanReflex/blob/main/docs/DEVELOPMENT_SETUP.md).

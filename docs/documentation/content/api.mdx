@@ -1,78 +1,127 @@
 ---
 title: API Reference
-description: Complete REST API documentation
+description: REST API overview and key endpoints
 ---
 
 # API Reference
 
-**Base URL:** `http://localhost:8000/v1`
+High-level overview of the REST API. For full details, examples, and error formats, see the complete reference at [`docs/API_REFERENCE.md`](https://github.com/minhe51805/UrbanReflex/blob/main/docs/API_REFERENCE.md).
 
-## Air Quality
+---
 
-### GET /aqi/stations
+## Base URLs
 
-```bash
-curl "/aqi/stations?limit=10&country=VN"
-```
+- Dev: `http://localhost:8000`
+- Docs: `/docs` (Swagger), `/redoc` (ReDoc), schema `/openapi.json`
+- Namespace: `/api/v1/` (all endpoints below assume this prefix)
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `limit` | int | Max results (default: 100) |
-| `country` | string | Country code (ISO) |
-| `city` | string | City name |
+---
 
-### GET /aqi/stations/:id
+## Auth Status
+
+- Current dev mode: most endpoints do **not** require auth.
+- Planned: JWT Bearer (`/auth/login`) and API Key (`X-API-Key`).
+
+---
+
+## Common Parameters
+
+- Pagination: `limit` (default 100, max 1000), `offset` (default 0), `page` (alternative to offset).
+- Filtering (typical): `category`, `priority`, `status`, `type`, `created_after`, `created_before`.
+- Sorting: `sort_by`, `order` (`asc`/`desc`, default `desc`).
+
+---
+
+## Error Format (consistent)
 
 ```json
 {
-  "id": 12345,
-  "name": "District 1",
-  "measurements": [
-    {"parameter": "pm25", "value": 25.5}
-  ]
+  "detail": "Error message describing what went wrong",
+  "status_code": 400,
+  "error_type": "ValidationError"
 }
 ```
 
-## NGSI-LD
+Common statuses: 200/201/204, 400/401/403/404/422, 500/502/503.
 
-### GET /ngsi-ld/entities
-
-```bash
-curl "/ngsi-ld/entities?type=RoadSegment&limit=50"
-```
-
-## Users
-
-### GET /users/me
-
-```bash
-curl -H "Authorization: Bearer TOKEN" "/users/me"
-```
-
-### POST /users/api-keys
-
-```json
-{"name": "My Key", "description": "For app"}
-```
+---
 
 ## Citizen Reports
 
-### POST /citizen-reports
+- **Classify**: `POST /api/v1/citizen-reports/classify/{entity_id}` — NLP + POI priority.
+- **Get**: `GET /api/v1/citizen-reports/{entity_id}` — NGSI-LD entity payload.
+- **List**: `GET /api/v1/citizen-reports` — filters: `category`, `priority`, `status`; pagination.
+- **Create**: `POST /api/v1/citizen-reports` — description, location (GeoJSON Point), category, reportedBy, images.
+- **Update**: `PATCH /api/v1/citizen-reports/{entity_id}` — status, assignedTo, notes.
+- **Delete**: `DELETE /api/v1/citizen-reports/{entity_id}` — 204.
+
+---
+
+## AI Chatbot
+
+- **Chat (streaming SSE)**: `POST /ai-service/chatbot/chat`
+  - Body: `message` (required), optional `conversation_id`, `user_id`.
+  - Streaming tokens (`start`, `token`, `end`). Non-stream: `?stream=false`.
+- **History**: `GET /ai-service/chatbot/history/{conversation_id}`
+- **Delete history**: `DELETE /ai-service/chatbot/history/{conversation_id}`
+
+---
+
+## Items (placeholder CRUD)
+
+- **List**: `GET /api/v1/items?skip=0&limit=100`
+- **Get**: `GET /api/v1/items/{item_id}`
+- **Create**: `POST /api/v1/items` (name, description, price, tax)
+
+---
+
+## Users
+
+- **Current user**: `GET /api/v1/users/me` (Bearer planned)
+- **List users (admin)**: `GET /api/v1/users?limit=&offset=&role=`
+
+---
+
+## Admin
+
+- **Health**: `GET /admin/health` — status of backend, Orion-LD, AI service; uptime; version.
+- **Stats**: `GET /admin/stats` — reports by category/priority, totals, active users.
+
+---
+
+## NGSI-LD Integration
+
+Directly via Orion-LD (dev):
+
+- Base: `http://localhost:1026/ngsi-ld/v1`
+- List entities: `GET /entities`
+- Get by ID: `GET /entities/{entity_id}`
+- Query by type: `GET /entities?type=CitizenReport`
+- Geo query: `GET /entities?type=CitizenReport&georel=near;maxDistance==1000&geometry=Point&coordinates=[lon,lat]`
+- Temporal: `GET /temporal/entities?type=AirQualityObserved&timerel=after&timeAt=2025-12-01T00:00:00Z`
+
+---
+
+## Rate Limiting & Versioning (planned)
+
+- Planned limits: anonymous 100/h, authenticated 1000/h, admin 10000/h (`X-RateLimit-*` headers).
+- Versioning: current `/api/v1/`; future breaking changes will use `/api/v2/`. Deprecation headers/messages may be returned.
+
+---
+
+## Testing (quick)
 
 ```bash
-curl -X POST "/citizen-reports" \
-  -H "Authorization: Bearer TOKEN" \
-  -F "title=Broken light" \
-  -F "category=streetlight"
+# Health
+curl http://localhost:8000/health
+
+# Classify a citizen report
+curl -X POST http://localhost:8000/api/v1/citizen-reports/classify/urn:ngsi-ld:CitizenReport:001
+
+# Chat (non-streaming)
+curl -X POST "http://localhost:8000/ai-service/chatbot/chat?stream=false" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "What is the air quality in District 1?"}'
 ```
 
-## AI Services
-
-### POST /ai/chat
-
-```json
-{
-  "message": "Air quality today?",
-  "context": {"location": {"lat": 10.77, "lon": 106.69}}
-}
-```
+For complete examples and responses, read [`docs/API_REFERENCE.md`](https://github.com/minhe51805/UrbanReflex/blob/main/docs/API_REFERENCE.md).

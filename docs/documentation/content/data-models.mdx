@@ -1,79 +1,190 @@
 ---
 title: Data Models
-description: NGSI-LD schemas and entities
+description: NGSI-LD entities, spatial/temporal properties, and examples
 ---
 
 # Data Models
 
-## NGSI-LD Entities
+UrbanReflex follows NGSI-LD for smart city context data. Core entities are stored in Orion-LD; app metadata may live in MongoDB. Below is a condensed view—see full details in [`docs/DATA_MODEL_AND_ENTITIES.md`](https://github.com/minhe51805/UrbanReflex/blob/main/docs/DATA_MODEL_AND_ENTITIES.md).
 
-### RoadSegment
+---
+
+## NGSI-LD Basics
+
+- `@context`: `https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld`
+- `id`: `urn:ngsi-ld:<Type>:<Unique>`
+- `type`: entity type
+- `Property`: value + optional metadata (`unitCode`, `observedAt`)
+- `Relationship`: link to another entity via `object`
+- `GeoProperty`: GeoJSON (`Point`, `LineString`, `Polygon`), coords in `[lon, lat]`
+
+---
+
+## Core Entity Types
+
+### RoadSegment (hub)
+- LineString geometry; links infrastructure, observations, and reports.
+- Key properties: `name`, `roadClass`, `length`, `width`, `laneCount`, `surfaceType`, `maxSpeed`, `location` (LineString).
 
 ```json
 {
-  "id": "urn:ngsi-ld:RoadSegment:001",
+  "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+  "id": "urn:ngsi-ld:RoadSegment:HoChiMinh-NguyenHue-001",
   "type": "RoadSegment",
-  "name": {"type": "Property", "value": "Nguyen Hue Blvd"},
+  "name": { "type": "Property", "value": "Nguyen Hue Boulevard" },
   "location": {
     "type": "GeoProperty",
-    "value": {"type": "LineString", "coordinates": [[106.69, 10.77]]}
+    "value": {
+      "type": "LineString",
+      "coordinates": [
+        [106.7009, 10.7756],
+        [106.7015, 10.7762],
+        [106.7021, 10.7768]
+      ]
+    }
   },
-  "trafficFlow": {"type": "Property", "value": "heavy"}
+  "roadClass": { "type": "Property", "value": "primary" },
+  "length": { "type": "Property", "value": 450, "unitCode": "MTR" },
+  "width": { "type": "Property", "value": 24, "unitCode": "MTR" },
+  "laneCount": { "type": "Property", "value": 4 },
+  "surfaceType": { "type": "Property", "value": "asphalt" },
+  "maxSpeed": { "type": "Property", "value": 40, "unitCode": "KMH" }
 }
 ```
 
 ### Streetlight
+- Point geometry; tied to a `RoadSegment` via `refRoadSegment`; status and energy props.
 
 ```json
 {
-  "id": "urn:ngsi-ld:Streetlight:001",
+  "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+  "id": "urn:ngsi-ld:Streetlight:HoChiMinh-001",
   "type": "Streetlight",
-  "status": {"type": "Property", "value": "on"},
-  "powerConsumption": {"type": "Property", "value": 25.5, "unitCode": "WTT"}
+  "location": {
+    "type": "GeoProperty",
+    "value": { "type": "Point", "coordinates": [106.7009, 10.7756] }
+  },
+  "refRoadSegment": {
+    "type": "Relationship",
+    "object": "urn:ngsi-ld:RoadSegment:HoChiMinh-NguyenHue-001"
+  },
+  "status": { "type": "Property", "value": "on", "observedAt": "2025-12-08T20:00:00Z" },
+  "powerState": { "type": "Property", "value": 45, "unitCode": "WTT" },
+  "lampType": { "type": "Property", "value": "LED" },
+  "luminousFlux": { "type": "Property", "value": 3000, "unitCode": "LUM" },
+  "installationDate": { "type": "Property", "value": "2023-05-15T00:00:00Z" }
 }
 ```
 
-## MongoDB Schemas
+### CitizenReport
+- Point geometry; links to `RoadSegment`; classification/priority/status fields.
 
-### User
-
-```javascript
-// User Collection
+```json
 {
-  _id: "ObjectId",
-  email: "String",
-  hashed_password: "String",
-  role: "citizen | admin | city_official",
-  api_keys: []
+  "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+  "id": "urn:ngsi-ld:CitizenReport:HoChiMinh-001",
+  "type": "CitizenReport",
+  "description": { "type": "Property", "value": "Large pothole on Nguyen Hue" },
+  "location": {
+    "type": "GeoProperty",
+    "value": { "type": "Point", "coordinates": [106.7009, 10.7756] }
+  },
+  "category": { "type": "Property", "value": "infrastructure" },
+  "priority": { "type": "Property", "value": "high" },
+  "status": { "type": "Property", "value": "pending" },
+  "refRoadSegment": {
+    "type": "Relationship",
+    "object": "urn:ngsi-ld:RoadSegment:HoChiMinh-NguyenHue-001"
+  },
+  "reportedBy": { "type": "Property", "value": "user@example.com" },
+  "images": {
+    "type": "Property",
+    "value": [
+      "https://storage.urbanreflex.dev/reports/report-001-image1.jpg"
+    ]
+  },
+  "createdAt": "2025-12-08T10:00:00Z",
+  "modifiedAt": "2025-12-08T10:30:00Z"
 }
 ```
 
-### Citizen Report
+### WeatherObserved / AirQualityObserved
+- Point geometry observations with `dateObserved`/`observedAt` and pollutant/weather metrics.
 
-```javascript
-// Citizen Report Collection
+```json
 {
-  _id: "ObjectId",
-  title: "String",
-  category: "streetlight | road | waste",
-  status: "open | in_progress | resolved",
-  location: { type: "Point", coordinates: [106.69, 10.77] }
+  "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+  "id": "urn:ngsi-ld:AirQualityObserved:HoChiMinh-District1-20251208",
+  "type": "AirQualityObserved",
+  "location": {
+    "type": "GeoProperty",
+    "value": { "type": "Point", "coordinates": [106.7009, 10.7756] }
+  },
+  "pm25": { "type": "Property", "value": 35.2, "unitCode": "GQ", "observedAt": "2025-12-08T14:00:00Z" },
+  "pm10": { "type": "Property", "value": 58.7, "unitCode": "GQ", "observedAt": "2025-12-08T14:00:00Z" },
+  "no2": { "type": "Property", "value": 42.1, "unitCode": "GQ", "observedAt": "2025-12-08T14:00:00Z" },
+  "aqi": { "type": "Property", "value": 87, "observedAt": "2025-12-08T14:00:00Z" },
+  "dateObserved": { "type": "Property", "value": "2025-12-08T14:00:00Z" }
 }
 ```
 
-## TypeScript Types
+### PointOfInterest
+- Points for hospitals, schools, parks, etc.; categories and contact info.
 
-```typescript
-interface User {
-  id: string;
-  email: string;
-  role: "citizen" | "admin" | "city_official";
-}
-
-interface CitizenReport {
-  id: string;
-  title: string;
-  category: string;
-  status: "open" | "in_progress" | "resolved";
+```json
+{
+  "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+  "id": "urn:ngsi-ld:PointOfInterest:HoChiMinh-Hospital-District1",
+  "type": "PointOfInterest",
+  "name": { "type": "Property", "value": "District 1 General Hospital" },
+  "location": {
+    "type": "GeoProperty",
+    "value": { "type": "Point", "coordinates": [106.7009, 10.7756] }
+  },
+  "category": { "type": "Property", "value": ["hospital", "healthcare"] },
+  "address": { "type": "Property", "value": { "streetAddress": "123 Nguyen Hue Boulevard" } },
+  "contactPoint": { "type": "Property", "value": { "telephone": "+84-28-1234567" } },
+  "openingHours": { "type": "Property", "value": "Mo-Su 00:00-24:00" }
 }
 ```
+
+---
+
+## Relationships
+
+- `refRoadSegment` links Streetlight/CitizenReport → RoadSegment.
+- Proximity (geo queries) links POIs/observations to roads/areas.
+- Temporal queries track observation history (`timerel` params in NGSI-LD).
+
+Example relationship query (all streetlights on a road):
+```http
+GET /ngsi-ld/v1/entities?type=Streetlight&q=refRoadSegment=="urn:ngsi-ld:RoadSegment:HoChiMinh-NguyenHue-001"
+```
+
+---
+
+## Spatial & Temporal
+
+- CRS: WGS84, coordinates `[lon, lat]`.
+- Geo: `Point`, `LineString`, `Polygon`; queries: `near`, `within`, `intersects`.
+- Temporal: `dateObserved`, `observedAt`, `createdAt`, `modifiedAt`; temporal queries via `/temporal/entities`.
+
+---
+
+## Validation & Standards
+
+- IDs: `urn:ngsi-ld:<Type>:<Identifier>`.
+- Units: UN/CEFACT codes (e.g., `CEL`, `MTR`, `KMH`, `LUM`).
+- JSON-LD contexts define semantics (`docs/jsonld/` in repo).
+- Prefer FIWARE Smart Data Models; extend only when needed.
+
+---
+
+## Examples & Datasets
+
+- Full examples: see `docs/DATA_MODEL_AND_ENTITIES.md` (section Examples).
+- Open data exports: `open_data/` (GeoJSON, NDJSON) for RoadSegment, Streetlight, WeatherObserved, AirQualityObserved, PointOfInterest, CitizenReport.
+
+---
+
+For the complete specification, diagrams, and more examples, read [`docs/DATA_MODEL_AND_ENTITIES.md`](https://github.com/minhe51805/UrbanReflex/blob/main/docs/DATA_MODEL_AND_ENTITIES.md).

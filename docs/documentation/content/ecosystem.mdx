@@ -1,69 +1,69 @@
 ---
 title: Ecosystem
-description: External integrations
+description: External and platform services used by UrbanReflex
 ---
 
 # Ecosystem
 
-## OpenAQ
+# Overview
 
-Air quality data platform.
+UrbanReflex integrates several external and platform services. Most are optional in dev (mock data if keys are missing). Configure via `.env` as shown in `DEVELOPMENT_SETUP.md`.
 
+---
+
+## Orion-LD (Context Broker)
+- NGSI-LD-compliant context broker for core entities.
+- Default dev URL: `http://localhost:1026/ngsi-ld/v1`
+- Used for: `RoadSegment`, `Streetlight`, `CitizenReport`, `WeatherObserved`, `AirQualityObserved`, `PointOfInterest`.
 ```bash
-OPENAQ_API_KEY="your-key"
+ORION_LD_URL=http://localhost:1026
 ```
 
-```python
-stations = await openaq_client.get_locations(country="VN")
-```
+---
 
-## Orion-LD
-
-NGSI-LD Context Broker.
-
+## OpenAQ (optional, air quality source)
+- External AQ data; can be mocked in dev if API key absent.
 ```bash
-ORION_LD_URL="http://localhost:1026"
+OPENAQ_API_KEY=your_key_here
 ```
 
-```python
-await orion_client.create_entity({
-    "id": "urn:ngsi-ld:Streetlight:001",
-    "type": "Streetlight",
-    "status": {"type": "Property", "value": "on"}
-})
-```
+---
 
-## Pinecone
-
-Vector database for AI search.
-
+## OpenWeatherMap (optional, weather source)
+- External weather data; can be mocked in dev.
 ```bash
-PINECONE_API_KEY="your-key"
-PINECONE_INDEX_NAME="urbanreflex-index"
+OPENWEATHER_API_KEY=your_key_here
 ```
 
-## Gemini AI
+---
 
-LLM for chatbot.
-
-```python
-import google.generativeai as genai
-
-model = genai.GenerativeModel('gemini-2.5-flash')
-response = model.generate_content(prompt)
-```
-
-## OpenWeatherMap
-
-Weather data API.
-
+## Gemini AI (chatbot LLM)
+- Primary LLM for chatbot endpoints (`/ai-service/chatbot/chat`).
 ```bash
-OWM_API_KEY="your-key"
+GEMINI_API_KEY=your_key_here
 ```
 
-## Community Tools
+---
 
-- **Pandas** - Data manipulation
-- **Docker** - Containerization
-- **Prometheus** - Monitoring
-- **Grafana** - Visualization
+## Pinecone (optional vector search for RAG)
+- Enables semantic retrieval for chatbot when configured.
+```bash
+PINECONE_API_KEY=your_key_here
+PINECONE_ENVIRONMENT=your_env
+PINECONE_INDEX_NAME=urbanreflex-index
+```
+If not set, chatbot still works without vector search.
+
+---
+
+## Databases & Infra
+- **MongoDB**: application data (users, reports metadata). Dev: `mongodb://localhost:27017`.
+- **Docker Compose**: spins up MongoDB + Orion-LD (via `just dev` or `just db-start`).
+- **Scheduler (planned)**: fetch external data (OpenAQ/OpenWeather), transform to NGSI-LD, push to Orion-LD/Mongo.
+
+---
+
+## Monitoring / Tooling (future/optional)
+- Prometheus & Grafana for metrics/visualization.
+- Postman/Thunder Client for API testing.
+- VS Code + ESLint/Prettier/Black/isort for dev experience.

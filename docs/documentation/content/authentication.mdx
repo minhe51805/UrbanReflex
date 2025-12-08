@@ -1,76 +1,68 @@
 ---
 title: Authentication
-description: JWT tokens and API keys
+description: Current dev status and planned JWT/API-key flows
 ---
 
 # Authentication
 
-## JWT Authentication
+**Current state (dev):** Most endpoints are open for ease of testing. Auth (JWT/API key) is planned; headers below may be optional in your environment.
 
-### Register
+---
 
-```http
-POST /auth/register
-```
+## Planned Flows
 
+### JWT Bearer
+
+- **Login:** `POST /auth/login`
 ```json
 {
-  "email": "user@example.com",
-  "username": "johndoe",
-  "password": "securepass123"
+  "username": "user@example.com",
+  "password": "securepassword123"
 }
 ```
-
-### Login
-
-```http
-POST /auth/login
-```
-
-**Response:**
-
+**Response**
 ```json
 {
-  "access_token": "eyJhbGciOiJIUzI1NiIs...",
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "token_type": "bearer",
-  "expires_in": 1800
+  "expires_in": 3600
 }
 ```
-
-### Using Token
-
-```bash
-curl -H "Authorization: Bearer YOUR_TOKEN" "/users/me"
-```
-
-## API Keys
-
-### Create Key
-
+**Use token**
 ```http
-POST /users/api-keys
+GET /api/v1/users/me
+Authorization: Bearer <token>
 ```
 
-```json
-{"name": "My App", "description": "Mobile app"}
-```
+### API Key
 
-### Using API Key
-
+- **Header:** `X-API-Key: <your_api_key>`
+- **Query (alt):** `?api_key=<your_api_key>`
+- Example (citizen reports list): 
 ```bash
-curl -H "X-API-Key: ur_live_123abc" "/aqi/stations"
+curl -H "X-API-Key: your_api_key" \
+  "http://localhost:8000/api/v1/citizen-reports?limit=20"
 ```
 
-## Roles
+API key creation (when enabled): `POST /users/api-keys` with `name`, `description` (requires auth).
 
-| Role | Permissions |
-|------|-------------|
-| `citizen` | Read, create reports |
-| `city_official` | Manage reports, analytics |
-| `admin` | Full access |
+---
 
-## Security
+## Roles (intended)
 
-- Passwords: bcrypt hashed
-- Tokens: 30 min expiry
-- HTTPS required in production
+| Role          | Permissions                                            |
+| ------------- | ------------------------------------------------------ |
+| `citizen`     | Create/list own reports; basic read access             |
+| `city_official` | Manage reports, view analytics                       |
+| `admin`       | Full access; admin endpoints                           |
+
+---
+
+## Security Notes
+
+- JWT expiry (planned): 30–60 minutes; refresh not yet exposed.
+- Passwords stored hashed (e.g., bcrypt) when registration is enabled.
+- CORS allowlist configurable via `.env` (`ALLOWED_ORIGINS`).
+- Use HTTPS in production; keep tokens/API keys in headers, not query when possible.
+
+For full endpoint coverage, see [`docs/API_REFERENCE.md`](https://github.com/minhe51805/UrbanReflex/blob/main/docs/API_REFERENCE.md). In dev, if you hit 401/403, ensure your environment has auth enabled or remove the auth header when testing open endpoints.

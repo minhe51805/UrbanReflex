@@ -1,70 +1,129 @@
 ---
 title: AI Services
-description: Chatbot, classification, and RAG
+description: Gemini-powered chatbot (SSE), classification, and optional vector search
 ---
 
 # AI Services
 
-## RAG Chatbot
+UrbanReflex AI stack uses Gemini for generation and supports optional vector search (Pinecone) for RAG. Chatbot endpoints support streaming (SSE) and non-streaming. Classification is exposed via citizen-report API.
 
-Sử dụng Gemini AI + Pinecone vector database.
+---
 
-### POST /ai-service/chatbot/chat
+## Chatbot (Gemini)
 
+**Endpoint:** `POST /ai-service/chatbot/chat`
+
+- Streaming SSE (default): emits `start`, `token`, `end` events.
+- Non-streaming: add `?stream=false`.
+- Optional: `conversation_id`, `user_id` to maintain context.
+
+**Request (non-streaming example)**
 ```json
 {
-  "message": "Chất lượng không khí Quận 1?",
-  "session_id": "session_123"
+  "message": "What is the air quality in District 1?",
+  "conversation_id": "conv_123456",
+  "user_id": "user@example.com"
 }
 ```
 
-**Response:**
-
+**Response (non-streaming)**
 ```json
 {
-  "response": "Quận 1 có PM2.5 là 25.5 µg/m³...",
-  "sources": [{"type": "aqi_station", "id": 12345}],
-  "suggestions": ["Xem dự báo", "Đặt cảnh báo"]
+  "conversation_id": "conv_123456",
+  "response": "The current air quality in District 1 is moderate with PM2.5 at 35 µg/m³...",
+  "sources": [
+    {
+      "type": "AirQualityObserved",
+      "id": "urn:ngsi-ld:AirQualityObserved:District1-001",
+      "timestamp": "2025-12-08T10:00:00Z"
+    }
+  ],
+  "timestamp": "2025-12-08T10:30:45Z"
 }
 ```
 
-## Report Classification
+**Response (streaming SSE snippet)**
+```
+data: {"type": "start", "conversation_id": "conv_123456"}
+data: {"type": "token", "content": "The"}
+data: {"type": "token", "content": " current"}
+data: {"type": "end", "full_response": "The current air quality in District 1 is..."}
+```
 
-### POST /citizen-reports/classify
+### Chat History
+- `GET /ai-service/chatbot/history/{conversation_id}`
+- `DELETE /ai-service/chatbot/history/{conversation_id}` (204)
 
+---
+
+## Report Classification (NLP + POI priority)
+
+**Endpoint:** `POST /api/v1/citizen-reports/classify/{entity_id}`
+
+**Response (example)**
 ```json
 {
-  "title": "Đèn đường không sáng",
-  "description": "Đèn ở góc đường đã tắt 3 ngày"
+  "entity_id": "urn:ngsi-ld:CitizenReport:001",
+  "category": "infrastructure",
+  "priority": "high",
+  "confidence": 0.89,
+  "poi_proximity": {
+    "nearby_pois": [
+      { "type": "hospital", "distance": 250, "name": "District 1 Hospital" }
+    ],
+    "priority_boost": 1
+  },
+  "updated_at": "2025-12-08T10:30:00Z"
 }
 ```
 
-**Response:**
+Errors:
+- 404 if report not found in Orion-LD
+- 500 if NLP service unavailable
 
+---
+
+## Vector Search (optional RAG)
+
+**Endpoint:** `POST /ai/search` (if enabled)
 ```json
 {
-  "category": "streetlight",
-  "confidence": 0.95,
-  "priority_suggestion": "medium"
-}
-```
-
-## Vector Search
-
-### POST /ai/search
-
-```json
-{
-  "query": "Tìm báo cáo đèn đường hỏng Quận 1",
+  "query": "Find broken streetlight reports in District 1 this month",
   "limit": 10
 }
 ```
+**Response (example)**
+```json
+{
+  "results": [
+    {
+      "type": "citizen_report",
+      "relevance_score": 0.95,
+      "data": {
+        "id": "urn:ngsi-ld:CitizenReport:001",
+        "title": "Broken streetlight on Main Street",
+        "category": "streetlight",
+        "status": "open"
+      }
+    }
+  ],
+  "total_results": 12
+}
+```
+
+---
 
 ## Configuration
 
+`.env` (backend):
 ```bash
-# Required
-GEMINI_API_KEY="your-key"
-PINECONE_API_KEY="your-key"
-PINECONE_INDEX_NAME="urbanreflex-index"
+# AI
+GEMINI_API_KEY=your_key_here
+
+# Vector search (optional)
+PINECONE_API_KEY=your_key_here
+PINECONE_ENVIRONMENT=your_env
+PINECONE_INDEX_NAME=urbanreflex-index
 ```
+
+If Pinecone keys are absent, chatbot still works without RAG. Set API keys and restart backend to enable vector search. See full API details in [`docs/API_REFERENCE.md`](https://github.com/minhe51805/UrbanReflex/blob/main/docs/API_REFERENCE.md).

@@ -1,74 +1,67 @@
 ---
 title: Configuration
-description: Environment variables and settings
+description: Environment variables, services, and run commands
 ---
 
 # Configuration
 
-## Required Variables
-
+## Backend `.env` (core)
 ```bash
 # Database
-MONGODB_URL="mongodb://localhost:27017"
-DATABASE_NAME="urbanreflex"
+MONGODB_URI=mongodb://localhost:27017
+MONGODB_DB_NAME=urbanreflex
+ORION_LD_URL=http://localhost:1026
 
-# Authentication
-SECRET_KEY="your-secret-key"
+# AI (optional but required for chatbot with Gemini)
+GEMINI_API_KEY=
+
+# Vector search (optional RAG)
+PINECONE_API_KEY=
+PINECONE_ENVIRONMENT=
+PINECONE_INDEX_NAME=urbanreflex-index
+
+# External data (optional; mock used if absent)
+OPENAQ_API_KEY=
+OPENWEATHER_API_KEY=
+
+# Security
+SECRET_KEY=change_me
+ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 
-# Orion-LD
-ORION_LD_URL="http://localhost:1026"
+# CORS
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8000
+
+# Logging
+LOG_LEVEL=INFO
 ```
 
-## Optional Variables
-
+## Frontend `src/frontend/.env.local`
 ```bash
-# AI Services
-GEMINI_API_KEY="your-key"
-PINECONE_API_KEY="your-key"
-
-# External APIs
-OPENAQ_API_KEY="your-key"
-OWM_API_KEY="your-key"
-
-# Development
-DEBUG=true
-LOG_LEVEL="DEBUG"
+NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
+(Docs site uses Next.js export in `docs/documentation`; API URL above is for app/frontend.)
 
-## Docker
+## Docker Compose (dev stack)
+- `just dev` / `just db-start` will start MongoDB + Orion-LD (and scheduler if configured).
+- Default ports: MongoDB 27017, Orion-LD 1026, backend 8000, frontend 3000.
 
-```yaml
-services:
-  backend:
-    build: .
-    ports: ["8000:8000"]
-    depends_on: [mongo, orion]
-
-  mongo:
-    image: mongo:7.0
-    volumes: ["mongodb_data:/data/db"]
-
-  orion:
-    image: fiware/orion-ld
-    depends_on: [mongo]
-```
-
-## Commands
-
+## Just Commands (common)
 ```bash
-just dev          # Start all services
-just backend-dev  # FastAPI only
-just frontend-dev # Next.js only
-just test         # Run tests
-just format       # Format code
+just install       # Install UV + backend deps + frontend deps
+just setup-env     # Copy .env and .env.local templates
+just dev           # Start DBs + show backend/frontend instructions
+just backend-dev   # Run FastAPI dev server (8000)
+just frontend-dev  # Run Next.js dev server (3000)
+just db-start      # Start MongoDB + Orion-LD
+just db-logs       # Tail DB logs
+just test          # Run backend tests
+just format        # Format code (Black + Prettier)
+just lint          # Lint (Flake8 + ESLint)
 ```
 
-## Production
-
-```bash
-DEBUG=false
-LOG_LEVEL=WARNING
-```
-
-Enable HTTPS and strict CORS in production.
+## Production Notes (baseline)
+- Set `DEBUG=false`, `LOG_LEVEL=WARNING` (or appropriate level).
+- Enforce HTTPS and restrictive CORS for public hosts.
+- Provide real secrets for `SECRET_KEY`, API keys, and any auth providers.
+- Size and secure MongoDB/Orion-LD for production workloads (backups, auth, network policies).
