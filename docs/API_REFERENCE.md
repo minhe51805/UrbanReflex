@@ -1,660 +1,1007 @@
-# 📋 API Reference
+# API Reference
 
-Complete REST API documentation for UrbanReflex platform.
+Complete REST API documentation for UrbanReflex platform. This guide covers all available endpoints, request/response formats, authentication, and examples.
 
-## 🚀 Base URL
+## Table of Contents
+
+- [Overview](#overview)
+- [Base URLs](#base-urls)
+- [Authentication](#authentication)
+- [Common Parameters](#common-parameters)
+- [Error Handling](#error-handling)
+- [Citizen Reports API](#citizen-reports-api)
+- [AI Chatbot API](#ai-chatbot-api)
+- [Items API](#items-api)
+- [Users API](#users-api)
+- [Admin API](#admin-api)
+- [NGSI-LD Integration](#ngsi-ld-integration)
+- [Rate Limiting](#rate-limiting)
+- [Versioning](#versioning)
+
+---
+
+## Overview
+
+UrbanReflex provides a RESTful API built with FastAPI, offering automatic interactive documentation and type-safe request/response handling.
+
+**Key Features**:
+
+- RESTful design principles
+- JSON request/response format
+- Automatic OpenAPI/Swagger documentation
+- Request validation with Pydantic
+- CORS support for web applications
+- Async request handling
+- Comprehensive error messages
+
+**API Capabilities**:
+
+- Manage citizen reports
+- AI-powered chatbot interactions
+- NGSI-LD entity operations
+- User authentication and management
+- Administrative functions
+
+---
+
+## Base URLs
+
+### Development
 
 ```
-Production:  https://api.urbanreflex.dev/v1
-Development: http://localhost:8000/v1
+http://localhost:8000
 ```
 
-## 🔐 Authentication
-
-UrbanReflex uses JWT tokens for authentication and API keys for programmatic access.
-
-### JWT Authentication (Web App)
-
-```bash
-# Login to get JWT token
-curl -X POST "/auth/login" \
-  -H "Content-Type: application/json" \
-  -d '{"email": "user@example.com", "password": "password"}'
-
-# Use token in subsequent requests
-curl -H "Authorization: Bearer <jwt_token>" "/users/me"
-```
-
-### API Key Authentication (API Access)
-
-```bash
-# Use API key in header
-curl -H "X-API-Key: <your_api_key>" "/aqi/stations"
-
-# Or as query parameter
-curl "/aqi/stations?api_key=<your_api_key>"
-```
-
-## 📊 Air Quality Endpoints
-
-### Get AQI Stations
-
-```http
-GET /aqi/stations
-```
-
-**Parameters:**
-
-- `limit` (integer, optional): Number of stations to return (default: 100, max: 1000)
-- `offset` (integer, optional): Pagination offset (default: 0)
-- `country` (string, optional): Filter by country code (ISO 3166-1 alpha-2)
-- `city` (string, optional): Filter by city name
-- `parameter` (string, optional): Filter by pollutant (pm25, pm10, o3, no2, so2, co)
-
-**Response:**
-
-```json
-{
-  "results": [
-    {
-      "id": 12345,
-      "name": "Ho Chi Minh City - District 1",
-      "city": "Ho Chi Minh City",
-      "country": "VN",
-      "coordinates": {
-        "latitude": 10.7769,
-        "longitude": 106.6951
-      },
-      "measurements": [
-        {
-          "parameter": "pm25",
-          "value": 25.5,
-          "unit": "µg/m³",
-          "last_updated": "2025-12-04T10:00:00Z"
-        }
-      ]
-    }
-  ],
-  "meta": {
-    "found": 1234,
-    "limit": 100,
-    "offset": 0,
-    "page": 1,
-    "pages": 13
-  }
-}
-```
-
-### Get Station Details
-
-```http
-GET /aqi/stations/{station_id}
-```
-
-**Parameters:**
-
-- `station_id` (integer): Station ID
-
-**Response:**
-
-```json
-{
-  "id": 12345,
-  "name": "Ho Chi Minh City - District 1",
-  "city": "Ho Chi Minh City",
-  "country": "VN",
-  "coordinates": {
-    "latitude": 10.7769,
-    "longitude": 106.6951
-  },
-  "measurements": [
-    {
-      "parameter": "pm25",
-      "value": 25.5,
-      "unit": "µg/m³",
-      "last_updated": "2025-12-04T10:00:00Z",
-      "aqi": {
-        "value": 80,
-        "category": "Moderate",
-        "color": "#FFDE33"
-      }
-    }
-  ],
-  "historical_data": {
-    "available_from": "2024-01-01T00:00:00Z",
-    "last_updated": "2025-12-04T10:00:00Z"
-  }
-}
-```
-
-### Get Historical Data
-
-```http
-GET /aqi/stations/{station_id}/measurements
-```
-
-**Parameters:**
-
-- `station_id` (integer): Station ID
-- `parameter` (string): Pollutant parameter (pm25, pm10, o3, no2, so2, co)
-- `date_from` (string): Start date (ISO 8601 format)
-- `date_to` (string): End date (ISO 8601 format)
-- `limit` (integer, optional): Max records (default: 1000)
-
-**Response:**
-
-```json
-{
-  "results": [
-    {
-      "parameter": "pm25",
-      "value": 25.5,
-      "unit": "µg/m³",
-      "date": {
-        "utc": "2025-12-04T10:00:00Z",
-        "local": "2025-12-04T17:00:00+07:00"
-      }
-    }
-  ],
-  "meta": {
-    "station_id": 12345,
-    "parameter": "pm25",
-    "found": 144,
-    "limit": 1000
-  }
-}
-```
-
-## 🏙️ Smart City Endpoints
-
-### Get NGSI-LD Entities
-
-```http
-GET /ngsi-ld/entities
-```
-
-**Parameters:**
-
-- `type` (string, optional): Entity type (RoadSegment, Streetlight, WeatherObserved, etc.)
-- `limit` (integer, optional): Number of entities (default: 50, max: 100)
-- `georel` (string, optional): Geographical relationship (near, within, etc.)
-- `geometry` (string, optional): Geometry type (Point, Polygon)
-- `coordinates` (string, optional): Geometry coordinates
-
-**Response:**
-
-```json
-[
-  {
-    "id": "urn:ngsi-ld:RoadSegment:001",
-    "type": "RoadSegment",
-    "name": {
-      "type": "Property",
-      "value": "Nguyen Hue Boulevard"
-    },
-    "location": {
-      "type": "GeoProperty",
-      "value": {
-        "type": "LineString",
-        "coordinates": [
-          [106.6951, 10.7769],
-          [106.6955, 10.7773]
-        ]
-      }
-    },
-    "roadClass": {
-      "type": "Property",
-      "value": "primary"
-    },
-    "trafficFlow": {
-      "type": "Property",
-      "value": "heavy",
-      "observedAt": "2025-12-04T10:00:00Z"
-    }
-  }
-]
-```
-
-### Get Entity by ID
-
-```http
-GET /ngsi-ld/entities/{entity_id}
-```
-
-**Parameters:**
-
-- `entity_id` (string): NGSI-LD entity ID
-
-**Response:**
-
-```json
-{
-  "id": "urn:ngsi-ld:Streetlight:001",
-  "type": "Streetlight",
-  "location": {
-    "type": "GeoProperty",
-    "value": {
-      "type": "Point",
-      "coordinates": [106.6951, 10.7769]
-    }
-  },
-  "status": {
-    "type": "Property",
-    "value": "on",
-    "observedAt": "2025-12-04T10:00:00Z"
-  },
-  "powerConsumption": {
-    "type": "Property",
-    "value": 25.5,
-    "unitCode": "WTT",
-    "observedAt": "2025-12-04T10:00:00Z"
-  }
-}
-```
-
-## 👥 User Management
-
-### Get Current User
-
-```http
-GET /users/me
-```
-
-**Headers:**
-
-- `Authorization: Bearer <jwt_token>`
-
-**Response:**
-
-```json
-{
-  "id": "user123",
-  "email": "user@example.com",
-  "full_name": "John Doe",
-  "role": "citizen",
-  "is_active": true,
-  "created_at": "2025-01-01T00:00:00Z",
-  "api_keys": [
-    {
-      "id": "key123",
-      "name": "Development Key",
-      "created_at": "2025-01-01T00:00:00Z",
-      "last_used": "2025-12-04T09:30:00Z"
-    }
-  ]
-}
-```
-
-### Create API Key
-
-```http
-POST /users/api-keys
-```
-
-**Headers:**
-
-- `Authorization: Bearer <jwt_token>`
-
-**Body:**
-
-```json
-{
-  "name": "My API Key",
-  "description": "For my mobile app"
-}
-```
-
-**Response:**
-
-```json
-{
-  "id": "key456",
-  "name": "My API Key",
-  "key": "ur_live_1234567890abcdef...",
-  "created_at": "2025-12-04T10:00:00Z"
-}
-```
-
-## 📝 Citizen Reports
-
-### Create Report
-
-```http
-POST /citizen-reports
-```
-
-**Headers:**
-
-- `Authorization: Bearer <jwt_token>`
-- `Content-Type: multipart/form-data`
-
-**Body:**
+### Production (Future)
 
 ```
-title: Broken streetlight on Main Street
-description: The streetlight at the corner of Main St and 1st Ave has been out for 3 days
-category: streetlight
-priority: medium
-location[latitude]: 10.7769
-location[longitude]: 106.6951
-photos: [file1.jpg, file2.jpg]
+https://api.urbanreflex.dev
 ```
 
-**Response:**
+### Documentation URLs
 
-```json
-{
-  "id": "report123",
-  "title": "Broken streetlight on Main Street",
-  "description": "The streetlight at the corner of Main St and 1st Ave has been out for 3 days",
-  "category": "streetlight",
-  "priority": "medium",
-  "status": "open",
-  "location": {
-    "type": "Point",
-    "coordinates": [106.6951, 10.7769]
-  },
-  "photos": [
-    "https://storage.urbanreflex.dev/reports/report123_photo1.jpg",
-    "https://storage.urbanreflex.dev/reports/report123_photo2.jpg"
-  ],
-  "created_at": "2025-12-04T10:00:00Z",
-  "created_by": "user123"
-}
-```
-
-### Get Reports
-
-```http
-GET /citizen-reports
-```
-
-**Parameters:**
-
-- `limit` (integer, optional): Number of reports (default: 20, max: 100)
-- `offset` (integer, optional): Pagination offset
-- `status` (string, optional): Filter by status (open, in_progress, resolved, closed)
-- `category` (string, optional): Filter by category
-- `created_by` (string, optional): Filter by creator (requires admin role)
-
-**Response:**
-
-```json
-{
-  "results": [
-    {
-      "id": "report123",
-      "title": "Broken streetlight on Main Street",
-      "category": "streetlight",
-      "priority": "medium",
-      "status": "open",
-      "location": {
-        "type": "Point",
-        "coordinates": [106.6951, 10.7769]
-      },
-      "created_at": "2025-12-04T10:00:00Z",
-      "votes": 5,
-      "comments_count": 2
-    }
-  ],
-  "meta": {
-    "found": 45,
-    "limit": 20,
-    "offset": 0
-  }
-}
-```
-
-## 🤖 AI Services
-
-### Chat with AI Assistant
-
-```http
-POST /ai/chat
-```
-
-**Headers:**
-
-- `Authorization: Bearer <jwt_token>`
-
-**Body:**
-
-```json
-{
-  "message": "What's the air quality like in Ho Chi Minh City today?",
-  "context": {
-    "location": {
-      "latitude": 10.7769,
-      "longitude": 106.6951
-    }
-  }
-}
-```
-
-**Response:**
-
-```json
-{
-  "response": "Based on the latest data, Ho Chi Minh City currently has moderate air quality with a PM2.5 level of 25.5 µg/m³. This corresponds to an AQI of 80, which is considered acceptable for most people. However, sensitive individuals may experience minor breathing discomfort.",
-  "sources": [
-    {
-      "type": "aqi_station",
-      "id": 12345,
-      "data": { "pm25": 25.5, "aqi": 80 }
-    }
-  ],
-  "suggestions": [
-    "Check hourly forecasts",
-    "View nearby stations",
-    "Set up air quality alerts"
-  ]
-}
-```
-
-### Search with Natural Language
-
-```http
-POST /ai/search
-```
-
-**Headers:**
-
-- `Authorization: Bearer <jwt_token>`
-
-**Body:**
-
-```json
-{
-  "query": "Find all broken streetlights reported in District 1 this month",
-  "filters": {
-    "date_range": "2025-12-01/2025-12-31"
-  }
-}
-```
-
-**Response:**
-
-```json
-{
-  "results": [
-    {
-      "type": "citizen_report",
-      "relevance_score": 0.95,
-      "data": {
-        "id": "report123",
-        "title": "Broken streetlight on Main Street",
-        "category": "streetlight",
-        "status": "open",
-        "location": { "type": "Point", "coordinates": [106.6951, 10.7769] }
-      }
-    }
-  ],
-  "interpretation": {
-    "intent": "search_reports",
-    "entities": {
-      "category": "streetlight",
-      "status": "broken",
-      "location": "District 1",
-      "time_period": "this month"
-    }
-  },
-  "total_results": 12
-}
-```
-
-## 📊 Analytics & Statistics
-
-### Get System Statistics
-
-```http
-GET /analytics/stats
-```
-
-**Headers:**
-
-- `Authorization: Bearer <jwt_token>`
-- Requires `admin` role
-
-**Response:**
-
-```json
-{
-  "overview": {
-    "total_users": 15234,
-    "active_users_today": 1523,
-    "api_calls_today": 45234,
-    "citizen_reports_total": 3421
-  },
-  "air_quality": {
-    "stations_online": 892,
-    "stations_total": 950,
-    "latest_measurements": 45234,
-    "data_freshness": "2 minutes ago"
-  },
-  "reports": {
-    "open": 156,
-    "in_progress": 89,
-    "resolved_today": 23,
-    "avg_resolution_time": "4.2 days"
-  }
-}
-```
-
-## 🚨 Error Handling
-
-### HTTP Status Codes
-
-- `200 OK` - Request successful
-- `201 Created` - Resource created successfully
-- `400 Bad Request` - Invalid request parameters
-- `401 Unauthorized` - Authentication required
-- `403 Forbidden` - Insufficient permissions
-- `404 Not Found` - Resource not found
-- `429 Too Many Requests` - Rate limit exceeded
-- `500 Internal Server Error` - Server error
-
-### Error Response Format
-
-```json
-{
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "Invalid request parameters",
-    "details": {
-      "field": "email",
-      "issue": "Invalid email format"
-    },
-    "request_id": "req_123456"
-  }
-}
-```
-
-## 🔄 Rate Limiting
-
-### Limits by Plan
-
-| Plan       | Requests/Hour | Burst  |
-| ---------- | ------------- | ------ |
-| Free       | 1,000         | 100    |
-| Developer  | 10,000        | 500    |
-| Pro        | 100,000       | 2,000  |
-| Enterprise | Unlimited     | 10,000 |
-
-### Rate Limit Headers
+**Interactive API Documentation (Swagger UI)**
 
 ```
-X-RateLimit-Limit: 1000
-X-RateLimit-Remaining: 999
-X-RateLimit-Reset: 1701691200
+http://localhost:8000/docs
 ```
 
-## 📡 Webhooks
+**Alternative Documentation (ReDoc)**
 
-### Subscribe to Events
-
-```http
-POST /webhooks
+```
+http://localhost:8000/redoc
 ```
 
-**Body:**
+**OpenAPI JSON Schema**
 
-```json
-{
-  "url": "https://yourapp.com/webhooks/urbanreflex",
-  "events": ["report.created", "aqi.alert", "measurement.updated"],
-  "secret": "your_webhook_secret"
-}
 ```
-
-### Webhook Payload Example
-
-```json
-{
-  "event": "report.created",
-  "timestamp": "2025-12-04T10:00:00Z",
-  "data": {
-    "report": {
-      "id": "report123",
-      "title": "Broken streetlight",
-      "category": "streetlight",
-      "location": { "type": "Point", "coordinates": [106.6951, 10.7769] }
-    }
-  }
-}
-```
-
-## 🔍 Testing
-
-### Postman Collection
-
-Download our [Postman Collection](https://github.com/minhe51805/UrbanReflex/blob/main/docs/postman/UrbanReflex.postman_collection.json) for easy API testing.
-
-### cURL Examples
-
-```bash
-# Get all air quality stations
-curl "https://api.urbanreflex.dev/v1/aqi/stations?limit=10" \
-  -H "X-API-Key: your_api_key"
-
-# Create a citizen report
-curl -X POST "https://api.urbanreflex.dev/v1/citizen-reports" \
-  -H "Authorization: Bearer your_jwt_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Pothole on Main Street",
-    "description": "Large pothole causing traffic issues",
-    "category": "road",
-    "priority": "high",
-    "location": {"latitude": 10.7769, "longitude": 106.6951}
-  }'
+http://localhost:8000/openapi.json
 ```
 
 ---
 
-<div align="center">
+## Authentication
 
-**Need help?** Check our [FAQ](./FAQ.md) or [join our community](https://github.com/minhe51805/UrbanReflex/discussions)
+### Current Implementation
 
-[🏠 Back to Main Documentation](../README.md) • [📚 Documentation Index](./INDEX.md)
+The current version does not require authentication for most endpoints. This is suitable for development and internal testing.
 
-</div>
+### Future Authentication (Planned)
+
+**JWT Bearer Token Authentication**
+
+```http
+POST /auth/login
+Content-Type: application/json
+
+{
+  "username": "user@example.com",
+  "password": "securepassword123"
+}
+```
+
+**Response**:
+
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer",
+  "expires_in": 3600
+}
+```
+
+**Using the Token**:
+
+```http
+GET /api/v1/users/me
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+### API Key Authentication (Future)
+
+For programmatic access:
+
+```http
+GET /api/v1/citizen-reports
+X-API-Key: your_api_key_here
+```
+
+---
+
+## Common Parameters
+
+### Pagination Parameters
+
+Most list endpoints support pagination:
+
+**Query Parameters**:
+
+- `limit` (integer): Number of items to return (default: 100, max: 1000)
+- `offset` (integer): Number of items to skip (default: 0)
+- `page` (integer): Page number (alternative to offset)
+
+**Example**:
+
+```http
+GET /api/v1/citizen-reports?limit=20&offset=40
+```
+
+**Response includes metadata**:
+
+```json
+{
+  "data": [...],
+  "meta": {
+    "total": 350,
+    "limit": 20,
+    "offset": 40,
+    "page": 3,
+    "pages": 18
+  }
+}
+```
+
+### Filtering Parameters
+
+Common filter parameters:
+
+- `type`: Filter by entity type
+- `category`: Filter by category
+- `status`: Filter by status
+- `created_after`: ISO 8601 datetime
+- `created_before`: ISO 8601 datetime
+
+**Example**:
+
+```http
+GET /api/v1/citizen-reports?category=infrastructure&status=pending
+```
+
+### Sorting Parameters
+
+- `sort_by`: Field name to sort by
+- `order`: `asc` or `desc` (default: `desc`)
+
+**Example**:
+
+```http
+GET /api/v1/citizen-reports?sort_by=created_at&order=desc
+```
+
+---
+
+## Error Handling
+
+### Error Response Format
+
+All errors follow a consistent format:
+
+```json
+{
+  "detail": "Error message describing what went wrong",
+  "status_code": 400,
+  "error_type": "ValidationError"
+}
+```
+
+### HTTP Status Codes
+
+**Success Codes**:
+
+- `200 OK` - Request succeeded
+- `201 Created` - Resource created successfully
+- `204 No Content` - Request succeeded, no response body
+
+**Client Error Codes**:
+
+- `400 Bad Request` - Invalid request format or parameters
+- `401 Unauthorized` - Authentication required
+- `403 Forbidden` - Insufficient permissions
+- `404 Not Found` - Resource not found
+- `422 Unprocessable Entity` - Validation error
+
+**Server Error Codes**:
+
+- `500 Internal Server Error` - Server-side error
+- `502 Bad Gateway` - External service error
+- `503 Service Unavailable` - Service temporarily unavailable
+
+### Example Error Responses
+
+**Validation Error (422)**:
+
+```json
+{
+  "detail": [
+    {
+      "loc": ["body", "description"],
+      "msg": "field required",
+      "type": "value_error.missing"
+    }
+  ]
+}
+```
+
+**Not Found (404)**:
+
+```json
+{
+  "detail": "CitizenReport with ID 'urn:ngsi-ld:CitizenReport:123' not found"
+}
+```
+
+**Server Error (500)**:
+
+```json
+{
+  "detail": "Internal server error occurred",
+  "error_type": "DatabaseConnectionError"
+}
+```
+
+---
+
+## Citizen Reports API
+
+Endpoints for managing citizen-submitted reports about urban issues.
+
+### Classify Citizen Report
+
+Classify and prioritize an existing citizen report using NLP.
+
+**Endpoint**: `POST /api/v1/citizen-reports/classify/{entity_id}`
+
+**Parameters**:
+
+- `entity_id` (path, required): NGSI-LD entity ID of the report
+
+**Description**:
+
+1. Retrieves the CitizenReport entity from Orion-LD
+2. Uses NLP classifier to determine category (infrastructure, environment, safety, etc.)
+3. Applies POI-based priority adjustment
+4. Updates the entity with classification results
+
+**Request**:
+
+```http
+POST /api/v1/citizen-reports/classify/urn:ngsi-ld:CitizenReport:001
+```
+
+**Response** (200 OK):
+
+```json
+{
+  "entity_id": "urn:ngsi-ld:CitizenReport:001",
+  "category": "infrastructure",
+  "priority": "high",
+  "confidence": 0.89,
+  "poi_proximity": {
+    "nearby_pois": [
+      {
+        "type": "hospital",
+        "distance": 250,
+        "name": "District 1 Hospital"
+      }
+    ],
+    "priority_boost": 1
+  },
+  "updated_at": "2025-12-08T10:30:00Z"
+}
+```
+
+**Error Responses**:
+
+Not Found (404):
+
+```json
+{
+  "detail": "CitizenReport entity not found in Orion-LD"
+}
+```
+
+Classification Error (500):
+
+```json
+{
+  "detail": "Failed to classify report: NLP service unavailable"
+}
+```
+
+### Get Citizen Report
+
+Retrieve a specific citizen report by ID.
+
+**Endpoint**: `GET /api/v1/citizen-reports/{entity_id}`
+
+**Parameters**:
+
+- `entity_id` (path, required): NGSI-LD entity ID
+
+**Request**:
+
+```http
+GET /api/v1/citizen-reports/urn:ngsi-ld:CitizenReport:001
+```
+
+**Response** (200 OK):
+
+```json
+{
+  "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+  "id": "urn:ngsi-ld:CitizenReport:001",
+  "type": "CitizenReport",
+  "description": {
+    "type": "Property",
+    "value": "Broken streetlight on Nguyen Hue Street"
+  },
+  "category": {
+    "type": "Property",
+    "value": "infrastructure"
+  },
+  "priority": {
+    "type": "Property",
+    "value": "high"
+  },
+  "status": {
+    "type": "Property",
+    "value": "pending"
+  },
+  "location": {
+    "type": "GeoProperty",
+    "value": {
+      "type": "Point",
+      "coordinates": [106.7009, 10.7756]
+    }
+  },
+  "reportedBy": {
+    "type": "Property",
+    "value": "user@example.com"
+  },
+  "createdAt": "2025-12-08T10:00:00Z",
+  "modifiedAt": "2025-12-08T10:30:00Z"
+}
+```
+
+### List Citizen Reports
+
+Retrieve a list of citizen reports with filtering and pagination.
+
+**Endpoint**: `GET /api/v1/citizen-reports`
+
+**Query Parameters**:
+
+- `limit` (integer): Max items (default: 100)
+- `offset` (integer): Skip items (default: 0)
+- `category` (string): Filter by category
+- `priority` (string): Filter by priority (low, medium, high, critical)
+- `status` (string): Filter by status (pending, in_progress, resolved, rejected)
+
+**Request**:
+
+```http
+GET /api/v1/citizen-reports?category=infrastructure&priority=high&limit=20
+```
+
+**Response** (200 OK):
+
+```json
+{
+  "data": [
+    {
+      "id": "urn:ngsi-ld:CitizenReport:001",
+      "type": "CitizenReport",
+      "description": "Broken streetlight",
+      "category": "infrastructure",
+      "priority": "high",
+      "status": "pending",
+      "location": {
+        "type": "Point",
+        "coordinates": [106.7009, 10.7756]
+      },
+      "createdAt": "2025-12-08T10:00:00Z"
+    }
+  ],
+  "meta": {
+    "total": 150,
+    "limit": 20,
+    "offset": 0,
+    "page": 1,
+    "pages": 8
+  }
+}
+```
+
+### Create Citizen Report
+
+Create a new citizen report.
+
+**Endpoint**: `POST /api/v1/citizen-reports`
+
+**Request Body**:
+
+```json
+{
+  "description": "Pothole on Le Loi Boulevard causing traffic issues",
+  "location": {
+    "type": "Point",
+    "coordinates": [106.7009, 10.7756]
+  },
+  "category": "infrastructure",
+  "reportedBy": "user@example.com",
+  "images": ["https://storage.urbanreflex.dev/images/report-001.jpg"]
+}
+```
+
+**Response** (201 Created):
+
+```json
+{
+  "id": "urn:ngsi-ld:CitizenReport:002",
+  "message": "Report created successfully",
+  "entity_url": "http://localhost:1026/ngsi-ld/v1/entities/urn:ngsi-ld:CitizenReport:002"
+}
+```
+
+### Update Citizen Report
+
+Update an existing citizen report.
+
+**Endpoint**: `PATCH /api/v1/citizen-reports/{entity_id}`
+
+**Request Body**:
+
+```json
+{
+  "status": "in_progress",
+  "assignedTo": "maintenance@hcmc.gov.vn",
+  "notes": "Maintenance crew dispatched"
+}
+```
+
+**Response** (200 OK):
+
+```json
+{
+  "message": "Report updated successfully",
+  "entity_id": "urn:ngsi-ld:CitizenReport:001"
+}
+```
+
+### Delete Citizen Report
+
+Delete a citizen report.
+
+**Endpoint**: `DELETE /api/v1/citizen-reports/{entity_id}`
+
+**Response** (204 No Content)
+
+---
+
+## AI Chatbot API
+
+Endpoints for AI-powered chatbot interactions using Gemini AI.
+
+### Send Chat Message
+
+Send a message to the AI chatbot and receive a streaming response.
+
+**Endpoint**: `POST /ai-service/chatbot/chat`
+
+**Request Body**:
+
+```json
+{
+  "message": "What is the current air quality in District 1?",
+  "conversation_id": "conv_123456",
+  "user_id": "user@example.com"
+}
+```
+
+**Parameters**:
+
+- `message` (string, required): User's message
+- `conversation_id` (string, optional): Continue existing conversation
+- `user_id` (string, optional): User identifier for context
+
+**Response** (200 OK - Streaming):
+
+Content-Type: `text/event-stream`
+
+```
+data: {"type": "start", "conversation_id": "conv_123456"}
+
+data: {"type": "token", "content": "The"}
+
+data: {"type": "token", "content": " current"}
+
+data: {"type": "token", "content": " air"}
+
+data: {"type": "token", "content": " quality"}
+
+data: {"type": "end", "full_response": "The current air quality in District 1 is..."}
+```
+
+**Non-Streaming Response**:
+
+For clients that don't support streaming, add `?stream=false`:
+
+```http
+POST /ai-service/chatbot/chat?stream=false
+```
+
+```json
+{
+  "conversation_id": "conv_123456",
+  "response": "The current air quality in District 1 is moderate with PM2.5 at 35 µg/m³. This is acceptable for most people, though sensitive groups should consider limiting prolonged outdoor activities.",
+  "sources": [
+    {
+      "type": "AirQualityObserved",
+      "id": "urn:ngsi-ld:AirQualityObserved:District1-001",
+      "timestamp": "2025-12-08T10:00:00Z"
+    }
+  ],
+  "timestamp": "2025-12-08T10:30:45Z"
+}
+```
+
+### Get Chat History
+
+Retrieve conversation history.
+
+**Endpoint**: `GET /ai-service/chatbot/history/{conversation_id}`
+
+**Response** (200 OK):
+
+```json
+{
+  "conversation_id": "conv_123456",
+  "messages": [
+    {
+      "role": "user",
+      "content": "What is the current air quality?",
+      "timestamp": "2025-12-08T10:30:00Z"
+    },
+    {
+      "role": "assistant",
+      "content": "The current air quality is moderate...",
+      "timestamp": "2025-12-08T10:30:05Z"
+    }
+  ],
+  "created_at": "2025-12-08T10:30:00Z",
+  "updated_at": "2025-12-08T10:30:05Z"
+}
+```
+
+### Clear Chat History
+
+Delete a conversation.
+
+**Endpoint**: `DELETE /ai-service/chatbot/history/{conversation_id}`
+
+**Response** (204 No Content)
+
+---
+
+## Items API
+
+Generic CRUD operations for items (placeholder for custom entities).
+
+### List Items
+
+**Endpoint**: `GET /api/v1/items`
+
+**Query Parameters**:
+
+- `skip` (integer): Offset (default: 0)
+- `limit` (integer): Max items (default: 100)
+
+**Response** (200 OK):
+
+```json
+{
+  "items": [
+    {
+      "id": 1,
+      "name": "Item 1",
+      "description": "Description of item 1",
+      "price": 29.99,
+      "tax": 2.5
+    }
+  ],
+  "total": 50,
+  "skip": 0,
+  "limit": 100
+}
+```
+
+### Get Item
+
+**Endpoint**: `GET /api/v1/items/{item_id}`
+
+**Response** (200 OK):
+
+```json
+{
+  "id": 1,
+  "name": "Item 1",
+  "description": "Description of item 1",
+  "price": 29.99,
+  "tax": 2.5
+}
+```
+
+### Create Item
+
+**Endpoint**: `POST /api/v1/items`
+
+**Request Body**:
+
+```json
+{
+  "name": "New Item",
+  "description": "Item description",
+  "price": 19.99,
+  "tax": 1.6
+}
+```
+
+**Response** (201 Created):
+
+```json
+{
+  "id": 51,
+  "name": "New Item",
+  "description": "Item description",
+  "price": 19.99,
+  "tax": 1.6
+}
+```
+
+---
+
+## Users API
+
+User management endpoints.
+
+### Get Current User
+
+**Endpoint**: `GET /api/v1/users/me`
+
+**Headers**:
+
+```
+Authorization: Bearer <token>
+```
+
+**Response** (200 OK):
+
+```json
+{
+  "id": "user_123",
+  "username": "user@example.com",
+  "email": "user@example.com",
+  "full_name": "John Doe",
+  "role": "citizen",
+  "created_at": "2025-01-01T00:00:00Z"
+}
+```
+
+### List Users (Admin)
+
+**Endpoint**: `GET /api/v1/users`
+
+**Query Parameters**:
+
+- `limit` (integer): Max users (default: 50)
+- `offset` (integer): Skip users (default: 0)
+- `role` (string): Filter by role
+
+**Response** (200 OK):
+
+```json
+{
+  "users": [
+    {
+      "id": "user_123",
+      "username": "user@example.com",
+      "email": "user@example.com",
+      "role": "citizen",
+      "active": true
+    }
+  ],
+  "total": 1250,
+  "limit": 50,
+  "offset": 0
+}
+```
+
+---
+
+## Admin API
+
+Administrative endpoints (requires admin role).
+
+### System Health
+
+**Endpoint**: `GET /admin/health`
+
+**Response** (200 OK):
+
+```json
+{
+  "status": "healthy",
+  "services": {
+    "database": "connected",
+    "orion_ld": "connected",
+    "ai_service": "connected"
+  },
+  "uptime": 86400,
+  "version": "1.0.0"
+}
+```
+
+### System Statistics
+
+**Endpoint**: `GET /admin/stats`
+
+**Response** (200 OK):
+
+```json
+{
+  "total_reports": 5432,
+  "active_users": 1250,
+  "reports_today": 45,
+  "reports_this_week": 312,
+  "reports_by_category": {
+    "infrastructure": 2156,
+    "environment": 1843,
+    "safety": 987,
+    "other": 446
+  },
+  "reports_by_priority": {
+    "critical": 123,
+    "high": 567,
+    "medium": 2341,
+    "low": 2401
+  }
+}
+```
+
+---
+
+## NGSI-LD Integration
+
+UrbanReflex integrates with Orion-LD Context Broker for NGSI-LD entity management.
+
+### Orion-LD Base URL
+
+```
+http://localhost:1026/ngsi-ld/v1
+```
+
+### Direct NGSI-LD Operations
+
+**List All Entities**:
+
+```http
+GET http://localhost:1026/ngsi-ld/v1/entities
+```
+
+**Get Entity by ID**:
+
+```http
+GET http://localhost:1026/ngsi-ld/v1/entities/{entity_id}
+```
+
+**Query by Type**:
+
+```http
+GET http://localhost:1026/ngsi-ld/v1/entities?type=CitizenReport
+```
+
+**Geo-Query (Entities Near Point)**:
+
+```http
+GET http://localhost:1026/ngsi-ld/v1/entities?type=CitizenReport&georel=near;maxDistance==1000&geometry=Point&coordinates=[106.7009,10.7756]
+```
+
+**Temporal Query**:
+
+```http
+GET http://localhost:1026/ngsi-ld/v1/temporal/entities?type=AirQualityObserved&timerel=after&timeAt=2025-12-01T00:00:00Z
+```
+
+For more details, see [NGSI-LD API Specification](https://www.etsi.org/deliver/etsi_gs/CIM/001_099/009/01.08.01_60/gs_CIM009v010801p.pdf).
+
+---
+
+## Rate Limiting
+
+### Current Implementation
+
+No rate limiting in development version.
+
+### Future Implementation
+
+**Rate Limits (Planned)**:
+
+- **Anonymous**: 100 requests/hour
+- **Authenticated**: 1000 requests/hour
+- **Admin**: 10000 requests/hour
+
+**Rate Limit Headers**:
+
+```
+X-RateLimit-Limit: 1000
+X-RateLimit-Remaining: 987
+X-RateLimit-Reset: 1702123456
+```
+
+**Rate Limit Exceeded Response** (429):
+
+```json
+{
+  "detail": "Rate limit exceeded. Try again in 3600 seconds.",
+  "retry_after": 3600
+}
+```
+
+---
+
+## Versioning
+
+### Current Version
+
+All endpoints are under `/api/v1/` namespace.
+
+### Version Strategy
+
+- Major versions for breaking changes (`/api/v2/`)
+- Backward compatibility maintained for at least 6 months
+- Deprecated endpoints marked in documentation
+- Version specified in API response headers
+
+**Example**:
+
+```
+X-API-Version: 1.0.0
+```
+
+### Deprecation Notice Format
+
+```json
+{
+  "data": {...},
+  "deprecation_warning": {
+    "message": "This endpoint will be deprecated on 2026-06-01",
+    "alternative": "/api/v2/citizen-reports",
+    "docs": "https://docs.urbanreflex.dev/api/v2/migration"
+  }
+}
+```
+
+---
+
+## Testing the API
+
+### Using cURL
+
+**Health Check**:
+
+```bash
+curl http://localhost:8000/health
+```
+
+**Classify Report**:
+
+```bash
+curl -X POST http://localhost:8000/api/v1/citizen-reports/classify/urn:ngsi-ld:CitizenReport:001
+```
+
+**Send Chat Message**:
+
+```bash
+curl -X POST http://localhost:8000/ai-service/chatbot/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "What is the air quality in District 1?"}'
+```
+
+### Using Python
+
+```python
+import requests
+
+# Health check
+response = requests.get("http://localhost:8000/health")
+print(response.json())
+
+# Classify report
+response = requests.post(
+    "http://localhost:8000/api/v1/citizen-reports/classify/urn:ngsi-ld:CitizenReport:001"
+)
+print(response.json())
+
+# Chat with AI
+response = requests.post(
+    "http://localhost:8000/ai-service/chatbot/chat",
+    json={"message": "What is the air quality?"}
+)
+print(response.json())
+```
+
+### Using JavaScript (Fetch)
+
+```javascript
+// Health check
+fetch('http://localhost:8000/health')
+  .then(res => res.json())
+  .then(data => console.log(data));
+
+// Classify report
+fetch('http://localhost:8000/api/v1/citizen-reports/classify/urn:ngsi-ld:CitizenReport:001', {
+  method: 'POST',
+})
+  .then(res => res.json())
+  .then(data => console.log(data));
+
+// Chat with AI
+fetch('http://localhost:8000/ai-service/chatbot/chat', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ message: 'What is the air quality?' }),
+})
+  .then(res => res.json())
+  .then(data => console.log(data));
+```
+
+---
+
+## Interactive Documentation
+
+### Swagger UI
+
+Visit http://localhost:8000/docs for interactive API documentation where you can:
+
+- Browse all available endpoints
+- View request/response schemas
+- Try API calls directly from the browser
+- Download OpenAPI specification
+
+### ReDoc
+
+Visit http://localhost:8000/redoc for alternative documentation with:
+
+- Clean, readable format
+- Code samples in multiple languages
+- Organized by tags
+- Search functionality
+
+---
+
+## Additional Resources
+
+- [DEVELOPMENT_SETUP.md](./DEVELOPMENT_SETUP.md) - Setup guide
+- [ARCHITECTURE.md](./ARCHITECTURE.md) - System architecture
+- [DATA_MODEL_AND_ENTITIES.md](./DATA_MODEL_AND_ENTITIES.md) - Data models
+- [OpenAPI Specification](http://localhost:8000/openapi.json) - Machine-readable API spec

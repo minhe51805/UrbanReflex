@@ -1,436 +1,907 @@
-# Code Style Guide - UrbanReflex Monorepo
+# Code Style Guide
 
-This document describes the code style conventions and tooling used across the UrbanReflex monorepo for Python backend, JavaScript/TypeScript frontend, and related files.
+Coding standards and best practices for contributing to UrbanReflex. This guide ensures consistent, maintainable, and high-quality code across the project.
 
-## Overview
+## Table of Contents
 
-We use automated tools to enforce consistent code style across the project. This eliminates debates about formatting and allows developers to focus on logic.
+- [General Principles](#general-principles)
+- [Python Style Guide](#python-style-guide)
+- [TypeScript/JavaScript Style Guide](#typescriptjavascript-style-guide)
+- [React/Next.js Conventions](#reactnextjs-conventions)
+- [Git Commit Guidelines](#git-commit-guidelines)
+- [Documentation Standards](#documentation-standards)
+- [Testing Standards](#testing-standards)
+- [Code Review Checklist](#code-review-checklist)
 
-**Tools:**
+---
 
-- **Python**: Black, Flake8, isort
-- **JavaScript/TypeScript**: ESLint, Prettier
-- **Optional**: Biome (for additional linting)
+## General Principles
 
-## Python Backend (`src/backend/`)
+### Code Quality Standards
 
-### Black - Code Formatter
+**Readability First**:
 
-Black is an opinionated code formatter that ensures consistent Python style.
+- Code is read more often than written
+- Favor clarity over cleverness
+- Use descriptive names
+- Write self-documenting code
 
-**Configuration** (in `pyproject.toml`):
+**DRY (Don't Repeat Yourself)**:
 
-```toml
-[tool.black]
-line-length = 100
-target-version = ["py310"]
+- Extract reusable functions
+- Create shared utilities
+- Avoid code duplication
+- Use constants for repeated values
+
+**KISS (Keep It Simple, Stupid)**:
+
+- Simple solutions over complex ones
+- Break down complex logic
+- Avoid premature optimization
+- Write straightforward code
+
+**YAGNI (You Aren't Gonna Need It)**:
+
+- Don't add unused features
+- Implement what's needed now
+- Avoid speculative coding
+- Refactor when requirements change
+
+### File Organization
+
+**Backend Structure**:
+
+```
+src/backend/
+├── routers/          # API route handlers (one file per resource)
+├── models/           # Pydantic models
+├── schemas/          # Request/response schemas
+├── utils/            # Utility functions
+├── ai_service/       # AI-related services
+├── config/           # Configuration
+└── tests/            # Test files mirror structure
 ```
 
-**Usage:**
+**Frontend Structure**:
+
+```
+src/frontend/
+├── app/              # Next.js pages
+├── components/       # React components
+│   ├── ui/           # Base UI components
+│   ├── charts/       # Data visualization
+│   ├── maps/         # Map components
+│   └── forms/        # Form components
+├── lib/              # Utilities
+├── types/            # TypeScript definitions
+└── contexts/         # React contexts
+```
+
+---
+
+## Python Style Guide
+
+### Code Formatting
+
+**Use Black for Formatting**:
 
 ```bash
-# Format a file
-black src/backend/app.py
-
-# Format entire backend
-black src/backend/
+# Format all Python files
+black src/backend
 
 # Check without modifying
-black --check src/backend/
+black --check src/backend
 ```
 
-**Key Rules:**
-
-- Line length: 100 characters
-- Double quotes (except in strings with quotes)
-- Two blank lines between top-level definitions
-- One blank line between method definitions
-
-### Flake8 - Linting
-
-Flake8 checks for logical errors and style issues.
-
-**Configuration** (in `pyproject.toml`):
+**Configuration**:
 
 ```toml
-[tool.flake8]
-max-line-length = 100
-extend-ignore = ["E203", "E266", "E501", "W503"]
+# pyproject.toml
+[tool.black]
+line-length = 88
+target-version = ['py310']
+include = '\.pyi?$'
 ```
 
-**Usage:**
+### Import Ordering
 
-```bash
-# Check for issues
-flake8 src/backend/
-
-# Common checks:
-# E501: Line too long (handled by Black)
-# W503: Line break before binary operator
-# E203: Whitespace before ':'
-```
-
-### isort - Import Organization
-
-isort organizes Python imports alphabetically and by section.
-
-**Configuration** (in `pyproject.toml`):
-
-```toml
-[tool.isort]
-profile = "black"
-line_length = 100
-```
-
-**Usage:**
+**Use isort**:
 
 ```bash
 # Sort imports
-isort src/backend/
+isort src/backend
 
 # Check without modifying
-isort --check-only src/backend/
+isort --check-only src/backend
 ```
 
-**Import Order:**
-
-1. Future imports (`from __future__ import ...`)
-2. Standard library
-3. Third-party packages
-4. Local application imports
-
-Example:
+**Import Order**:
 
 ```python
-from __future__ import annotations
-
+# 1. Standard library imports
 import os
-from typing import Optional
+import sys
+from datetime import datetime
+from typing import Optional, List, Dict
 
-import numpy as np
-from fastapi import FastAPI
+# 2. Third-party imports
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+import httpx
 
-from ..config.config import Settings
-from .utils import helper_function
+# 3. Local application imports
+from ..models.citizen_report import CitizenReport
+from ..utils.ngsi_ld import format_entity
+from ..config.settings import settings
 ```
 
-## Frontend (`src/frontend/`)
+### Naming Conventions
 
-### ESLint - Linting
+**Variables and Functions**:
 
-ESLint checks for common JavaScript/TypeScript errors and style issues.
+```python
+# snake_case for variables and functions
+user_name = "John Doe"
+max_attempts = 5
 
-**Configuration**: `eslint.config.mjs`
+def calculate_air_quality_index(pm25_value: float) -> int:
+    """Calculate AQI from PM2.5 value."""
+    pass
 
-Uses Next.js recommended rules:
-
-- `eslint-config-next/core-web-vitals`
-- `eslint-config-next/typescript`
-
-**Usage:**
-
-```bash
-cd src/frontend
-
-# Check for issues
-npm run lint
-
-# Fix issues automatically
-npm run lint:fix
+def get_citizen_reports(limit: int = 100) -> List[CitizenReport]:
+    """Retrieve citizen reports from database."""
+    pass
 ```
 
-### Prettier - Code Formatter
+**Classes**:
 
-Prettier automatically formats JavaScript, TypeScript, JSON, and Markdown files.
+```python
+# PascalCase for class names
+class CitizenReport(BaseModel):
+    """Citizen report data model."""
+    id: str
+    description: str
+    category: str
 
-**Configuration**: Root `.prettierrc.json`
+class AirQualityService:
+    """Service for air quality data operations."""
 
-```json
-{
-  "semi": true,
-  "singleQuote": true,
-  "trailingComma": "es5",
-  "printWidth": 100,
-  "tabWidth": 2,
-  "useTabs": false
-}
+    def __init__(self):
+        pass
 ```
 
-**Usage:**
+**Constants**:
+
+```python
+# UPPER_CASE for constants
+MAX_REPORT_LENGTH = 1000
+DEFAULT_PAGE_SIZE = 100
+API_VERSION = "1.0.0"
+```
+
+**Private Members**:
+
+```python
+# Leading underscore for private/internal
+class DataProcessor:
+    def __init__(self):
+        self._cache = {}
+        self._connection = None
+
+    def _internal_method(self):
+        """Internal method, not part of public API."""
+        pass
+```
+
+### Type Hints
+
+**Always Use Type Hints**:
+
+```python
+from typing import Optional, List, Dict, Any, Union
+
+def process_report(
+    report_id: str,
+    category: str,
+    priority: Optional[int] = None
+) -> Dict[str, Any]:
+    """Process a citizen report."""
+    return {
+        "id": report_id,
+        "category": category,
+        "priority": priority or 1
+    }
+
+def get_entities(
+    entity_type: str,
+    limit: int = 100,
+    offset: int = 0
+) -> List[Dict[str, Any]]:
+    """Retrieve entities from Orion-LD."""
+    pass
+```
+
+**Complex Types**:
+
+```python
+from typing import TypedDict, Literal
+
+class ReportData(TypedDict):
+    id: str
+    description: str
+    category: Literal["infrastructure", "environment", "safety"]
+    priority: int
+
+def create_report(data: ReportData) -> str:
+    """Create a new report."""
+    pass
+```
+
+### Docstrings
+
+**Use Google Style Docstrings**:
+
+```python
+def classify_citizen_report(entity_id: str, description: str) -> Dict[str, Any]:
+    """Classify a citizen report using NLP.
+
+    This function uses a machine learning model to categorize the report
+    and determine its priority based on content and location.
+
+    Args:
+        entity_id: NGSI-LD entity identifier
+        description: Text description of the issue
+
+    Returns:
+        Dictionary containing:
+            - category: Classified category
+            - priority: Determined priority level
+            - confidence: Classification confidence score
+
+    Raises:
+        HTTPException: If entity not found or classification fails
+
+    Example:
+        >>> result = classify_citizen_report(
+        ...     "urn:ngsi-ld:CitizenReport:001",
+        ...     "Broken streetlight"
+        ... )
+        >>> print(result["category"])
+        'infrastructure'
+    """
+    pass
+```
+
+### Error Handling
+
+**Specific Exceptions**:
+
+```python
+from fastapi import HTTPException, status
+
+# Good: Specific exception
+def get_report(report_id: str) -> CitizenReport:
+    try:
+        report = database.get(report_id)
+    except NotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Report {report_id} not found"
+        )
+    except DatabaseError as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database error: {str(e)}"
+        )
+
+    return report
+
+# Bad: Catching all exceptions
+def get_report(report_id: str) -> CitizenReport:
+    try:
+        return database.get(report_id)
+    except Exception:  # Too broad
+        return None
+```
+
+### Async/Await
+
+**Async Functions**:
+
+```python
+import httpx
+from typing import Dict, Any
+
+async def fetch_external_data(url: str) -> Dict[str, Any]:
+    """Fetch data from external API asynchronously."""
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url)
+        response.raise_for_status()
+        return response.json()
+
+async def process_multiple_reports(report_ids: List[str]) -> List[Dict]:
+    """Process multiple reports concurrently."""
+    tasks = [classify_report(rid) for rid in report_ids]
+    return await asyncio.gather(*tasks)
+```
+
+### Logging
+
+**Use Proper Logging**:
+
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+
+def process_data(data: Dict) -> None:
+    """Process incoming data."""
+    logger.info(f"Processing data: {data.get('id')}")
+
+    try:
+        result = transform_data(data)
+        logger.debug(f"Transform result: {result}")
+    except ValueError as e:
+        logger.error(f"Transform failed: {e}", exc_info=True)
+        raise
+
+    logger.info("Processing completed successfully")
+```
+
+---
+
+## TypeScript/JavaScript Style Guide
+
+### Code Formatting
+
+**Use Prettier**:
 
 ```bash
 # Format all files
-npm run format
-
-# Check without modifying
-npm run format:check
-
-# Format specific file
-npx prettier --write src/frontend/components/Header.tsx
-```
-
-**Key Rules:**
-
-- 100 character line width
-- 2 space indentation
-- Single quotes for strings
-- Semicolons required
-- Trailing commas in ES5
-
-## Biome (Optional Alternative)
-
-Biome is a modern, all-in-one linter, formatter, and organizer for JavaScript/TypeScript.
-
-**Configuration**: `biome.json` at root
-
-**Usage:**
-
-```bash
-# Install (optional)
-npm install --save-dev @biomejs/biome
-
-# Format
-npx biome format . --write
-
-# Lint
-npx biome lint . --write
-
-# Combined check
-npx biome check .
-```
-
-**Comparison:**
-
-- ESLint + Prettier: More mature, widely adopted
-- Biome: Faster, combined tool, newer but gaining popularity
-
-We currently use ESLint + Prettier, but Biome config is available if you prefer to migrate.
-
-## Pre-Commit Integration
-
-All code style checks are automatically run via Husky pre-commit hooks:
-
-```bash
-git add .
-git commit -m "feat: new feature"
-# Hooks run automatically:
-# - Frontend: ESLint --fix + Prettier
-# - Backend: Black + isort
-# - All: JSON/Markdown formatting
-```
-
-## Running Style Checks Manually
-
-### Python Backend
-
-```bash
-# Format code
-black src/backend/
-
-# Check style
-flake8 src/backend/
-
-# Organize imports
-isort src/backend/
-
-# All at once
-black src/backend/ && isort src/backend/ && flake8 src/backend/
-```
-
-### Frontend
-
-```bash
 cd src/frontend
-
-# Check linting
-npm run lint
-
-# Fix linting
-npm run lint:fix
-
-# Format code
 npm run format
 
 # Check formatting
 npm run format:check
 ```
 
-### Entire Project
-
-```bash
-# Format all
-npm run format
-
-# Check all
-npm run format:check
-```
-
-## IDE Integration
-
-### VS Code
-
-#### Python
-
-Install extensions:
-
-- `ms-python.python`
-- `ms-python.vscode-pylance`
-
-Add to `.vscode/settings.json`:
+**Configuration**:
 
 ```json
+// .prettierrc
 {
-  "python.linting.enabled": true,
-  "python.linting.flake8Enabled": true,
-  "python.linting.flake8Args": ["--max-line-length=100"],
-  "python.formatting.provider": "black",
-  "python.formatting.blackArgs": ["--line-length=100"],
-  "editor.formatOnSave": true
+  "semi": true,
+  "singleQuote": false,
+  "tabWidth": 2,
+  "trailingComma": "es5",
+  "printWidth": 80,
+  "arrowParens": "always"
 }
 ```
 
-#### JavaScript/TypeScript
+### TypeScript Configuration
 
-Install extensions:
+**Strict Type Checking**:
 
-- `dbaeumer.vscode-eslint`
-- `esbenp.prettier-vscode`
+```json
+// tsconfig.json
+{
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
+  }
+}
+```
 
-Add to `.vscode/settings.json`:
+### Naming Conventions
+
+**Variables and Functions**:
+
+```typescript
+// camelCase for variables and functions
+const userName = 'John Doe';
+const maxAttempts = 5;
+
+function calculateAirQualityIndex(pm25Value: number): number {
+  return Math.round(pm25Value * 2);
+}
+
+const getReports = async (limit: number = 100): Promise<Report[]> => {
+  // Implementation
+};
+```
+
+**Interfaces and Types**:
+
+```typescript
+// PascalCase for interfaces and types
+interface CitizenReport {
+  id: string;
+  description: string;
+  category: string;
+  priority: number;
+}
+
+type ReportCategory = 'infrastructure' | 'environment' | 'safety';
+
+type ReportStatus = 'pending' | 'in_progress' | 'resolved';
+```
+
+**Components**:
+
+```typescript
+// PascalCase for React components
+export function AirQualityCard({ data }: AirQualityCardProps) {
+  return <div>{data.aqi}</div>;
+}
+
+export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location }) => {
+  return <div>{location}</div>;
+};
+```
+
+**Constants**:
+
+```typescript
+// UPPER_CASE for constants
+export const API_BASE_URL = 'http://localhost:8000';
+export const MAX_REPORT_LENGTH = 1000;
+export const DEFAULT_MAP_CENTER = [10.7769, 106.6951];
+```
+
+### Type Definitions
+
+**Explicit Types**:
+
+```typescript
+// Good: Explicit types
+interface AirQualityData {
+  aqi: number;
+  pm25: number;
+  pm10: number;
+  location: [number, number];
+  timestamp: string;
+}
+
+function processAirQuality(data: AirQualityData): string {
+  return `AQI: ${data.aqi}`;
+}
+
+// Bad: Implicit any
+function processData(data) {
+  return data.value;
+}
+```
+
+**Union Types**:
+
+```typescript
+type Status = 'pending' | 'success' | 'error';
+
+interface ApiResponse<T> {
+  data?: T;
+  error?: string;
+  status: Status;
+}
+
+function handleResponse<T>(response: ApiResponse<T>): void {
+  if (response.status === 'success' && response.data) {
+    console.log(response.data);
+  }
+}
+```
+
+### Async/Await
+
+**Async Functions**:
+
+```typescript
+async function fetchReports(limit: number): Promise<Report[]> {
+  try {
+    const response = await fetch(`/api/reports?limit=${limit}`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.reports;
+  } catch (error) {
+    console.error('Failed to fetch reports:', error);
+    throw error;
+  }
+}
+```
+
+### Error Handling
+
+**Try-Catch Blocks**:
+
+```typescript
+async function submitReport(report: ReportData): Promise<string> {
+  try {
+    const response = await apiClient.post('/reports', report);
+    return response.data.id;
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw new Error(`API Error: ${error.message}`);
+    }
+    throw new Error('Failed to submit report');
+  }
+}
+```
+
+---
+
+## React/Next.js Conventions
+
+### Component Structure
+
+**Functional Components**:
+
+```typescript
+// Good: Functional component with TypeScript
+interface AirQualityCardProps {
+  aqi: number;
+  pm25: number;
+  location: string;
+}
+
+export function AirQualityCard({ aqi, pm25, location }: AirQualityCardProps) {
+  const aqiColor = getAqiColor(aqi);
+
+  return (
+    <div className="air-quality-card">
+      <h3>{location}</h3>
+      <div className={`aqi ${aqiColor}`}>
+        <span>AQI: {aqi}</span>
+      </div>
+      <p>PM2.5: {pm25} µg/m³</p>
+    </div>
+  );
+}
+```
+
+### Hooks Usage
+
+**useState**:
+
+```typescript
+const [reports, setReports] = useState<Report[]>([]);
+const [loading, setLoading] = useState(false);
+const [error, setError] = useState<string | null>(null);
+```
+
+**useEffect**:
+
+```typescript
+useEffect(() => {
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const data = await getReports();
+      setReports(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchData();
+}, []); // Empty deps array - run once on mount
+```
+
+**Custom Hooks**:
+
+```typescript
+function useAirQuality(location: string) {
+  const [data, setData] = useState<AirQualityData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchAirQuality() {
+      const result = await getAirQuality(location);
+      setData(result);
+      setLoading(false);
+    }
+
+    fetchAirQuality();
+  }, [location]);
+
+  return { data, loading };
+}
+
+// Usage
+const { data, loading } = useAirQuality('District 1');
+```
+
+### File Naming
+
+**Component Files**:
+
+```
+AirQualityCard.tsx       # Component
+AirQualityCard.test.tsx  # Tests
+AirQualityCard.module.css # Styles (if not using Tailwind)
+```
+
+**Utility Files**:
+
+```
+formatters.ts            # Utility functions
+api-client.ts            # API client
+types.ts                 # Type definitions
+constants.ts             # Constants
+```
+
+### CSS/Tailwind
+
+**Tailwind Classes**:
+
+```typescript
+// Good: Use Tailwind utilities
+<div className="flex items-center justify-between p-4 bg-white rounded-lg shadow">
+  <h3 className="text-lg font-semibold">Title</h3>
+  <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+    Click
+  </button>
+</div>
+
+// For complex/repeated styles, extract to component
+const Card: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div className="p-4 bg-white rounded-lg shadow">
+    {children}
+  </div>
+);
+```
+
+---
+
+## Git Commit Guidelines
+
+### Commit Message Format
+
+**Structure**:
+
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+**Types**:
+
+- `feat`: New feature
+- `fix`: Bug fix
+- `docs`: Documentation changes
+- `style`: Code style changes (formatting, missing semi-colons)
+- `refactor`: Code refactoring
+- `test`: Adding or updating tests
+- `chore`: Maintenance tasks
+
+**Examples**:
+
+```
+feat(reports): add photo upload to citizen reports
+
+Add ability for users to upload up to 5 photos when submitting
+a report. Photos are validated for size and type.
+
+Closes #123
+
+---
+
+fix(api): correct AQI calculation for PM2.5
+
+The AQI calculation was using incorrect breakpoints for PM2.5.
+Updated to match EPA standards.
+
+---
+
+docs: update installation instructions in README
+
+Add troubleshooting section for UV installation on Windows
+```
+
+### Branch Naming
+
+```
+feature/add-photo-upload
+fix/aqi-calculation-bug
+docs/update-api-reference
+refactor/simplify-auth-flow
+```
+
+---
+
+## Documentation Standards
+
+### Code Comments
+
+**When to Comment**:
+
+```typescript
+// Good: Explain WHY, not WHAT
+// Use exponential backoff to avoid overwhelming the API
+const delay = Math.pow(2, attempt) * 1000;
+
+// Bad: States the obvious
+// Increment counter by 1
+counter++;
+```
+
+**TODO Comments**:
+
+```typescript
+// TODO(username): Add error handling for network failures
+// FIXME: This breaks when input is negative
+// NOTE: This is a temporary workaround for API limitation
+```
+
+### API Documentation
+
+**FastAPI Docstrings**:
+
+```python
+@router.post("/classify/{entity_id}")
+async def classify_citizen_report(
+    entity_id: str
+) -> Dict[str, Any]:
+    """
+    Classify and prioritize a citizen report.
+
+    This endpoint retrieves a CitizenReport entity from Orion-LD,
+    processes it through an NLP classifier to determine the category,
+    and applies POI-based priority adjustment.
+
+    - **entity_id**: NGSI-LD entity ID (required)
+
+    Returns:
+        - category: Classified category
+        - priority: Assigned priority level
+        - confidence: Classification confidence
+    """
+    pass
+```
+
+---
+
+## Testing Standards
+
+### Python Tests
+
+**pytest Style**:
+
+```python
+def test_calculate_aqi():
+    """Test AQI calculation for various PM2.5 values."""
+    assert calculate_aqi(12.0) == 50
+    assert calculate_aqi(35.5) == 100
+    assert calculate_aqi(55.5) == 150
+
+def test_classify_report_success():
+    """Test successful report classification."""
+    result = classify_report("Broken streetlight")
+    assert result["category"] == "infrastructure"
+    assert result["confidence"] > 0.7
+
+@pytest.mark.asyncio
+async def test_fetch_air_quality():
+    """Test fetching air quality data from API."""
+    data = await fetch_air_quality("District 1")
+    assert data["aqi"] > 0
+    assert "pm25" in data
+```
+
+### TypeScript Tests
+
+**Jest Style**:
+
+```typescript
+describe("AirQualityCard", () => {
+  it("renders AQI value correctly", () => {
+    const { getByText } = render(
+      <AirQualityCard aqi={50} pm25={12} location="District 1" />
+    );
+    expect(getByText("AQI: 50")).toBeInTheDocument();
+  });
+
+  it("applies correct color for moderate AQI", () => {
+    const { container } = render(
+      <AirQualityCard aqi={75} pm25={25} location="District 1" />
+    );
+    expect(container.querySelector(".aqi")).toHaveClass("moderate");
+  });
+});
+```
+
+---
+
+## Code Review Checklist
+
+### Before Submitting PR
+
+- [ ] Code follows style guide
+- [ ] All tests pass
+- [ ] New tests added for new features
+- [ ] Documentation updated
+- [ ] No console.log or print statements
+- [ ] Type hints/types added
+- [ ] Error handling implemented
+- [ ] Commit messages follow guidelines
+
+### During Review
+
+- [ ] Code is readable and maintainable
+- [ ] Logic is sound and efficient
+- [ ] Edge cases handled
+- [ ] Security considerations addressed
+- [ ] Performance implications considered
+- [ ] Accessibility requirements met (frontend)
+
+---
+
+## Tools and Automation
+
+### Pre-commit Hooks
+
+```yaml
+# .pre-commit-config.yaml
+repos:
+  - repo: https://github.com/psf/black
+    rev: 23.3.0
+    hooks:
+      - id: black
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.0.0
+    hooks:
+      - id: flake8
+```
+
+### IDE Configuration
+
+**VS Code Settings**:
 
 ```json
 {
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true,
-  "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": true
   },
+  "python.linting.enabled": true,
+  "python.linting.flake8Enabled": true,
+  "python.formatting.provider": "black",
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   }
 }
 ```
 
-## CI/CD Integration
+---
 
-In GitHub Actions or similar CI, run these checks:
+## Additional Resources
 
-```yaml
-- name: Format Check - Python
-  run: black --check src/backend/
+- [PEP 8 - Python Style Guide](https://pep8.org/)
+- [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html)
+- [Airbnb JavaScript Style Guide](https://github.com/airbnb/javascript)
+- [React TypeScript Cheatsheet](https://react-typescript-cheatsheet.netlify.app/)
+- [Conventional Commits](https://www.conventionalcommits.org/)
 
-- name: Lint - Python
-  run: flake8 src/backend/
+For more information, see:
 
-- name: Format Check - Frontend
-  run: |
-    cd src/frontend
-    npm run format:check
-
-- name: Lint - Frontend
-  run: |
-    cd src/frontend
-    npm run lint
-```
-
-## Handling Conflicts
-
-### "My style differs from the tool"
-
-We follow the principle of **consistency over personal preference**. The tools are configured project-wide so everyone follows the same rules.
-
-### Disabling Rules
-
-Only disable linting rules when absolutely necessary:
-
-**Python:**
-
-```python
-# noqa: E501  # Ignore long line
-some_long_function_call()  # noqa: F401
-```
-
-**JavaScript:**
-
-```javascript
-// eslint-disable-next-line no-unused-vars
-const unusedVar = 'reason for exception';
-
-/* eslint-disable no-console */
-console.log('debug message');
-/* eslint-enable no-console */
-```
-
-Avoid disabling rules globally. Always comment why.
-
-## Line Lengths
-
-Both Python and JavaScript/TypeScript enforce **100 character line limit**.
-
-Good:
-
-```python
-user = User.objects.filter(
-    email=email,
-    is_active=True
-).first()
-```
-
-Bad:
-
-```python
-user = User.objects.filter(email=email, is_active=True).first()  # Too long
-```
-
-## String Quotes
-
-### Python
-
-Black uses double quotes by default:
-
-```python
-message = "Hello, world!"
-```
-
-### JavaScript/TypeScript
-
-Prettier uses single quotes:
-
-```javascript
-const message = 'Hello, world!';
-```
-
-## Trailing Commas
-
-### Python
-
-Black includes trailing commas in multi-line collections:
-
-```python
-data = [
-    1,
-    2,
-    3,  # Trailing comma
-]
-```
-
-### JavaScript/TypeScript
-
-Prettier includes trailing commas (ES5 compatible):
-
-```javascript
-const data = [
-  1,
-  2,
-  3, // Trailing comma
-];
-```
-
-## References
-
-- [Black Documentation](https://black.readthedocs.io/)
-- [Flake8 Documentation](https://flake8.pycqa.org/)
-- [isort Documentation](https://pycqa.github.io/isort/)
-- [ESLint Documentation](https://eslint.org/)
-- [Prettier Documentation](https://prettier.io/)
-- [Biome Documentation](https://biomejs.dev/)
+- [CONTRIBUTING.md](../CONTRIBUTING.md) - Contribution guidelines
+- [DEVELOPMENT_SETUP.md](./DEVELOPMENT_SETUP.md) - Development setup
+- [ARCHITECTURE.md](./ARCHITECTURE.md) - System architecture

@@ -153,9 +153,8 @@ install:
     @echo "All dependencies installed!"
     @echo ""
     @echo "Next steps:"
-    @echo "  1. Run 'just setup-env' to create environment files"
-    @echo "  2. Edit .env and src/frontend/.env.local with your API keys (optional)"
-    @echo "  3. Run 'just dev' to start all services"
+    @echo "  1. Copy .env.example to .env and configure"
+    @echo "  2. Run 'just dev' to start development"
 
 # Setup environment files
 setup-env:

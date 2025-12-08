@@ -1,589 +1,748 @@
-# 🏗️ System Architecture
-
-UrbanReflex is built with a modern microservices architecture designed for scalability, maintainability, and developer experience.
-
-## 🎯 High-Level Overview
-
-```mermaid
-graph TB
-    subgraph "Client Layer"
-        WEB[Web App<br/>Next.js 16]
-        MOBILE[Mobile App<br/>React Native]
-        API_CLIENT[API Clients<br/>SDKs & Tools]
-    end
-
-    subgraph "API Gateway"
-        GATEWAY[Load Balancer<br/>Nginx/CloudFlare]
-        AUTH[Authentication<br/>JWT & API Keys]
-        RATE[Rate Limiting<br/>Redis]
-    end
-
-    subgraph "Application Layer"
-        BACKEND[FastAPI Server<br/>Python 3.10+]
-        WEBSOCKET[WebSocket Service<br/>Real-time Updates]
-        SCHEDULER[Background Tasks<br/>Celery/Async]
-    end
-
-    subgraph "Data Layer"
-        MONGO[MongoDB<br/>Primary Database]
-        ORION[Orion Context Broker<br/>NGSI-LD]
-        PINECONE[Pinecone<br/>Vector Database]
-        REDIS[Redis<br/>Cache & Sessions]
-    end
-
-    subgraph "External Services"
-        OPENAQ[OpenAQ API<br/>Air Quality Data]
-        GEMINI[Gemini AI<br/>Text Generation]
-        OSM[OpenStreetMap<br/>Geospatial Data]
-        STORAGE[File Storage<br/>S3/Local]
-    end
-
-    WEB --> GATEWAY
-    MOBILE --> GATEWAY
-    API_CLIENT --> GATEWAY
-
-    GATEWAY --> AUTH
-    GATEWAY --> RATE
-    AUTH --> BACKEND
-    RATE --> BACKEND
-
-    BACKEND --> WEBSOCKET
-    BACKEND --> SCHEDULER
-    BACKEND --> MONGO
-    BACKEND --> ORION
-    BACKEND --> PINECONE
-    BACKEND --> REDIS
-
-    BACKEND --> OPENAQ
-    BACKEND --> GEMINI
-    BACKEND --> OSM
-    BACKEND --> STORAGE
-```
-
-## 🏛️ Architecture Principles
-
-### 📦 Microservices Design
-
-- **Separation of Concerns** - Each service handles specific domain logic
-- **API-First** - All functionality exposed through well-defined APIs
-- **Database per Service** - Each service owns its data
-- **Independent Deployment** - Services can be deployed independently
-
-### 🚀 Scalability
-
-- **Horizontal Scaling** - Add more instances as needed
-- **Stateless Services** - No server-side session state
-- **Caching Strategy** - Multiple layers of caching (Redis, CDN)
-- **Async Processing** - Background tasks for heavy operations
-
-### 🔒 Security by Design
-
-- **Zero Trust** - All requests authenticated and authorized
-- **Encryption** - Data encrypted at rest and in transit
-- **Input Validation** - All inputs validated at API boundary
-- **Rate Limiting** - Protect against abuse and DDoS
-
-## 🔧 Technology Stack Deep Dive
-
-### 🎨 Frontend Architecture (Next.js)
-
-```
-src/frontend/
-├── app/                    # Next.js 14 App Router
-│   ├── (dashboard)/       # Route groups
-│   ├── api/              # API routes (proxy to backend)
-│   ├── globals.css       # Global styles
-│   └── layout.tsx        # Root layout
-├── components/           # React components
-│   ├── ui/              # Reusable UI components
-│   ├── forms/           # Form components
-│   └── charts/          # Data visualization
-├── lib/                 # Utilities and services
-│   ├── api/            # API client functions
-│   ├── auth/           # Authentication utilities
-│   └── utils.ts        # Helper functions
-├── types/              # TypeScript definitions
-└── public/             # Static assets
-```
-
-**Key Technologies:**
-
-- **Next.js 16** - React framework with App Router
-- **React 19** - Latest React with concurrent features
-- **TypeScript 5** - Type safety and better DX
-- **Tailwind CSS** - Utility-first styling
-- **Framer Motion** - Smooth animations
-- **React Hook Form** - Form handling
-- **TanStack Query** - Server state management
-- **Zustand** - Client state management
-
-### 🐍 Backend Architecture (FastAPI)
-
-```
-src/backend/
-├── app.py              # FastAPI application setup
-├── dependencies.py     # Dependency injection
-├── routers/           # API endpoint routers
-│   ├── auth.py        # Authentication endpoints
-│   ├── users.py       # User management
-│   ├── chatbot.py     # AI chatbot service
-│   ├── citizen_reports.py # Reporting system
-│   └── items.py       # Generic CRUD operations
-├── models/            # Database models
-│   ├── user.py        # User model
-│   └── chat_history.py # Chat history model
-├── schemas/           # Pydantic schemas
-│   └── user.py        # User validation schemas
-├── utils/             # Utility modules
-│   ├── auth.py        # Authentication utilities
-│   └── db.py          # Database utilities
-└── ai_service/        # AI and ML services
-    ├── chatbot/       # Chatbot implementation
-    └── classifier_report/ # Report classification
-```
-
-**Key Technologies:**
-
-- **FastAPI** - High-performance async web framework
-- **Pydantic v2** - Data validation and serialization
-- **SQLAlchemy 2.0** - ORM for relational data
-- **Motor** - Async MongoDB driver
-- **Python-JOSE** - JWT token handling
-- **Passlib** - Password hashing
-- **Celery** - Distributed task queue
-- **Uvicorn** - ASGI server
-
-### 🗄️ Database Architecture
-
-#### Primary Database (MongoDB)
-
-```javascript
-// User Collection
-{
-  _id: ObjectId,
-  email: String,
-  hashed_password: String,
-  full_name: String,
-  role: String, // "citizen", "admin", "city_official"
-  is_active: Boolean,
-  created_at: Date,
-  api_keys: [
-    {
-      key_id: String,
-      name: String,
-      key_hash: String,
-      created_at: Date,
-      last_used: Date
-    }
-  ]
-}
-
-// Citizen Reports Collection
-{
-  _id: ObjectId,
-  title: String,
-  description: String,
-  category: String, // "streetlight", "road", "waste", etc.
-  priority: String, // "low", "medium", "high", "critical"
-  status: String,   // "open", "in_progress", "resolved", "closed"
-  location: {
-    type: "Point",
-    coordinates: [longitude, latitude]
-  },
-  photos: [String], // URLs to stored images
-  votes: Number,
-  created_by: ObjectId,
-  created_at: Date,
-  updated_at: Date,
-  assigned_to: ObjectId, // City official
-  resolution_notes: String,
-  resolved_at: Date
-}
-
-// Chat History Collection
-{
-  _id: ObjectId,
-  user_id: ObjectId,
-  session_id: String,
-  messages: [
-    {
-      role: String,    // "user", "assistant"
-      content: String,
-      timestamp: Date,
-      metadata: Object // Additional context
-    }
-  ],
-  created_at: Date,
-  updated_at: Date
-}
-```
-
-#### NGSI-LD Context Broker (Orion)
-
-```json
-// Road Segment Entity
-{
-  "id": "urn:ngsi-ld:RoadSegment:001",
-  "type": "RoadSegment",
-  "name": {
-    "type": "Property",
-    "value": "Nguyen Hue Boulevard"
-  },
-  "location": {
-    "type": "GeoProperty",
-    "value": {
-      "type": "LineString",
-      "coordinates": [[106.6951, 10.7769], [106.6955, 10.7773]]
-    }
-  },
-  "roadClass": {
-    "type": "Property",
-    "value": "primary"
-  },
-  "trafficFlow": {
-    "type": "Property",
-    "value": "heavy",
-    "observedAt": "2025-12-04T10:00:00Z"
-  }
-}
-
-// Streetlight Entity
-{
-  "id": "urn:ngsi-ld:Streetlight:001",
-  "type": "Streetlight",
-  "location": {
-    "type": "GeoProperty",
-    "value": {
-      "type": "Point",
-      "coordinates": [106.6951, 10.7769]
-    }
-  },
-  "status": {
-    "type": "Property",
-    "value": "on",
-    "observedAt": "2025-12-04T10:00:00Z"
-  },
-  "powerConsumption": {
-    "type": "Property",
-    "value": 25.5,
-    "unitCode": "WTT"
-  }
-}
-```
-
-#### Vector Database (Pinecone)
-
-```python
-# Vector embeddings for semantic search
-{
-  "id": "report_123",
-  "values": [0.1, 0.2, -0.3, ...],  # 1536-dimensional vector
-  "metadata": {
-    "type": "citizen_report",
-    "title": "Broken streetlight on Main Street",
-    "category": "streetlight",
-    "location": "District 1",
-    "created_at": "2025-12-04T10:00:00Z"
-  }
-}
-```
-
-## 🔄 Data Flow Architecture
-
-### 📊 Request Processing Flow
-
-```mermaid
-sequenceDiagram
-    participant Client
-    participant Gateway
-    participant Auth
-    participant API
-    participant DB
-    participant Cache
-    participant External
-
-    Client->>Gateway: HTTP Request
-    Gateway->>Auth: Validate Token/API Key
-    Auth-->>Gateway: Authentication Result
-
-    alt Authenticated
-        Gateway->>API: Forward Request
-        API->>Cache: Check Cache
-
-        alt Cache Hit
-            Cache-->>API: Return Cached Data
-        else Cache Miss
-            API->>DB: Query Database
-            API->>External: Fetch External Data (if needed)
-            External-->>API: Return Data
-            DB-->>API: Return Results
-            API->>Cache: Store in Cache
-        end
-
-        API-->>Gateway: JSON Response
-        Gateway-->>Client: HTTP Response
-    else Not Authenticated
-        Gateway-->>Client: 401 Unauthorized
-    end
-```
-
-### 🤖 AI Processing Flow
-
-```mermaid
-flowchart TD
-    A[User Query] --> B[Query Preprocessing]
-    B --> C[Intent Recognition]
-    C --> D[Entity Extraction]
-    D --> E[Context Retrieval]
-    E --> F[Vector Search]
-    F --> G[Knowledge Retrieval]
-    G --> H[Response Generation]
-    H --> I[Response Validation]
-    I --> J[Final Response]
-
-    F --> K[(Pinecone<br/>Vector DB)]
-    G --> L[(MongoDB<br/>Knowledge Base)]
-    H --> M[Gemini AI<br/>LLM]
-```
-
-### 📡 Real-time Data Flow
-
-```mermaid
-graph LR
-    A[External APIs] --> B[Data Ingestion Service]
-    B --> C[Data Transformation]
-    C --> D[Data Validation]
-    D --> E[Database Storage]
-    E --> F[Cache Update]
-    F --> G[WebSocket Broadcast]
-    G --> H[Client Updates]
-
-    I[Background Scheduler] --> B
-    J[Webhook Events] --> B
-```
-
-## 🚀 Deployment Architecture
-
-### 🐳 Containerization
-
-```yaml
-# docker-compose.yml structure
-services:
-  backend:
-    build: .
-    ports: ["8000:8000"]
-    depends_on: [mongodb, redis]
-
-  frontend:
-    build: ./website
-    ports: ["3000:3000"]
-    depends_on: [backend]
-
-  mongodb:
-    image: mongo:7.0
-    volumes: ["mongodb_data:/data/db"]
-
-  orion:
-    image: fiware/orion-ld
-    depends_on: [mongodb]
-
-  redis:
-    image: redis:7-alpine
-    volumes: ["redis_data:/data"]
-
-  nginx:
-    image: nginx:alpine
-    ports: ["80:80", "443:443"]
-    depends_on: [frontend, backend]
-```
-
-### ☁️ Cloud Infrastructure
-
-```mermaid
-graph TB
-    subgraph "CDN Layer"
-        CDN[CloudFlare CDN<br/>Static Assets & Caching]
-    end
-
-    subgraph "Load Balancer"
-        LB[Application Load Balancer<br/>SSL Termination]
-    end
-
-    subgraph "Application Tier"
-        APP1[App Server 1<br/>Frontend + Backend]
-        APP2[App Server 2<br/>Frontend + Backend]
-        APP3[App Server N<br/>Auto Scaling]
-    end
-
-    subgraph "Database Tier"
-        DB_PRIMARY[MongoDB Primary<br/>Read/Write]
-        DB_SECONDARY[MongoDB Secondary<br/>Read Replica]
-        REDIS_CLUSTER[Redis Cluster<br/>Caching & Sessions]
-    end
-
-    subgraph "External Services"
-        PINECONE[Pinecone<br/>Vector Database]
-        STORAGE[Object Storage<br/>S3/GCS/Azure Blob]
-    end
-
-    CDN --> LB
-    LB --> APP1
-    LB --> APP2
-    LB --> APP3
-
-    APP1 --> DB_PRIMARY
-    APP2 --> DB_SECONDARY
-    APP3 --> DB_SECONDARY
-
-    APP1 --> REDIS_CLUSTER
-    APP2 --> REDIS_CLUSTER
-    APP3 --> REDIS_CLUSTER
-
-    APP1 --> PINECONE
-    APP2 --> PINECONE
-    APP3 --> STORAGE
-```
-
-## 📈 Performance & Scalability
-
-### 🚀 Performance Optimizations
-
-1. **Database Optimization**
-
-   - Proper indexing on frequently queried fields
-   - Read replicas for scaling read operations
-   - Connection pooling for efficient database connections
-
-2. **Caching Strategy**
-
-   ```python
-   # Multi-level caching
-   L1: Application Memory Cache (FastAPI)
-   L2: Redis Cache (Shared across instances)
-   L3: CDN Cache (Static assets)
-   ```
-
-3. **API Optimization**
-
-   - Async/await for non-blocking operations
-   - Request/response compression
-   - Pagination for large datasets
-   - Field selection to minimize payload size
-
-4. **Frontend Optimization**
-   - Code splitting and lazy loading
-   - Image optimization and WebP format
-   - Service Worker for offline functionality
-   - Bundle analysis and tree shaking
-
-### 📊 Monitoring & Observability
-
-```mermaid
-graph TB
-    subgraph "Metrics Collection"
-        PROM[Prometheus<br/>Metrics Storage]
-        GRAFANA[Grafana<br/>Dashboards]
-    end
-
-    subgraph "Logging"
-        ELK[ELK Stack<br/>Centralized Logging]
-        LOKI[Grafana Loki<br/>Log Aggregation]
-    end
-
-    subgraph "Tracing"
-        JAEGER[Jaeger<br/>Distributed Tracing]
-        OPENTEL[OpenTelemetry<br/>Instrumentation]
-    end
-
-    subgraph "Alerting"
-        ALERT[AlertManager<br/>Alert Routing]
-        SLACK[Slack/Email<br/>Notifications]
-    end
-
-    PROM --> GRAFANA
-    ELK --> GRAFANA
-    LOKI --> GRAFANA
-    JAEGER --> GRAFANA
-    OPENTEL --> JAEGER
-    PROM --> ALERT
-    ALERT --> SLACK
-```
-
-## 🔒 Security Architecture
-
-### 🛡️ Security Layers
-
-1. **Network Security**
-
-   - HTTPS/TLS encryption for all traffic
-   - WAF (Web Application Firewall)
-   - DDoS protection via CloudFlare
-   - VPC with private subnets for databases
-
-2. **Authentication & Authorization**
-
-   ```python
-   # JWT Token Structure
-   {
-     "sub": "user123",           # User ID
-     "role": "citizen",          # User role
-     "exp": 1701691200,         # Expiration time
-     "iat": 1701604800,         # Issued at
-     "permissions": ["read", "write"] # Granular permissions
-   }
-   ```
-
-3. **Data Protection**
-
-   - Encryption at rest (AES-256)
-   - Encryption in transit (TLS 1.3)
-   - Password hashing (bcrypt with salt)
-   - PII data anonymization
-
-4. **API Security**
-   - Rate limiting per user/API key
-   - Input validation and sanitization
-   - SQL injection prevention
-   - CORS configuration
-   - Request size limits
-
-### 🔍 Security Monitoring
-
-```mermaid
-graph LR
-    A[Security Events] --> B[SIEM System]
-    B --> C[Threat Detection]
-    C --> D[Automated Response]
-    D --> E[Alert Generation]
-    E --> F[Security Team]
-
-    G[Vulnerability Scanner] --> H[Security Dashboard]
-    I[Penetration Testing] --> H
-    J[Code Analysis] --> H
-```
-
-## 🔄 Integration Patterns
-
-### 🌐 API Integration
-
-1. **RESTful APIs** - Standard HTTP methods for CRUD operations
-2. **GraphQL** - Flexible data querying (planned)
-3. **WebSockets** - Real-time bidirectional communication
-4. **Webhooks** - Event-driven notifications to external systems
-
-### 📊 Data Integration
-
-1. **ETL Pipelines** - Extract, Transform, Load data from external sources
-2. **Message Queues** - Async processing with Celery/Redis
-3. **Event Streaming** - Real-time data processing
-4. **Batch Processing** - Scheduled data synchronization
+# System Architecture
+
+UrbanReflex is built with a modern three-tier architecture designed for scalability, maintainability, and developer experience. This document describes the system design, technology stack, and architectural decisions.
+
+## Table of Contents
+
+- [Architecture Overview](#architecture-overview)
+- [System Components](#system-components)
+- [Technology Stack](#technology-stack)
+- [Data Flow](#data-flow)
+- [Security Architecture](#security-architecture)
+- [Scalability Considerations](#scalability-considerations)
+- [Deployment Architecture](#deployment-architecture)
 
 ---
 
-<div align="center">
+## Architecture Overview
 
-**Understanding the architecture?** Check out our [Development Setup Guide](./DEVELOPMENT_SETUP.md) to start building!
+### High-Level Architecture
 
-[🏠 Back to Main Documentation](../README.md) • [📚 Documentation Index](./INDEX.md)
+```
+┌─────────────────────────────────────────────────────────────┐
+│                       CLIENT LAYER                           │
+├─────────────────────────────────────────────────────────────┤
+│  Web Browser          Mobile App         API Clients        │
+│  (Next.js 16)        (Future)            (SDKs)             │
+└────────────┬─────────────────────┬─────────────┬────────────┘
+             │                     │             │
+             └─────────────────────┼─────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    APPLICATION LAYER                         │
+├─────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
+│  │   FastAPI    │  │  AI Service  │  │  Scheduler   │      │
+│  │   Backend    │  │  (Gemini)    │  │  (APScheduler)│      │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘      │
+│         │                  │                  │              │
+└─────────┼──────────────────┼──────────────────┼──────────────┘
+          │                  │                  │
+          ▼                  ▼                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│                        DATA LAYER                            │
+├─────────────────────────────────────────────────────────────┤
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐   │
+│  │ MongoDB  │  │ Orion-LD │  │ Pinecone │  │  Redis   │   │
+│  │          │  │ (NGSI-LD)│  │ (Vectors)│  │ (Cache)  │   │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘   │
+└─────────────────────────────────────────────────────────────┘
+          │                  │                  │
+          ▼                  ▼                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    EXTERNAL SERVICES                         │
+├─────────────────────────────────────────────────────────────┤
+│  OpenAQ API    │  OpenWeatherMap   │  OpenStreetMap        │
+│  (Air Quality) │  (Weather Data)   │  (Geospatial Data)    │
+└─────────────────────────────────────────────────────────────┘
+```
 
-</div>
+### Design Principles
+
+**1. Separation of Concerns**
+
+- Frontend handles presentation and user interaction
+- Backend manages business logic and data processing
+- Database layer handles data persistence
+- External services provide specialized data
+
+**2. API-First Design**
+
+- All functionality exposed through RESTful APIs
+- OpenAPI/Swagger documentation
+- Versioned endpoints for backward compatibility
+
+**3. Microservices-Ready**
+
+- Loosely coupled components
+- Each service can scale independently
+- Service-to-service communication via HTTP/REST
+
+**4. NGSI-LD Compliance**
+
+- Standardized data models
+- Interoperability with FIWARE ecosystem
+- Context information management
+
+---
+
+## System Components
+
+### Frontend Layer (Next.js 16)
+
+**Technology**: Next.js 16 with React 19 and TypeScript
+
+**Architecture**: App Router with server-side rendering
+
+**Structure**:
+
+```
+src/frontend/
+├── app/                  # Next.js App Router
+│   ├── (dashboard)/     # Protected dashboard routes
+│   │   ├── air-quality/
+│   │   ├── weather/
+│   │   ├── reports/
+│   │   └── analytics/
+│   ├── api/             # API route proxies
+│   ├── layout.tsx       # Root layout
+│   └── page.tsx         # Landing page
+├── components/          # React components
+│   ├── ui/              # Base UI components (Shadcn/ui)
+│   ├── charts/          # Data visualization
+│   ├── maps/            # Leaflet map components
+│   └── forms/           # Form components
+├── lib/                 # Utilities
+│   ├── api.ts           # API client
+│   └── utils.ts         # Helper functions
+└── types/               # TypeScript definitions
+```
+
+**Key Features**:
+
+- Server-side rendering for SEO and performance
+- Real-time updates via Server-Sent Events (SSE)
+- Interactive maps using Leaflet
+- Data visualization with Chart.js
+- Responsive design with Tailwind CSS
+
+**State Management**:
+
+- React Context for global state
+- URL state for filters and pagination
+- Local state for component-specific data
+
+**Routing**:
+
+- File-based routing via App Router
+- Dynamic routes for entity details
+- Route groups for protected areas
+- Middleware for authentication
+
+### Backend Layer (FastAPI)
+
+**Technology**: FastAPI 0.121 with Python 3.10+
+
+**Architecture**: Layered architecture with dependency injection
+
+**Structure**:
+
+```
+src/backend/
+├── app.py                      # Application entry point
+├── dependencies.py             # Dependency injection
+├── routers/                    # API route handlers
+│   ├── air_quality.py          # /api/air-quality
+│   ├── weather.py              # /api/weather
+│   ├── citizen_reports.py      # /api/reports
+│   ├── points_of_interest.py   # /api/pois
+│   └── chatbot.py              # /api/chat
+├── models/                     # Pydantic data models
+│   ├── air_quality.py
+│   ├── weather.py
+│   ├── citizen_report.py
+│   └── point_of_interest.py
+├── schemas/                    # Request/Response schemas
+│   ├── requests.py
+│   └── responses.py
+├── ai_service/                 # AI chatbot service
+│   ├── chatbot.py              # Gemini integration
+│   └── vector_store.py         # Pinecone vector DB
+├── utils/                      # Utility functions
+│   ├── ngsi_ld.py              # NGSI-LD helpers
+│   └── validation.py           # Data validation
+└── config/                     # Configuration
+    └── settings.py             # Environment settings
+```
+
+**Key Features**:
+
+- Async request handling
+- Automatic API documentation (Swagger/ReDoc)
+- Request validation with Pydantic
+- CORS middleware for cross-origin requests
+- Error handling middleware
+- Logging and monitoring
+
+**API Design**:
+
+- RESTful endpoints
+- JSON responses
+- Pagination for list endpoints
+- Filtering and sorting
+- Versioned API (v1)
+
+**Data Validation**:
+
+- Pydantic models for request/response validation
+- JSON Schema validation for NGSI-LD entities
+- Custom validators for business logic
+
+### AI Service (Gemini AI)
+
+**Technology**: Google Gemini Pro with Pinecone vector database
+
+**Purpose**: Intelligent chatbot for urban data queries
+
+**Architecture**:
+
+```
+AI Service
+├── Gemini Pro API          # LLM for text generation
+├── Pinecone Vector DB      # Semantic search
+└── RAG Pipeline            # Retrieval-Augmented Generation
+```
+
+**Features**:
+
+- Natural language queries about city data
+- Context-aware responses
+- Vector similarity search for relevant data
+- Streaming responses for real-time chat
+
+**Workflow**:
+
+1. User sends natural language query
+2. Query embedded into vector
+3. Semantic search in Pinecone for relevant context
+4. Context + query sent to Gemini Pro
+5. AI generates response with citations
+6. Stream response back to user
+
+### Scheduler Service
+
+**Technology**: APScheduler
+
+**Purpose**: Automated data collection and processing
+
+**Scheduled Tasks**:
+
+- Fetch air quality data from OpenAQ (every 30 minutes)
+- Fetch weather data from OpenWeatherMap (every 15 minutes)
+- Update OSM road network (daily)
+- Generate analytics reports (weekly)
+- Clean old data (monthly)
+
+**Configuration**:
+
+```python
+# scripts/run_scheduler.py
+scheduler = AsyncIOScheduler()
+
+# Air quality updates
+scheduler.add_job(
+    fetch_aqi_data,
+    'interval',
+    minutes=30,
+    id='fetch_aqi'
+)
+
+# Weather updates
+scheduler.add_job(
+    fetch_weather_data,
+    'interval',
+    minutes=15,
+    id='fetch_weather'
+)
+```
+
+---
+
+## Technology Stack
+
+### Frontend Technologies
+
+**Core Framework**
+
+- Next.js 16.0.7 - React framework with SSR
+- React 19.0.0 - UI library
+- TypeScript 5.7.2 - Type safety
+
+**UI and Styling**
+
+- Tailwind CSS 3.4.1 - Utility-first CSS
+- Shadcn/ui - Component library
+- Radix UI - Headless UI components
+
+**Data Visualization**
+
+- Leaflet 1.9.4 - Interactive maps
+- React Leaflet - React wrapper for Leaflet
+- Chart.js 4.x - Charts and graphs
+- Recharts - Declarative charts
+
+**State and Data**
+
+- React Context - Global state
+- TanStack Query - Server state management
+- Axios - HTTP client
+
+**Development Tools**
+
+- ESLint - Code linting
+- Prettier - Code formatting
+- Husky - Git hooks
+
+### Backend Technologies
+
+**Core Framework**
+
+- FastAPI 0.121.0 - Web framework
+- Uvicorn - ASGI server
+- Python 3.10+ - Programming language
+
+**Data and Validation**
+
+- Pydantic 2.10.3 - Data validation
+- Motor 3.6.0 - Async MongoDB driver
+- httpx 0.28.1 - Async HTTP client
+
+**AI and ML**
+
+- google-generativeai - Gemini Pro SDK
+- pinecone-client - Vector database
+- numpy - Numerical computing
+
+**Task Scheduling**
+
+- APScheduler 3.10.4 - Background jobs
+- asyncio - Async programming
+
+**Development Tools**
+
+- Black - Code formatter
+- Flake8 - Linter
+- isort - Import sorter
+- pytest - Testing framework
+
+### Database Technologies
+
+**MongoDB 4.4**
+
+- Document database for application data
+- Geospatial indexes for location queries
+- Aggregation pipeline for analytics
+
+**Orion-LD 1.5.1**
+
+- NGSI-LD context broker
+- FIWARE component
+- Real-time context management
+- Temporal and spatial queries
+
+**Pinecone**
+
+- Vector database for semantic search
+- Used by AI chatbot
+- Similarity search on embeddings
+
+**Redis (Future)**
+
+- Caching layer
+- Session storage
+- Rate limiting
+
+---
+
+## Data Flow
+
+### User Request Flow
+
+```
+1. User Action
+   └──> Browser sends HTTP request
+
+2. Next.js Frontend
+   ├──> Client-side routing
+   ├──> Server component rendering
+   └──> API call to backend
+
+3. FastAPI Backend
+   ├──> Route handler receives request
+   ├──> Validate request (Pydantic)
+   ├──> Business logic processing
+   └──> Database query
+
+4. Database Layer
+   ├──> MongoDB for application data
+   └──> Orion-LD for NGSI-LD entities
+
+5. Response
+   ├──> Format response (JSON)
+   ├──> Send to frontend
+   └──> Render in browser
+```
+
+### Real-Time Data Collection Flow
+
+```
+1. Scheduler triggers job
+   └──> Run at specified interval
+
+2. Data Fetcher Script
+   ├──> Call external API (OpenAQ, OpenWeatherMap)
+   ├──> Parse response
+   └──> Transform to NGSI-LD format
+
+3. Data Validation
+   ├──> Validate against JSON Schema
+   └──> Check data quality
+
+4. Data Storage
+   ├──> Store in MongoDB (raw data)
+   ├──> Send to Orion-LD (NGSI-LD entities)
+   └──> Update vector embeddings (AI features)
+
+5. Notification (Future)
+   └──> Notify frontend of updates via WebSocket
+```
+
+### AI Chatbot Flow
+
+```
+1. User sends message
+   └──> POST /api/chat
+
+2. Backend processes query
+   ├──> Extract intent
+   └──> Generate embedding vector
+
+3. Vector Search
+   ├──> Query Pinecone for similar context
+   └──> Retrieve top 5 relevant documents
+
+4. RAG Pipeline
+   ├──> Combine query + context
+   ├──> Send to Gemini Pro
+   └──> Generate response
+
+5. Stream Response
+   ├──> Stream tokens to frontend
+   └──> Display in chat interface
+```
+
+---
+
+## Security Architecture
+
+### Authentication and Authorization
+
+**JWT-Based Authentication** (Future Implementation)
+
+```
+1. User login
+   ├──> Username + password
+   └──> POST /auth/login
+
+2. Backend validation
+   ├──> Check credentials
+   ├──> Generate JWT token
+   └──> Return token
+
+3. Subsequent requests
+   ├──> Include token in Authorization header
+   ├──> Backend validates token
+   └──> Allow or deny access
+```
+
+**API Key Authentication** (For external integrations)
+
+- API keys stored in environment variables
+- Never exposed to frontend
+- Rotated regularly
+
+### Data Security
+
+**Encryption**
+
+- HTTPS/TLS for data in transit
+- Environment variables for sensitive data
+- MongoDB encryption at rest (production)
+
+**Input Validation**
+
+- Pydantic models validate all inputs
+- SQL injection prevention (NoSQL used)
+- XSS protection via React escaping
+- CSRF tokens (future)
+
+**CORS Configuration**
+
+```python
+# Backend CORS settings
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
+
+### Rate Limiting (Future)
+
+```python
+# Planned implementation with Redis
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    client_ip = request.client.host
+    # Check rate limit in Redis
+    # Block if exceeded
+    response = await call_next(request)
+    return response
+```
+
+---
+
+## Scalability Considerations
+
+### Horizontal Scaling
+
+**Frontend**
+
+- Stateless Next.js app
+- Deploy multiple instances behind load balancer
+- CDN for static assets
+- Edge rendering with Vercel
+
+**Backend**
+
+- Stateless FastAPI servers
+- Load balancer distributes requests
+- Async processing for heavy operations
+- Background jobs via scheduler
+
+**Database**
+
+- MongoDB replica set for high availability
+- Sharding for large datasets
+- Read replicas for read-heavy workloads
+- Orion-LD federation (future)
+
+### Caching Strategy
+
+**Browser Cache**
+
+- Static assets cached by browser
+- Service worker for offline support
+
+**CDN Cache**
+
+- Static files served from CDN
+- Edge caching for API responses
+
+**Application Cache** (Future with Redis)
+
+- Frequently accessed data cached
+- Cache invalidation on updates
+- TTL for time-sensitive data
+
+### Performance Optimizations
+
+**Frontend**
+
+- Code splitting with Next.js
+- Image optimization
+- Lazy loading components
+- Prefetching routes
+
+**Backend**
+
+- Connection pooling for databases
+- Async/await for I/O operations
+- Batch operations for bulk updates
+- Database indexes for common queries
+
+---
+
+## Deployment Architecture
+
+### Development Environment
+
+```
+Developer Machine
+├── Frontend: npm run dev (localhost:3000)
+├── Backend: uvicorn --reload (localhost:8000)
+└── Databases: Docker Compose
+    ├── MongoDB (localhost:27017)
+    └── Orion-LD (localhost:1026)
+```
+
+### Production Environment (Future)
+
+```
+Cloud Infrastructure
+├── Frontend (Vercel/Netlify)
+│   ├── Next.js app
+│   ├── CDN distribution
+│   └── Edge functions
+├── Backend (AWS/GCP/Azure)
+│   ├── Load Balancer
+│   ├── FastAPI instances (auto-scaling)
+│   └── Scheduler service
+├── Databases
+│   ├── MongoDB Atlas (managed)
+│   ├── Orion-LD (Kubernetes)
+│   └── Pinecone (managed)
+└── Monitoring
+    ├── Logging (CloudWatch/Stackdriver)
+    ├── Metrics (Prometheus/Grafana)
+    └── Error tracking (Sentry)
+```
+
+### CI/CD Pipeline
+
+```
+Git Push
+  └──> GitHub Actions
+       ├──> Run tests
+       ├──> Lint code
+       ├──> Build Docker images
+       ├──> Push to registry
+       └──> Deploy to environment
+            ├── Dev (on push to dev branch)
+            ├── Staging (on push to main branch)
+            └── Production (on tagged release)
+```
+
+### Docker Compose Setup
+
+Current development setup:
+
+```yaml
+services:
+  mongo:
+    image: mongo:4.4
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo-data:/data/db
+
+  orion-ld:
+    image: fiware/orion-ld:1.5.1
+    depends_on:
+      - mongo
+    ports:
+      - '1026:1026'
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile.scheduler
+    depends_on:
+      - mongo
+      - orion-ld
+```
+
+---
+
+## Architectural Decisions
+
+### Why Next.js 16?
+
+- Server-side rendering for SEO
+- App Router for modern routing
+- React Server Components
+- Built-in optimization
+- TypeScript support
+- Large ecosystem
+
+### Why FastAPI?
+
+- High performance (async/await)
+- Automatic API documentation
+- Type hints with Pydantic
+- Easy to learn and use
+- Modern Python features
+- Active community
+
+### Why MongoDB?
+
+- Flexible schema for evolving data models
+- Geospatial queries for location data
+- JSON-like documents match frontend
+- Horizontal scaling support
+- Rich aggregation framework
+
+### Why Orion-LD?
+
+- NGSI-LD standard compliance
+- Interoperability with FIWARE
+- Built for IoT and smart cities
+- Temporal and spatial queries
+- Context information management
+
+### Why Microservices-Ready?
+
+- Independent scaling of components
+- Technology flexibility
+- Easier testing and debugging
+- Team autonomy
+- Fault isolation
+
+---
+
+## Future Enhancements
+
+**1. WebSocket Support**
+
+- Real-time updates for dashboards
+- Live notifications
+- Collaborative features
+
+**2. Redis Caching**
+
+- Reduce database load
+- Faster response times
+- Session management
+
+**3. Authentication System**
+
+- User registration and login
+- Role-based access control
+- OAuth2 integration
+
+**4. Mobile App**
+
+- React Native application
+- Offline-first architecture
+- Push notifications
+
+**5. Analytics Platform**
+
+- Data warehouse integration
+- Machine learning models
+- Predictive analytics
+
+**6. Multi-Tenancy**
+
+- Support multiple cities
+- Tenant isolation
+- Shared infrastructure
+
+For more details on specific components, see:
+
+- [API_REFERENCE.md](./API_REFERENCE.md) - API documentation
+- [DATA_MODEL_AND_ENTITIES.md](./DATA_MODEL_AND_ENTITIES.md) - Data models
+- [DEVELOPMENT_SETUP.md](./DEVELOPMENT_SETUP.md) - Setup guide
