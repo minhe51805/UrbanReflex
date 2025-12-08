@@ -51,13 +51,13 @@
 
 ## ✨ Highlights
 
-- 🌍 **Real-time air quality and environmental monitoring** (NGSI-LD aligned)  
-- 📝 **Citizen-Powered Infrastructure Reporting** with photo uploads & geolocation  
-- 🤖 **Automated classification and prioritization** for city operations & RAG system  
-- 🏛️ **NGSI-LD Compliant Smart City Data Models** (ETSI standard)  
-- 📂 **Open Data Access** via public API & standard exports: **GeoJSON, NDJSON, CSV**  
-- ⚡ **One-Command Setup** with Just task runner & UV package manager  
-- 🔐 **Access control** for citizens, city staff, and admins  
+- 🌍 **Real-time air quality and environmental monitoring** (NGSI-LD aligned)
+- 📝 **Citizen-Powered Infrastructure Reporting** with photo uploads & geolocation
+- 🤖 **Automated classification and prioritization** for city operations & RAG system
+- 🏛️ **NGSI-LD Compliant Smart City Data Models** (ETSI standard)
+- 📂 **Open Data Access** via public API & standard exports: **GeoJSON, NDJSON, CSV**
+- ⚡ **One-Command Setup** with Just task runner & UV package manager
+- 🔐 **Access control** for citizens, city staff, and admins
 
 ---
 
@@ -138,98 +138,61 @@ See [CHANGELOG.md](./CHANGELOG.md) for full release notes.
 ### Prerequisites
 
 ```bash
-# Required
-✅ Just task runner         # https://just.systems/
-✅ Git                       # Version control
+✅ Just task runner    # https://just.systems/
+✅ Docker Desktop      # https://www.docker.com/
 ✅ 8GB RAM minimum
-✅ 10GB free disk space
-
-# Auto-installed by `just install`
-📦 UV package manager
-📦 Node.js 18+
-📦 Python 3.10+
 ```
 
-### ⚡ 3-Command Setup
+### Installation
 
 ```bash
 # 1. Clone repository
 git clone https://github.com/minhe51805/UrbanReflex.git
 cd UrbanReflex
 
-# 2. Install everything (UV + backend + frontend)
+# 2. Install Just (if not already installed)
+winget install Casey.Just  # Windows
+brew install just          # macOS
+cargo install just         # Linux
+
+# 3. Install all dependencies (one command!)
 just install
-# Automatically:
-# - Installs UV package manager (if not present)
-# - Installs 175 Python packages
-# - Installs 632 npm packages
+# ✅ Auto-installs UV, Python packages, npm packages
 
-# 3. Setup environment files
+# 4. Setup environment files
 just setup-env
-# Creates:
-# - .env (backend configuration)
-# - src/frontend/.env.local (frontend configuration)
+# Edit .env and src/frontend/.env.local with your API keys (optional)
 
-# 4. Start development servers
-just dev
-# Starts:
-# - Backend API (http://localhost:8000)
-# - Frontend App (http://localhost:3000)
-# - MongoDB + Orion-LD (via Docker Compose)
+# 5. Start services (3 terminals)
+just dev                # Terminal 1: Databases
+just backend-dev        # Terminal 2: Backend
+just frontend-dev       # Terminal 3: Frontend
 ```
 
-### 🔧 Environment Configuration
+**Done!** 🎉 Open http://localhost:3000
 
-After running `just setup-env`, edit the created files:
+### Environment Variables (Optional)
 
 <details>
-<summary><b>.env (Backend)</b></summary>
+<summary>Click to expand configuration</summary>
+
+Edit `.env` for backend:
 
 ```bash
-# Database
-MONGODB_URL="mongodb://localhost:27017"
-DATABASE_NAME="urbanreflex"
-
-# Authentication
-SECRET_KEY="your-secret-key-here"  # Generate: openssl rand -hex 32
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-
-# AI Services (Optional - features disabled without these)
-GEMINI_API_KEY="your-gemini-key"           # Required for chatbot
-PINECONE_API_KEY="your-pinecone-key"       # Required for vector search
-PINECONE_INDEX_NAME="urbanreflex-index"
-
-# External APIs (Optional - falls back to mock data)
-OPENAQ_API_KEY="your-openaq-key"
-OWM_API_KEY="your-openweathermap-key"
+GEMINI_API_KEY=your-key        # For AI chatbot
+PINECONE_API_KEY=your-key      # For vector search
+OPENAQ_API_KEY=your-key        # For real air quality data
 ```
 
-</details>
-
-<details>
-<summary><b>src/frontend/.env.local (Frontend)</b></summary>
+Edit `src/frontend/.env.local`:
 
 ```bash
 NEXT_PUBLIC_API_URL=http://localhost:8000
-NEXT_PUBLIC_OPENAQ_API_KEY=your-openaq-key
-NEXT_PUBLIC_NGSI_LD_URL=http://localhost:1026
 ```
+
+> App works without API keys (uses mock data)
 
 </details>
-
-### ✅ Verify Installation
-
-```bash
-# Check backend health
-curl http://localhost:8000/health
-# Expected: {"service":"UrbanReflex","status":"running","version":"0.2.0"}
-
-# Check all services info
-just info
-
-# Check frontend
-open http://localhost:3000
-```
 
 ---
 
@@ -310,34 +273,44 @@ UrbanReflex/
 ### Installation & Setup
 
 ```bash
-just install          # Install UV + backend deps + frontend deps
-just setup-env        # Create .env and .env.local from examples
-just backend-install  # Install only backend dependencies
-just frontend-install # Install only frontend dependencies
+just install          # Install UV + backend deps + frontend deps (one command!)
+just setup-env        # Create .env and src/frontend/.env.local from examples
 ```
 
 ### Development
 
 ```bash
-just dev             # Start backend + frontend + databases
-just backend-dev     # Start backend only (port 8000)
-just frontend-dev    # Start frontend only (port 3000)
+just dev              # Start databases + show instructions for backend/frontend
+just backend-dev      # Start backend API (port 8000)
+just frontend-dev     # Start frontend app (port 3000)
+```
+
+### Database Management
+
+```bash
+just db-start         # Start MongoDB + Orion-LD
+just db-stop          # Stop databases
+just db-restart       # Restart databases
+just db-logs          # View database logs
+just db-clean         # Remove all database data (with confirmation)
 ```
 
 ### Code Quality
 
 ```bash
-just format          # Format all code (Black + Prettier)
-just lint            # Run linters (Flake8 + ESLint)
-just test            # Run all tests
+just format           # Format all code (Black + Prettier)
+just lint             # Run linters (Flake8 + ESLint)
+just test             # Run backend tests
 ```
 
 ### Utilities
 
 ```bash
-just info            # Show project info (ports, services)
-just health          # Check backend health endpoint
-just clean           # Clean build artifacts
+just info             # Show project info, ports, and quick start guide
+just health           # Check backend health endpoint
+just clean            # Clean build artifacts and cache
+just stop-all         # Stop all running services
+just code             # Open project in VS Code
 ```
 
 ---
@@ -455,7 +428,6 @@ This project is licensed under the **GNU General Public License v3.0** - see the
 <div align="center">
 
 **UrbanReflex v0.2.0** — Smart City Intelligence Platform
-
 
 [🏠 Homepage](https://github.com/minhe51805/UrbanReflex) • [📚 Documentation](https://minhe51805.github.io/UrbanReflex/) • [🐛 Report Bug](https://github.com/minhe51805/UrbanReflex/issues) • [💬 Discussions](https://t.me/+o1X9iR9j7_czYmE1)
 
