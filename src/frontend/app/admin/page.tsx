@@ -69,6 +69,8 @@ import {
   Sparkles,
 } from 'lucide-react';
 
+const ADMIN_API_BASE = process.env.NEXT_PUBLIC_AI_BACKEND_URL || 'https://pulsar-ai.site';
+
 interface UserForAdmin {
   id: string;
   email: string;
@@ -529,7 +531,7 @@ export default function AdminPage() {
 
       // Load users
       try {
-        const usersRes = await fetch('http://163.61.183.90:8001/admin/users', {
+        const usersRes = await fetch(`${ADMIN_API_BASE}/admin/users`, {
           headers: { 
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -744,7 +746,7 @@ export default function AdminPage() {
         throw new Error('No authentication token');
       }
 
-      const response = await fetch(`http://163.61.183.90:8001/admin/users/${selectedUser.id}`, {
+      const response = await fetch(`${ADMIN_API_BASE}/admin/users/${selectedUser.id}`, {
         method: 'PUT',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -794,7 +796,7 @@ export default function AdminPage() {
         throw new Error('No authentication token');
       }
 
-      const response = await fetch(`http://163.61.183.90:8001/admin/users/${selectedUser.id}/password`, {
+      const response = await fetch(`${ADMIN_API_BASE}/admin/users/${selectedUser.id}/password`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -919,7 +921,7 @@ export default function AdminPage() {
         user: userToDelete
       });
 
-      const response = await fetch(`http://163.61.183.90:8001/admin/users/${encodeURIComponent(userId)}`, {
+      const response = await fetch(`${ADMIN_API_BASE}/admin/users/${encodeURIComponent(userId)}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

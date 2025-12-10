@@ -6,7 +6,7 @@
  *              and automatically classify reports using AI backend service.
  * 
  * @see {@link https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld} NGSI-LD Context
- * @see {@link http://163.61.183.90:8001/api/v1/citizen-reports/classify} AI Classification API
+ * @see {@link https://pulsar-ai.site/api/v1/citizen-reports/classify} AI Classification API
  */
 
 'use client';
@@ -268,7 +268,7 @@ export default function CitizenReportForm() {
       
       try {
         const aiResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_AI_BACKEND_URL || 'http://163.61.183.90:8001'}/api/v1/citizen-reports/classify/${encodeURIComponent(reportId)}`,
+          `${process.env.NEXT_PUBLIC_AI_BACKEND_URL || 'https://pulsar-ai.site'}/api/v1/citizen-reports/classify/${encodeURIComponent(reportId)}`,
           {
             method: 'POST',
             headers: {

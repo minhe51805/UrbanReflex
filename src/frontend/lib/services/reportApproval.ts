@@ -36,7 +36,7 @@ const isServer = typeof window === 'undefined';
 // Use direct NGSI-LD URL on server, proxy on client
 const ORION_LD_URL = process.env.NEXT_PUBLIC_ORION_LD_URL || 'http://103.178.233.233:1026/ngsi-ld/v1';
 const NGSI_LD_BASE = isServer ? ORION_LD_URL : '/api/ngsi-ld';
-const AI_BACKEND_URL = `${process.env.NEXT_PUBLIC_AI_BACKEND_URL || 'http://163.61.183.90:8001'}/api/v1/citizen-reports`;
+const AI_BACKEND_URL = `${process.env.NEXT_PUBLIC_AI_BACKEND_URL || 'https://pulsar-ai.site'}/api/v1/citizen-reports`;
 
 interface ReportEntity {
   id: string;

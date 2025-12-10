@@ -33,7 +33,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-const PYTHON_BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://163.61.183.90:8001';
+const PYTHON_BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://pulsar-ai.site';
 
 /**
  * GET - Retrieve image by hash
